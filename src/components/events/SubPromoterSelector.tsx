@@ -12,7 +12,7 @@ interface SubPromoterSelectorProps {
 export const SubPromoterSelector = ({ control }: SubPromoterSelectorProps) => {
   // Filter users who can be sub-promoters (could be refined based on your app's logic)
   const potentialSubPromoters = users.filter(user => 
-    user.role === "promoter" || user.role === "dj" || user.role === "regular"
+    user.role === "promoter" || user.role === "dj" || user.role === "fan"
   );
   
   return (
