@@ -54,12 +54,16 @@ export const SubPromotersList = ({ subPromoters, eventId }: SubPromotersListProp
       return;
     }
 
-    // Use our context to add the new sub-promoter
+    // Get the current promoter ID
+    const promoterId = currentUser?.id || "6"; // Default to mock promoter if not logged in
+
+    // Use our context to add the new sub-promoter - Now including parentPromoterId
     const added = addSubPromoter({
       name: newPromoter.name,
       email: newPromoter.email,
       phone: newPromoter.phone || "",
-      avatar: newPromoter.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(newPromoter.name)}&background=random`
+      avatar: newPromoter.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(newPromoter.name)}&background=random`,
+      parentPromoterId: promoterId // Add the required field
     });
 
     toast({

@@ -42,14 +42,14 @@ export const SubPromoterProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   // Add a new sub-promoter
   const addSubPromoter = (newPromoter: Omit<SubPromoter, "id" | "uniqueCode" | "ticketsSold">) => {
-    const promoterId = currentUser?.id || "6"; // Default to mock promoter if not logged in
+    // Use parentPromoterId from the newPromoter object, this is now required
+    const promoterId = newPromoter.parentPromoterId;
     
     // Create a full sub-promoter object with generated ID and code
     const fullPromoter: SubPromoter = {
       id: uuidv4(),
       uniqueCode: generateUniqueCode(),
       ticketsSold: 0,
-      parentPromoterId: promoterId,
       ...newPromoter
     };
     
