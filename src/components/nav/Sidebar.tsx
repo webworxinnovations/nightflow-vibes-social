@@ -15,11 +15,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 
 export function Sidebar() {
-  // Mock user data
+  // Updated user data to match DJ Jnyc
   const user = {
-    name: 'Alex Rodriguez',
-    username: 'djalexx',
-    avatar: 'https://images.unsplash.com/photo-1543132220-4bf3de6e10ae?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8ZGp8ZW58MHx8MHx8fDA%3D',
+    name: 'DJ Jnyc',
+    username: 'PartyWithJnyc',
+    avatar: '/lovable-uploads/56a20a5c-18c3-476b-bce8-ce10030b6e26.png',
     role: 'dj'
   };
 
