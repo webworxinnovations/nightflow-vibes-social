@@ -16,6 +16,7 @@ interface AuthContextType {
   currentUser: AuthUser | null;
   setCurrentUser: (user: AuthUser | null) => void;
   isCreatorRole: () => boolean;
+  isSubPromoter: () => boolean;
   logout: () => void;
 }
 
@@ -31,13 +32,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!currentUser) return false;
     return ["dj", "promoter", "venue"].includes(currentUser.role);
   };
+  
+  const isSubPromoter = () => {
+    if (!currentUser) return false;
+    return currentUser.role === "fan";
+  };
 
   const logout = () => {
     setCurrentUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ currentUser, setCurrentUser, isCreatorRole, logout }}>
+    <AuthContext.Provider value={{ currentUser, setCurrentUser, isCreatorRole, isSubPromoter, logout }}>
       {children}
     </AuthContext.Provider>
   );

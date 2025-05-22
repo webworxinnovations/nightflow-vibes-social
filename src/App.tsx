@@ -21,6 +21,7 @@ import EventDetails from "./pages/EventDetails";
 import CreateEvent from "./pages/CreateEvent";
 import SignUp from "./pages/SignUp";
 import SubPromoterManagement from "./pages/SubPromoterManagement";
+import SubPromoterDashboard from "./pages/SubPromoterDashboard";
 
 const queryClient = new QueryClient();
 
@@ -44,6 +45,7 @@ const App = () => (
                   <Route path="dj-dashboard" element={<DjDashboard />} />
                   <Route path="promoter-dashboard" element={<PromoterDashboard />} />
                   <Route path="sub-promoters" element={<SubPromoterManagement />} />
+                  <Route path="sub-promoter-dashboard" element={<SubPromoterDashboard />} />
                   <Route path="create-event" element={<CreateEvent />} />
                   <Route path="signup" element={<SignUp />} />
                   <Route path="*" element={<NotFound />} />

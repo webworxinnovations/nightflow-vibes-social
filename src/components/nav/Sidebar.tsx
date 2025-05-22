@@ -10,6 +10,7 @@ import {
   Users,
   LogOut,
   Building2,
+  Ticket,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -34,9 +35,14 @@ export function Sidebar() {
       case 'dj':
         return [{ icon: Music, path: '/dj-dashboard', label: 'DJ Dashboard' }];
       case 'promoter':
-        return [{ icon: Users, path: '/promoter-dashboard', label: 'Promoter Dashboard' }];
+        return [
+          { icon: Users, path: '/promoter-dashboard', label: 'Promoter Dashboard' },
+          { icon: Users, path: '/sub-promoters', label: 'Sub-Promoters' }
+        ];
       case 'venue':
         return [{ icon: Building2, path: '/venue-dashboard', label: 'Venue Dashboard' }];
+      case 'fan':
+        return [{ icon: Ticket, path: '/sub-promoter-dashboard', label: 'My Promotions' }];
       default:
         return [];
     }
@@ -70,7 +76,7 @@ export function Sidebar() {
         ))}
       </nav>
 
-      {isCreatorRole() && userNavItems.length > 0 && (
+      {userNavItems.length > 0 && (
         <>
           <Separator className="my-4 bg-white/10" />
 
