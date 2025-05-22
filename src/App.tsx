@@ -19,6 +19,7 @@ import NotFound from "./pages/NotFound";
 import EventDetails from "./pages/EventDetails";
 import CreateEvent from "./pages/CreateEvent";
 import SignUp from "./pages/SignUp";
+import SubPromoterManagement from "./pages/SubPromoterManagement";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +40,7 @@ const App = () => (
                 <Route path="profile/:id" element={<Profile />} />
                 <Route path="dj-dashboard" element={<DjDashboard />} />
                 <Route path="promoter-dashboard" element={<PromoterDashboard />} />
+                <Route path="sub-promoters" element={<SubPromoterManagement />} />
                 <Route path="create-event" element={<CreateEvent />} />
                 <Route path="signup" element={<SignUp />} />
                 <Route path="*" element={<NotFound />} />

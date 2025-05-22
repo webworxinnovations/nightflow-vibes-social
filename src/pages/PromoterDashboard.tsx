@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -8,25 +7,32 @@ import { EventCard } from "@/components/cards/event-card";
 import { UserCard } from "@/components/cards/user-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
-import {
-  Calendar,
-  Users,
-  Ticket,
-  Plus,
-  BarChart3,
-  QrCode,
-  ChevronRight,
-  ArrowUpRight,
-  Search,
-  Share
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { 
+  Calendar, Users, Ticket, Plus, BarChart3, QrCode, ChevronRight, 
+  ArrowUpRight, Search, Share, UserPlus
 } from "lucide-react";
-import { events, users } from "@/lib/mock-data";
+import { 
+  events, users, subPromoters, getSubPromotersByParentId, 
+  getSubPromoterSalesByEventId, getEventsByPromoter 
+} from "@/lib/mock-data";
+import { SubPromotersList } from "@/components/promoter/SubPromotersList";
+import { SubPromoterSalesChart } from "@/components/promoter/SubPromoterSalesChart";
 
 export default function PromoterDashboard() {
   const [activeTab, setActiveTab] = useState("events");
+  const [selectedEventId, setSelectedEventId] = useState<string>(events[0]?.id);
+  const { currentUser } = useAuth();
+  const navigate = useNavigate();
   
-  // Mock promoter events
-  const promoterEvents = events;
+  // If we have a logged-in promoter, get their events
+  // Otherwise use mock data
+  const promoterId = currentUser?.id || "6"; // Default to mock promoter if not logged in
+  const promoterEvents = getEventsByPromoter(promoterId);
+  
+  // Get sub-promoters for this promoter
+  const mySubPromoters = getSubPromotersByParentId(promoterId);
   
   // Guest lists
   const guestLists = [
@@ -75,12 +81,12 @@ export default function PromoterDashboard() {
             
             <GlassmorphicCard>
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium text-muted-foreground">Upcoming Events</h3>
-                <Calendar className="h-5 w-5 text-muted-foreground" />
+                <h3 className="text-sm font-medium text-muted-foreground">Sub-Promoters</h3>
+                <UserPlus className="h-5 w-5 text-muted-foreground" />
               </div>
-              <p className="mt-2 text-3xl font-bold">{promoterEvents.length}</p>
+              <p className="mt-2 text-3xl font-bold">{mySubPromoters.length}</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Next event in 3 days
+                {mySubPromoters.reduce((acc, curr) => acc + curr.ticketsSold, 0)} tickets sold
               </p>
             </GlassmorphicCard>
           </div>
@@ -88,7 +94,7 @@ export default function PromoterDashboard() {
           <div className="mt-6">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-xl font-semibold">Your Events</h2>
-              <Button>
+              <Button onClick={() => navigate('/create-event')}>
                 <Plus className="mr-2 h-4 w-4" />
                 Create Event
               </Button>
@@ -141,65 +147,86 @@ export default function PromoterDashboard() {
           </div>
           
           <GlassmorphicCard className="mt-6">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Guest List Management</h2>
-              <Select
-                placeholder="Select event"
-                value={activeEvent.title}
-                onChange={() => {}}
-              >
-                {promoterEvents.map(event => (
-                  <option key={event.id} value={event.title}>
-                    {event.title}
-                  </option>
-                ))}
-              </Select>
-            </div>
-            
-            <div className="mt-4">
-              <div className="mb-2 flex items-center">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    placeholder="Search guests..."
-                    className="pl-9"
-                  />
-                </div>
-                <Button className="ml-2">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Guest
-                </Button>
+            <Tabs defaultValue="guest-list" onValueChange={(value) => setActiveTab(value)}>
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-xl font-semibold">
+                  {activeTab === "guest-list" ? "Guest List Management" : "Sub-Promoter Management"}
+                </h2>
+                <Select
+                  placeholder="Select event"
+                  value={selectedEventId}
+                  onChange={(e) => setSelectedEventId(e.target.value)}
+                >
+                  {promoterEvents.map(event => (
+                    <option key={event.id} value={event.id}>
+                      {event.title}
+                    </option>
+                  ))}
+                </Select>
               </div>
               
-              <div className="mt-4 space-y-4">
-                {guestLists.map((list, index) => (
-                  <div key={index}>
-                    <div className="mb-2 flex items-center justify-between">
-                      <h3 className="font-medium">{list.name}</h3>
-                      <span className="text-sm text-muted-foreground">
-                        {list.count}/{list.total} checked in
-                      </span>
-                    </div>
-                    <Progress value={(list.count / list.total) * 100} className="h-2" />
-                  </div>
-                ))}
-              </div>
+              <TabsList>
+                <TabsTrigger value="guest-list">Guest Lists</TabsTrigger>
+                <TabsTrigger value="sub-promoters">Sub-Promoters</TabsTrigger>
+                <TabsTrigger value="performance">Performance</TabsTrigger>
+              </TabsList>
               
-              <div className="mt-6 rounded-md border border-white/10 p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-medium">Guest Check-in QR Code</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Share this QR code for quick guest check-in
-                    </p>
+              <TabsContent value="guest-list" className="mt-4">
+                <div className="mb-2 flex items-center">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      placeholder="Search guests..."
+                      className="pl-9"
+                    />
                   </div>
-                  <Button variant="outline" size="sm">
-                    <QrCode className="mr-2 h-4 w-4" />
-                    Generate QR
+                  <Button className="ml-2">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Guest
                   </Button>
                 </div>
-              </div>
-            </div>
+                
+                <div className="mt-4 space-y-4">
+                  {guestLists.map((list, index) => (
+                    <div key={index}>
+                      <div className="mb-2 flex items-center justify-between">
+                        <h3 className="font-medium">{list.name}</h3>
+                        <span className="text-sm text-muted-foreground">
+                          {list.count}/{list.total} checked in
+                        </span>
+                      </div>
+                      <Progress value={(list.count / list.total) * 100} className="h-2" />
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="mt-6 rounded-md border border-white/10 p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-medium">Guest Check-in QR Code</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Share this QR code for quick guest check-in
+                      </p>
+                    </div>
+                    <Button variant="outline" size="sm">
+                      <QrCode className="mr-2 h-4 w-4" />
+                      Generate QR
+                    </Button>
+                  </div>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="sub-promoters" className="mt-4">
+                <SubPromotersList 
+                  subPromoters={mySubPromoters} 
+                  eventId={selectedEventId} 
+                />
+              </TabsContent>
+              
+              <TabsContent value="performance" className="mt-4">
+                <SubPromoterSalesChart eventId={selectedEventId} />
+              </TabsContent>
+            </Tabs>
           </GlassmorphicCard>
         </div>
         
@@ -207,7 +234,7 @@ export default function PromoterDashboard() {
           <GlassmorphicCard>
             <h2 className="text-xl font-semibold">Active Event</h2>
             
-            {activeEvent.isLive ? (
+            {activeEvent?.isLive ? (
               <div className="mt-4">
                 <div className="relative mb-3 overflow-hidden rounded-md">
                   <img
@@ -257,7 +284,7 @@ export default function PromoterDashboard() {
           <GlassmorphicCard className="mt-6">
             <h2 className="text-xl font-semibold">Quick Actions</h2>
             <div className="mt-4 space-y-2">
-              <Button variant="outline" className="w-full justify-between">
+              <Button variant="outline" className="w-full justify-between" onClick={() => navigate('/create-event')}>
                 <div className="flex items-center">
                   <Calendar className="mr-2 h-4 w-4" />
                   Create Event
@@ -268,6 +295,13 @@ export default function PromoterDashboard() {
                 <div className="flex items-center">
                   <Users className="mr-2 h-4 w-4" />
                   Manage Guest Lists
+                </div>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+              <Button variant="outline" className="w-full justify-between">
+                <div className="flex items-center">
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Manage Sub-Promoters
                 </div>
                 <ChevronRight className="h-4 w-4" />
               </Button>
@@ -334,7 +368,7 @@ function Select({
 }: { 
   placeholder: string;
   value: string;
-  onChange: () => void;
+  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   children: React.ReactNode;
 }) {
   return (

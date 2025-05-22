@@ -4,7 +4,7 @@ export interface User {
   name: string;
   username: string;
   avatar: string;
-  role: 'dj' | 'fan' | 'promoter' | 'venue';
+  role: 'dj' | 'fan' | 'promoter' | 'venue' | 'sub-promoter';
   bio?: string;
   location?: string;
   genres?: string[];
@@ -13,6 +13,18 @@ export interface User {
   coverImage?: string;
   isFollowing?: boolean;
   isLive?: boolean;
+  parentPromoterId?: string; // For sub-promoters, references main promoter
+}
+
+export interface SubPromoter {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  parentPromoterId: string; // References the main promoter id
+  ticketsSold: number;
+  uniqueCode: string;
+  avatar?: string;
 }
 
 export interface Event {
@@ -31,35 +43,15 @@ export interface Event {
   promoter: User;
   isLive?: boolean;
   vibe?: number;
+  subPromoterSales?: SubPromoterSale[]; // Track sales by sub-promoters
 }
 
-export interface Post {
-  id: string;
-  user: User;
-  content: string;
-  image?: string;
-  likes: number;
-  comments: number;
-  shares: number;
-  timestamp: string;
-  hasLiked?: boolean;
-}
-
-export interface SongRequest {
-  id: string;
-  song: Song;
-  fan: User;
-  message?: string;
-  tipAmount: number;
-  status: 'pending' | 'accepted' | 'declined';
-  timestamp: string;
-}
-
-export interface Song {
-  id: string;
-  title: string;
-  artist: string;
-  albumArt: string;
+export interface SubPromoterSale {
+  subPromoterId: string;
+  eventId: string;
+  ticketsSold: number;
+  totalRevenue: number;
+  lastSaleDate?: string;
 }
 
 // Mock Users (DJs, Promoters, Fans)
@@ -159,6 +151,68 @@ export const users: User[] = [
     followers: 35800,
     following: 215,
     coverImage: 'https://images.unsplash.com/photo-1574879948818-1cfda7aa5b1a?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTl8fGNsdWJ8ZW58MHx8MHx8fDA%3D'
+  }
+];
+
+// Mock Sub-Promoters
+export const subPromoters: SubPromoter[] = [
+  {
+    id: 'sp1',
+    name: 'Alex Johnson',
+    email: 'alex@example.com',
+    phone: '555-123-4567',
+    parentPromoterId: '6', // Nightlife Productions
+    ticketsSold: 28,
+    uniqueCode: 'ALEX2025'
+  },
+  {
+    id: 'sp2',
+    name: 'Taylor Williams',
+    email: 'taylor@example.com',
+    phone: '555-234-5678',
+    parentPromoterId: '6', // Nightlife Productions
+    ticketsSold: 42,
+    uniqueCode: 'TAYLOR2025'
+  },
+  {
+    id: 'sp3',
+    name: 'Jordan Lee',
+    email: 'jordan@example.com',
+    parentPromoterId: '6', // Nightlife Productions
+    ticketsSold: 15,
+    uniqueCode: 'JORDAN2025'
+  }
+];
+
+// Mock Sub-Promoter Sales Data
+export const subPromoterSales: SubPromoterSale[] = [
+  {
+    subPromoterId: 'sp1',
+    eventId: '1',
+    ticketsSold: 15,
+    totalRevenue: 675, // 15 tickets × $45
+    lastSaleDate: '2025-06-10T14:30:00Z'
+  },
+  {
+    subPromoterId: 'sp2',
+    eventId: '1',
+    ticketsSold: 22,
+    totalRevenue: 990, // 22 tickets × $45
+    lastSaleDate: '2025-06-11T09:15:00Z'
+  },
+  {
+    subPromoterId: 'sp1',
+    eventId: '2',
+    ticketsSold: 8,
+    totalRevenue: 280, // 8 tickets × $35
+    lastSaleDate: '2025-06-09T16:45:00Z'
+  },
+  {
+    subPromoterId: 'sp3',
+    eventId: '1',
+    ticketsSold: 10,
+    totalRevenue: 450, // 10 tickets × $45
+    lastSaleDate: '2025-06-08T11:20:00Z'
   }
 ];
 
@@ -473,3 +527,21 @@ export const formatTimeAgo = (timestamp: string) => {
     return 'Just now';
   }
 };
+
+export const getSubPromotersByParentId = (parentId: string) => 
+  subPromoters.filter(sp => sp.parentPromoterId === parentId);
+
+export const getSubPromoterSalesByEventId = (eventId: string) =>
+  subPromoterSales.filter(sale => sale.eventId === eventId);
+  
+export const getSubPromoterSalesByPromoterId = (promoterId: string) => {
+  const promoterSubPromoters = getSubPromotersByParentId(promoterId);
+  const subPromoterIds = promoterSubPromoters.map(sp => sp.id);
+  return subPromoterSales.filter(sale => subPromoterIds.includes(sale.subPromoterId));
+};
+
+export const getEventsByPromoter = (promoterId: string) =>
+  events.filter(event => event.promoter.id === promoterId);
+
+export const generateTicketLink = (eventId: string, subPromoterCode: string) =>
+  `https://tipdrop.app/tickets/${eventId}?code=${subPromoterCode}`;
