@@ -1,4 +1,3 @@
-
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -10,6 +9,7 @@ import { EventDetailsFields } from "./EventDetailsFields";
 import { EventVenueFields } from "./EventVenueFields";
 import { EventLineupSelector } from "./EventLineupSelector";
 import { SubPromoterSelector } from "./SubPromoterSelector";
+import { users } from "@/lib/mock-data";
 
 // Define form schema
 export const eventFormSchema = z.object({
@@ -75,10 +75,19 @@ export const EventForm = () => {
     // In a real app, we would send this data to a backend
     console.log("Event submission:", values);
     
-    // Show success toast
+    // Get sub-promoter names for the toast message
+    const subPromoterNames = values.subPromoters && values.subPromoters.length > 0 
+      ? users.filter(u => values.subPromoters?.includes(u.id)).map(u => u.name)
+      : [];
+    
+    // Show success toast with sub-promoter information
     toast({
       title: "Event created successfully!",
-      description: "Your event has been posted and is now visible in the Discover page.",
+      description: `Your event has been posted and is now visible in the Discover page.${
+        subPromoterNames.length > 0 
+          ? ` ${subPromoterNames.length} sub-promoters added: ${subPromoterNames.join(', ')}`
+          : ''
+      }`,
     });
     
     // Navigate to the events page
