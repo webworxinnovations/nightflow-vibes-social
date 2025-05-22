@@ -60,13 +60,18 @@ export default function Profile() {
     (event.promoter && event.promoter.id === user.id)
   );
 
-  // Setup similar DJs for the sidebar
-  user.similarDjs = users
-    .filter((u) => u.id !== user.id && u.role === 'dj')
-    .slice(0, 3);
+  // Initialize the user object with the needed properties
+  if (!user.similarDjs) {
+    // Setup similar DJs for the sidebar
+    user.similarDjs = users
+      .filter((u) => u.id !== user.id && u.role === 'dj')
+      .slice(0, 3);
+  }
   
-  // Add events property to user for the info component
-  user.events = userEvents;
+  // Add events property to user for the info component if it doesn't exist
+  if (!user.events) {
+    user.events = userEvents;
+  }
   
   return (
     <div>

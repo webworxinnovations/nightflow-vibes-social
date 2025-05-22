@@ -14,6 +14,8 @@ export interface User {
   isFollowing?: boolean;
   isLive?: boolean;
   parentPromoterId?: string; // For sub-promoters, references main promoter
+  similarDjs?: User[]; // Add this field to support similar DJs functionality
+  events?: Event[]; // Add this field to support events associated with a user
 }
 
 export interface SubPromoter {
