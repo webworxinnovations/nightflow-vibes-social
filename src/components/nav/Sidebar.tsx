@@ -23,6 +23,7 @@ export function Sidebar() {
     { icon: Home, path: '/', label: 'Home' },
     { icon: Search, path: '/discover', label: 'Discover' },
     { icon: Calendar, path: '/events', label: 'Events' },
+    { icon: User, path: `/profile/${currentUser?.id || ''}`, label: 'Profile' }
   ];
 
   // Determine dashboard items based on user role

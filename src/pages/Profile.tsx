@@ -1,7 +1,8 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { users, events, getDjById, getPostsByUser } from "@/lib/mock-data";
+import { v4 as uuidv4 } from "uuid";
+import { users, events, getDjById, getPostsByUser, Post } from "@/lib/mock-data";
 import { useAuth } from "@/contexts/AuthContext";
 import { SongRequestModal } from "@/components/tipdrop/song-request-modal";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
@@ -26,7 +27,7 @@ export default function Profile() {
   }, [id, currentUser, navigate]);
   
   const [user, setUser] = useState(getDjById(profileId || "1"));
-  const [posts, setPosts] = useState(getPostsByUser(profileId || "1"));
+  const [posts, setPosts] = useState<Post[]>(getPostsByUser(profileId || "1"));
   const [isFollowing, setIsFollowing] = useState(user?.isFollowing || false);
   const [followerCount, setFollowerCount] = useState(user?.followers || 0);
   const [isSongRequestOpen, setIsSongRequestOpen] = useState(false);
@@ -45,6 +46,42 @@ export default function Profile() {
   const handleFollow = () => {
     setIsFollowing(!isFollowing);
     setFollowerCount(isFollowing ? followerCount - 1 : followerCount + 1);
+  };
+  
+  const handleUpdateProfile = (profileData: any) => {
+    if (user) {
+      const updatedUser = {
+        ...user,
+        name: profileData.name,
+        bio: profileData.bio,
+        location: profileData.location
+      };
+      setUser(updatedUser);
+    }
+  };
+  
+  const handleCreatePost = (content: string, imageUrl?: string) => {
+    if (!user) return;
+    
+    // Create a new post object
+    const newPost: Post = {
+      id: uuidv4(),
+      user: user,
+      content: content,
+      image: imageUrl,
+      likes: 0,
+      comments: 0,
+      shares: 0,
+      timestamp: new Date().toISOString(),
+      hasLiked: false
+    };
+    
+    // Add to the beginning of posts array
+    setPosts([newPost, ...posts]);
+  };
+  
+  const handleDeletePost = (postId: string) => {
+    setPosts(posts.filter(post => post.id !== postId));
   };
   
   // If viewing your own profile, you should be able to edit it
@@ -80,6 +117,7 @@ export default function Profile() {
         isOwnProfile={isOwnProfile} 
         isFollowing={isFollowing} 
         handleFollow={handleFollow}
+        updateUserProfile={isOwnProfile ? handleUpdateProfile : undefined}
       />
       
       {/* Profile Info */}
@@ -92,6 +130,8 @@ export default function Profile() {
             userEvents={userEvents}
             isOwnProfile={isOwnProfile}
             userName={user.name}
+            onCreatePost={isOwnProfile ? handleCreatePost : undefined}
+            onDeletePost={isOwnProfile ? handleDeletePost : undefined}
           />
         </div>
         

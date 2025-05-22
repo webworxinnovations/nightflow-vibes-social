@@ -3,15 +3,65 @@ import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, User, Share, Heart } from "lucide-react";
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
 
 interface ProfileHeaderProps {
   user: any;
   isOwnProfile: boolean;
   isFollowing: boolean;
   handleFollow: () => void;
+  updateUserProfile?: (profileData: any) => void;
 }
 
-export function ProfileHeader({ user, isOwnProfile, isFollowing, handleFollow }: ProfileHeaderProps) {
+export function ProfileHeader({ 
+  user, 
+  isOwnProfile, 
+  isFollowing, 
+  handleFollow,
+  updateUserProfile
+}: ProfileHeaderProps) {
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [profileData, setProfileData] = useState({
+    name: user.name,
+    bio: user.bio || "",
+    location: user.location || "",
+  });
+  const { toast } = useToast();
+
+  const handleEditProfile = () => {
+    setIsEditDialogOpen(true);
+  };
+
+  const handleSaveProfile = () => {
+    if (updateUserProfile) {
+      updateUserProfile(profileData);
+      toast({
+        title: "Profile updated",
+        description: "Your profile has been successfully updated",
+      });
+    }
+    setIsEditDialogOpen(false);
+  };
+
+  const handleShareProfile = () => {
+    navigator.clipboard.writeText(window.location.href);
+    toast({
+      title: "Profile link copied",
+      description: "Profile link has been copied to clipboard",
+    });
+  };
+
   return (
     <>
       <Button variant="ghost" className="mb-4" asChild>
@@ -50,13 +100,23 @@ export function ProfileHeader({ user, isOwnProfile, isFollowing, handleFollow }:
         
         <div className="absolute bottom-4 right-4 flex space-x-2">
           {isOwnProfile ? (
-            <Button size="sm" variant="outline" className="bg-background/20 backdrop-blur-sm">
+            <Button 
+              size="sm" 
+              variant="outline" 
+              className="bg-background/20 backdrop-blur-sm"
+              onClick={handleEditProfile}
+            >
               <User className="mr-1 h-4 w-4" />
               Edit Profile
             </Button>
           ) : (
             <>
-              <Button size="sm" variant="outline" className="bg-background/20 backdrop-blur-sm">
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="bg-background/20 backdrop-blur-sm"
+                onClick={handleShareProfile}
+              >
                 <Share className="mr-1 h-4 w-4" />
                 Share
               </Button>
@@ -73,6 +133,57 @@ export function ProfileHeader({ user, isOwnProfile, isFollowing, handleFollow }:
           )}
         </div>
       </div>
+
+      {/* Edit Profile Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Profile</DialogTitle>
+            <DialogDescription>
+              Make changes to your profile information here.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="name" className="text-right">
+                Name
+              </label>
+              <Input
+                id="name"
+                value={profileData.name}
+                onChange={(e) => setProfileData({...profileData, name: e.target.value})}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="location" className="text-right">
+                Location
+              </label>
+              <Input
+                id="location"
+                value={profileData.location}
+                onChange={(e) => setProfileData({...profileData, location: e.target.value})}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="bio" className="text-right">
+                Bio
+              </label>
+              <Textarea
+                id="bio"
+                value={profileData.bio}
+                onChange={(e) => setProfileData({...profileData, bio: e.target.value})}
+                className="col-span-3"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleSaveProfile}>Save changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
