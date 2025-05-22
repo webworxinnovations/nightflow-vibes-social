@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { UserCard } from "@/components/cards/user-card";
 import { EventCard } from "@/components/cards/event-card";
@@ -9,6 +8,7 @@ import { users, events } from "@/lib/mock-data";
 import { Search, Filter, Plus } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Define filter types
 type UserRole = 'all' | 'dj' | 'promoter' | 'venue';
@@ -16,6 +16,7 @@ type EventFilter = 'all' | 'upcoming' | 'live';
 type GenreFilter = 'all' | string;
 
 export default function Discover() {
+  const { isCreatorRole } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("djs");
   const [roleFilter, setRoleFilter] = useState<UserRole>('all');
@@ -103,12 +104,14 @@ export default function Discover() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Discover</h1>
         
-        {/* Add Event button for promoters - in a real app this would check user role */}
-        <Link to="/create-event">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" /> Add Event
-          </Button>
-        </Link>
+        {/* Show Add Event button only for creator roles */}
+        {isCreatorRole() && (
+          <Link to="/create-event">
+            <Button>
+              <Plus className="mr-2 h-4 w-4" /> Add Event
+            </Button>
+          </Link>
+        )}
       </div>
       
       <div className="mb-6 flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:items-center sm:space-x-4">
