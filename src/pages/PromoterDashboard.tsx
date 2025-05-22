@@ -4,18 +4,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { GlassmorphicCard } from "@/components/ui/glassmorphic-card";
 import { EventCard } from "@/components/cards/event-card";
-import { UserCard } from "@/components/cards/user-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSubPromoters } from "@/contexts/SubPromoterContext";
 import { 
   Calendar, Users, Ticket, Plus, BarChart3, QrCode, ChevronRight, 
   ArrowUpRight, Search, Share, UserPlus
 } from "lucide-react";
 import { 
-  events, users, subPromoters, getSubPromotersByParentId, 
-  getSubPromoterSalesByEventId, getEventsByPromoter 
+  events, users, getEventsByPromoter,
+  getSubPromoterSalesByEventId
 } from "@/lib/mock-data";
 import { SubPromotersList } from "@/components/promoter/SubPromotersList";
 import { SubPromoterSalesChart } from "@/components/promoter/SubPromoterSalesChart";
@@ -24,6 +24,7 @@ export default function PromoterDashboard() {
   const [activeTab, setActiveTab] = useState("events");
   const [selectedEventId, setSelectedEventId] = useState<string>(events[0]?.id);
   const { currentUser } = useAuth();
+  const { getSubPromotersForPromoter } = useSubPromoters();
   const navigate = useNavigate();
   
   // If we have a logged-in promoter, get their events
@@ -31,8 +32,8 @@ export default function PromoterDashboard() {
   const promoterId = currentUser?.id || "6"; // Default to mock promoter if not logged in
   const promoterEvents = getEventsByPromoter(promoterId);
   
-  // Get sub-promoters for this promoter
-  const mySubPromoters = getSubPromotersByParentId(promoterId);
+  // Get sub-promoters for this promoter from our context
+  const mySubPromoters = getSubPromotersForPromoter(promoterId);
   
   // Guest lists
   const guestLists = [

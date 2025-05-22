@@ -3,12 +3,14 @@ import { useState } from "react";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Copy, UserPlus, QrCode } from "lucide-react";
 import { SubPromoter, generateTicketLink } from "@/lib/mock-data";
 import { toast } from "@/components/ui/use-toast";
+import { useSubPromoters } from "@/contexts/SubPromoterContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface SubPromotersListProps {
   subPromoters: SubPromoter[];
@@ -22,8 +24,11 @@ export const SubPromotersList = ({ subPromoters, eventId }: SubPromotersListProp
   const [newPromoter, setNewPromoter] = useState({
     name: "",
     email: "",
-    phone: ""
+    phone: "",
+    avatar: ""
   });
+  const { addSubPromoter } = useSubPromoters();
+  const { currentUser } = useAuth();
 
   const copyLink = (subPromoter: SubPromoter) => {
     const link = generateTicketLink(eventId, subPromoter.uniqueCode);
@@ -39,13 +44,30 @@ export const SubPromotersList = ({ subPromoters, eventId }: SubPromotersListProp
     setIsQrDialogOpen(true);
   };
 
-  const addSubPromoter = () => {
-    // In a real app, we would save to the database
+  const handleAddSubPromoter = () => {
+    if (!newPromoter.name || !newPromoter.email) {
+      toast({
+        title: "Missing information",
+        description: "Please provide at least a name and email for the sub-promoter.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Use our context to add the new sub-promoter
+    const added = addSubPromoter({
+      name: newPromoter.name,
+      email: newPromoter.email,
+      phone: newPromoter.phone || "",
+      avatar: newPromoter.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(newPromoter.name)}&background=random`
+    });
+
     toast({
       title: "Sub-promoter added",
       description: `${newPromoter.name} has been added as a sub-promoter.`,
     });
-    setNewPromoter({ name: "", email: "", phone: "" });
+    
+    setNewPromoter({ name: "", email: "", phone: "", avatar: "" });
     setIsAddDialogOpen(false);
   };
 
@@ -69,34 +91,42 @@ export const SubPromotersList = ({ subPromoters, eventId }: SubPromotersListProp
           </TableRow>
         </TableHeader>
         <TableBody>
-          {subPromoters.map((promoter) => (
-            <TableRow key={promoter.id}>
-              <TableCell className="font-medium">
-                <div className="flex items-center">
-                  <Avatar className="h-8 w-8 mr-2">
-                    <AvatarImage src={promoter.avatar} alt={promoter.name} />
-                    <AvatarFallback>{promoter.name.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <div>{promoter.name}</div>
-                    <div className="text-xs text-muted-foreground">{promoter.email}</div>
-                  </div>
-                </div>
-              </TableCell>
-              <TableCell>
-                <Badge variant="outline">{promoter.uniqueCode}</Badge>
-              </TableCell>
-              <TableCell className="text-right">{promoter.ticketsSold}</TableCell>
-              <TableCell className="text-right">
-                <Button variant="ghost" size="sm" onClick={() => copyLink(promoter)}>
-                  <Copy className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => showQrCode(promoter)}>
-                  <QrCode className="h-4 w-4" />
-                </Button>
+          {subPromoters.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                No sub-promoters yet. Add your first one!
               </TableCell>
             </TableRow>
-          ))}
+          ) : (
+            subPromoters.map((promoter) => (
+              <TableRow key={promoter.id}>
+                <TableCell className="font-medium">
+                  <div className="flex items-center">
+                    <Avatar className="h-8 w-8 mr-2">
+                      <AvatarImage src={promoter.avatar} alt={promoter.name} />
+                      <AvatarFallback>{promoter.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <div>{promoter.name}</div>
+                      <div className="text-xs text-muted-foreground">{promoter.email}</div>
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Badge variant="outline">{promoter.uniqueCode}</Badge>
+                </TableCell>
+                <TableCell className="text-right">{promoter.ticketsSold}</TableCell>
+                <TableCell className="text-right">
+                  <Button variant="ghost" size="sm" onClick={() => copyLink(promoter)}>
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => showQrCode(promoter)}>
+                    <QrCode className="h-4 w-4" />
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))
+          )}
         </TableBody>
       </Table>
 
@@ -105,6 +135,9 @@ export const SubPromotersList = ({ subPromoters, eventId }: SubPromotersListProp
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add Sub-Promoter</DialogTitle>
+            <DialogDescription>
+              Add someone who will help promote your events and sell tickets
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -135,7 +168,7 @@ export const SubPromotersList = ({ subPromoters, eventId }: SubPromotersListProp
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
-            <Button onClick={addSubPromoter}>Add Sub-Promoter</Button>
+            <Button onClick={handleAddSubPromoter}>Add Sub-Promoter</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -145,6 +178,9 @@ export const SubPromotersList = ({ subPromoters, eventId }: SubPromotersListProp
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Ticket Link QR Code</DialogTitle>
+            <DialogDescription>
+              Share this QR code with your sub-promoter
+            </DialogDescription>
           </DialogHeader>
           {selectedPromoter && (
             <div className="flex flex-col items-center justify-center py-4">

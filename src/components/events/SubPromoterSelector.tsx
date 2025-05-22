@@ -1,3 +1,4 @@
+
 import { FormField, FormItem, FormLabel, FormDescription, FormMessage } from "@/components/ui/form";
 import { users } from "@/lib/mock-data";
 import { Control } from "react-hook-form";
@@ -5,28 +6,43 @@ import { EventFormValues } from "./EventForm";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
+import { useSubPromoters } from "@/contexts/SubPromoterContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface SubPromoterSelectorProps {
   control: Control<EventFormValues>;
 }
 
 export const SubPromoterSelector = ({ control }: SubPromoterSelectorProps) => {
-  // Filter users who can be sub-promoters (could be refined based on your app's logic)
-  const potentialSubPromoters = users.filter(user => 
-    user.role === "promoter" || user.role === "dj" || user.role === "fan"
-  );
+  const { currentUser } = useAuth();
+  const { subPromoters, getSubPromotersForPromoter } = useSubPromoters();
+  const [selectedPromoters, setSelectedPromoters] = useState<string[]>([]);
   
-  // Track selected promoters for visual feedback
-  const [selectedPromoteres, setSelectedPromoters] = useState<string[]>([]);
+  const promoterId = currentUser?.id || "6"; // Default to mock promoter if not logged in
+  
+  // Get all sub-promoters for this promoter
+  const mySubPromoters = getSubPromotersForPromoter(promoterId);
+  
+  // Combine system users who can be sub-promoters with custom added sub-promoters
+  const potentialSubPromoters = [
+    ...users.filter(user => 
+      user.role === "promoter" || user.role === "dj" || user.role === "fan"
+    ),
+    ...mySubPromoters.filter(sp => 
+      // Filter out any duplicates that might exist in both arrays
+      !users.some(u => u.id === sp.id)
+    )
+  ];
   
   // Get selected promoter names for display
   const getSelectedPromoterNames = () => {
-    return users
-      .filter(user => selectedPromoteres.includes(user.id))
-      .map(user => user.name);
+    return potentialSubPromoters
+      .filter(promoter => selectedPromoters.includes(promoter.id))
+      .map(promoter => promoter.name);
   };
   
   console.log("Sub promoters available:", potentialSubPromoters.length);
+  console.log("Custom sub promoters:", mySubPromoters.length);
   
   return (
     <FormField
@@ -67,6 +83,7 @@ export const SubPromoterSelector = ({ control }: SubPromoterSelectorProps) => {
                     ${field.value?.includes(promoter.id) 
                       ? 'border-primary bg-primary/10' 
                       : 'border-white/10 hover:bg-primary/5'}
+                    ${mySubPromoters.some(sp => sp.id === promoter.id) ? 'ring-1 ring-primary/30' : ''}
                   `}
                   onClick={() => {
                     const currentValue = field.value || [];
@@ -83,6 +100,9 @@ export const SubPromoterSelector = ({ control }: SubPromoterSelectorProps) => {
                     <AvatarFallback>{promoter.name.charAt(0)}</AvatarFallback>
                   </Avatar>
                   <span className="font-medium">{promoter.name}</span>
+                  {mySubPromoters.some(sp => sp.id === promoter.id) && (
+                    <Badge variant="outline" className="ml-auto text-xs">Custom</Badge>
+                  )}
                 </div>
               ))}
             </div>

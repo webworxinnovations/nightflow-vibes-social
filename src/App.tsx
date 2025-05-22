@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppLayout } from "./layouts/AppLayout";
 import { ThemeProvider } from "./providers/ThemeProvider";
 import { AuthProvider } from "./contexts/AuthContext";
+import { SubPromoterProvider } from "./contexts/SubPromoterContext";
 
 // Import pages
 import Home from "./pages/Home";
@@ -27,27 +28,29 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider defaultTheme="dark">
       <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<AppLayout />}>
-                <Route index element={<Home />} />
-                <Route path="discover" element={<Discover />} />
-                <Route path="events" element={<Events />} />
-                <Route path="events/:id" element={<EventDetails />} />
-                <Route path="profile/:id" element={<Profile />} />
-                <Route path="dj-dashboard" element={<DjDashboard />} />
-                <Route path="promoter-dashboard" element={<PromoterDashboard />} />
-                <Route path="sub-promoters" element={<SubPromoterManagement />} />
-                <Route path="create-event" element={<CreateEvent />} />
-                <Route path="signup" element={<SignUp />} />
-                <Route path="*" element={<NotFound />} />
-              </Route>
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
+        <SubPromoterProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<AppLayout />}>
+                  <Route index element={<Home />} />
+                  <Route path="discover" element={<Discover />} />
+                  <Route path="events" element={<Events />} />
+                  <Route path="events/:id" element={<EventDetails />} />
+                  <Route path="profile/:id" element={<Profile />} />
+                  <Route path="dj-dashboard" element={<DjDashboard />} />
+                  <Route path="promoter-dashboard" element={<PromoterDashboard />} />
+                  <Route path="sub-promoters" element={<SubPromoterManagement />} />
+                  <Route path="create-event" element={<CreateEvent />} />
+                  <Route path="signup" element={<SignUp />} />
+                  <Route path="*" element={<NotFound />} />
+                </Route>
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </SubPromoterProvider>
       </AuthProvider>
     </ThemeProvider>
   </QueryClientProvider>

@@ -1,25 +1,21 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { GlassmorphicCard } from "@/components/ui/glassmorphic-card";
 import { ArrowLeft, Search, UserPlus, Ticket, Download, Share } from "lucide-react";
-import { Select } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  subPromoters, events, getSubPromotersByParentId, 
-  getEventsByPromoter, getSubPromoterSalesByPromoterId,
-  subPromoterSales
-} from "@/lib/mock-data";
+import { useAuth } from "@/contexts/AuthContext";
+import { useSubPromoters } from "@/contexts/SubPromoterContext";
 import { SubPromotersList } from "@/components/promoter/SubPromotersList";
 import { SubPromoterSalesChart } from "@/components/promoter/SubPromoterSalesChart";
-import { useAuth } from "@/contexts/AuthContext";
+import { events, getEventsByPromoter } from "@/lib/mock-data";
 
 export default function SubPromoterManagement() {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
+  const { getSubPromotersForPromoter } = useSubPromoters();
   const [selectedEventId, setSelectedEventId] = useState<string>("");
   
   // Mock promoter ID (would come from auth in a real app)
@@ -28,8 +24,8 @@ export default function SubPromoterManagement() {
   // Get all events for this promoter
   const promoterEvents = getEventsByPromoter(promoterId);
   
-  // Get all sub-promoters for this promoter
-  const mySubPromoters = getSubPromotersByParentId(promoterId);
+  // Get all sub-promoters for this promoter using our context
+  const mySubPromoters = getSubPromotersForPromoter(promoterId);
   
   // Only set default event if not already set and we have events
   if (!selectedEventId && promoterEvents.length > 0) {
@@ -38,16 +34,6 @@ export default function SubPromoterManagement() {
   
   // Calculate total stats
   const totalTicketsSold = mySubPromoters.reduce((acc, curr) => acc + curr.ticketsSold, 0);
-  
-  // Get all sales for the selected event and promoter's sub-promoters
-  const eventSubPromoterSales = selectedEventId 
-    ? subPromoterSales.filter(sale => 
-        sale.eventId === selectedEventId && 
-        mySubPromoters.some(sp => sp.id === sale.subPromoterId)
-      )
-    : [];
-  
-  const totalEventRevenue = eventSubPromoterSales.reduce((acc, curr) => acc + curr.totalRevenue, 0);
   
   return (
     <div className="max-w-6xl mx-auto py-8">
@@ -75,7 +61,7 @@ export default function SubPromoterManagement() {
             <GlassmorphicCard>
               <h3 className="text-sm font-medium text-muted-foreground">Selected Event Revenue</h3>
               <p className="mt-2 text-3xl font-bold">
-                ${totalEventRevenue}
+                ${0}
               </p>
             </GlassmorphicCard>
           </div>
