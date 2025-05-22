@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Copy } from "lucide-react";
 import { SubPromoter, generateTicketLink } from "@/lib/mock-data";
 import { toast } from "@/components/ui/use-toast";
+import { QRCodeSVG } from "qrcode.react";
 
 interface QrCodeDialogProps {
   isOpen: boolean;
@@ -30,6 +31,11 @@ export const QrCodeDialog = ({
     });
   };
 
+  const getTicketLink = () => {
+    if (!selectedPromoter) return "";
+    return generateTicketLink(eventId, selectedPromoter.uniqueCode);
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -42,21 +48,17 @@ export const QrCodeDialog = ({
         {selectedPromoter && (
           <div className="flex flex-col items-center justify-center py-4">
             <div className="mb-4 p-4 bg-white rounded-md">
-              {/* In a real implementation, this would be an actual QR code */}
-              <div className="w-64 h-64 grid grid-cols-8 grid-rows-8 gap-1">
-                {Array(64).fill(0).map((_, i) => (
-                  <div 
-                    key={i} 
-                    className={`
-                      ${Math.random() > 0.7 ? "bg-black" : "bg-transparent"}
-                      ${(i < 8 || i >= 56 || i % 8 === 0 || i % 8 === 7) ? "bg-black" : ""}
-                    `}
-                  />
-                ))}
-              </div>
+              <QRCodeSVG
+                value={getTicketLink()}
+                size={256}
+                bgColor="#FFFFFF"
+                fgColor="#000000"
+                level="H"
+                includeMargin={false}
+              />
             </div>
             <p className="text-center text-sm">
-              {generateTicketLink(eventId, selectedPromoter.uniqueCode)}
+              {getTicketLink()}
             </p>
             <Button className="mt-4" onClick={copyLink}>
               <Copy className="h-4 w-4 mr-2" />
