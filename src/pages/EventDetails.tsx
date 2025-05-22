@@ -16,7 +16,7 @@ import {
   Share,
   QrCode,
   Ticket,
-  Fire,
+  Flame,
   ArrowLeft
 } from "lucide-react";
 
@@ -146,7 +146,7 @@ export default function EventDetails() {
                         className="transition-transform hover:scale-125"
                         onClick={() => setVibe(i + 1)}
                       >
-                        <Fire
+                        <Flame
                           className={`h-8 w-8 ${
                             i < vibe ? "text-orange-500" : "text-gray-400"
                           }`}

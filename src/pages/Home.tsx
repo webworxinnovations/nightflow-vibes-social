@@ -8,7 +8,7 @@ import { EventCard } from "@/components/cards/event-card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { users, posts, getLiveEvents, getLiveDjs } from "@/lib/mock-data";
-import { Fire } from "lucide-react";
+import { Flame } from "lucide-react";
 
 export default function Home() {
   const [liveDjs, setLiveDjs] = useState(getLiveDjs());
@@ -43,7 +43,7 @@ export default function Home() {
                       
                       <div className="mt-2 flex items-center gap-1">
                         {Array.from({ length: 5 }).map((_, i) => (
-                          <Fire
+                          <Flame
                             key={i}
                             className={`h-5 w-5 ${i < event.vibe! ? "text-orange-500" : "text-gray-400"}`}
                           />
