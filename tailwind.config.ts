@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,15 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// NightFlow custom colors
+				nightflow: {
+					purple: '#9d4edd',
+					pink: '#ff6ad5',
+					blue: '#23b5d3',
+					dark: '#121212',
+					'dark-lighter': '#1E1E1E',
+					'dark-lightest': '#2D2D2D',
 				}
 			},
 			borderRadius: {
@@ -84,11 +94,30 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'pulse-glow': {
+					'0%, 100%': { 
+						boxShadow: '0 0 10px rgba(157, 78, 221, 0.7)' 
+					},
+					'50%': { 
+						boxShadow: '0 0 20px rgba(157, 78, 221, 0.9), 0 0 30px rgba(255, 106, 213, 0.7)' 
+					}
+				},
+				'float': {
+					'0%, 100%': { transform: 'translateY(0)' },
+					'50%': { transform: 'translateY(-10px)' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'pulse-glow': 'pulse-glow 3s infinite',
+				'float': 'float 6s ease-in-out infinite'
+			},
+			backgroundImage: {
+				'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+				'nightflow-gradient': 'linear-gradient(to right, #9d4edd, #ff6ad5, #23b5d3)',
+				'glass-card': 'linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.1))',
 			}
 		}
 	},
