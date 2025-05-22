@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { EventDetailsFields } from "./EventDetailsFields";
 import { EventVenueFields } from "./EventVenueFields";
 import { EventLineupSelector } from "./EventLineupSelector";
+import { SubPromoterSelector } from "./SubPromoterSelector";
 
 // Define form schema
 export const eventFormSchema = z.object({
@@ -44,7 +45,8 @@ export const eventFormSchema = z.object({
   }),
   lineup: z.array(z.string()).nonempty({
     message: "Please select at least one DJ for the lineup."
-  })
+  }),
+  subPromoters: z.array(z.string()).optional(),
 });
 
 export type EventFormValues = z.infer<typeof eventFormSchema>;
@@ -64,7 +66,8 @@ export const EventForm = () => {
       imageUrl: "",
       startTime: "",
       endTime: "",
-      lineup: []
+      lineup: [],
+      subPromoters: [],
     }
   });
 
@@ -93,6 +96,8 @@ export const EventForm = () => {
         </div>
         
         <EventLineupSelector control={form.control} />
+        
+        <SubPromoterSelector control={form.control} />
         
         <div className="flex justify-end space-x-4">
           <Button variant="outline" type="button" onClick={() => navigate(-1)}>
