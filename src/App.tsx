@@ -39,7 +39,8 @@ const App = () => (
                   <Route path="discover" element={<Discover />} />
                   <Route path="events" element={<Events />} />
                   <Route path="events/:id" element={<EventDetails />} />
-                  <Route path="profile/:id" element={<Profile />} />
+                  <Route path="profile" element={<Profile />} /> {/* Personal profile route */}
+                  <Route path="profile/:id" element={<Profile />} /> {/* View others' profiles */}
                   <Route path="dj-dashboard" element={<DjDashboard />} />
                   <Route path="promoter-dashboard" element={<PromoterDashboard />} />
                   <Route path="sub-promoters" element={<SubPromoterManagement />} />

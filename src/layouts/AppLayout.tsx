@@ -4,6 +4,7 @@ import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
   Home, 
   Search, 
@@ -18,6 +19,7 @@ export function AppLayout() {
   const location = useLocation();
   const isMobile = useIsMobile();
   const [showTipModal, setShowTipModal] = useState(false);
+  const { currentUser } = useAuth();
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-gradient-to-br from-nightflow-dark to-nightflow-dark-lighter">
