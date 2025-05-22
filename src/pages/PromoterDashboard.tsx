@@ -3,7 +3,7 @@ import { useState } from "react";
 import { GlassmorphicCard } from "@/components/ui/glassmorphic-card";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubPromoters } from "@/contexts/SubPromoterContext";
-import { events, users } from "@/lib/mock-data";
+import { users } from "@/lib/mock-data";
 import { usePromoterEvents } from "@/hooks/usePromoterEvents";
 import { useSelectedEvent } from "@/hooks/useSelectedEvent";
 

@@ -13,7 +13,7 @@ export const EventSelector = ({ selectedEventId, onChange }: EventSelectorProps)
   return (
     <select 
       className="rounded-md border border-white/10 bg-background px-3 py-1 text-sm"
-      value={selectedEventId}
+      value={selectedEventId || ""}
       onChange={(e) => onChange(e.target.value)}
     >
       <option value="" disabled>Select event</option>

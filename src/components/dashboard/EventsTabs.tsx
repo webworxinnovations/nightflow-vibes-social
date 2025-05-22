@@ -5,18 +5,7 @@ import { Button } from "@/components/ui/button";
 import { EventCard } from "@/components/cards/event-card";
 import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
-interface Event {
-  id: string;
-  title: string;
-  image: string;
-  venue: string;
-  date: string;
-  isLive: boolean;
-  ticketsSold: number;
-  maxCapacity: number;
-  price: number;
-}
+import { Event } from "@/lib/mock-data";
 
 interface EventsTabsProps {
   events: Event[];
