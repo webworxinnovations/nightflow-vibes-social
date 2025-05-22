@@ -9,6 +9,7 @@ import { GlassmorphicCard } from "@/components/ui/glassmorphic-card";
 import { PostCard } from "@/components/cards/post-card";
 import { EventCard } from "@/components/cards/event-card";
 import { users, events, getDjById, getPostsByUser } from "@/lib/mock-data";
+import { SongRequestModal } from "@/components/tipdrop/song-request-modal";
 import {
   Heart,
   Calendar,
@@ -25,6 +26,7 @@ export default function Profile() {
   const [posts, setPosts] = useState(getPostsByUser(id || "1"));
   const [isFollowing, setIsFollowing] = useState(user?.isFollowing || false);
   const [followerCount, setFollowerCount] = useState(user?.followers || 0);
+  const [isSongRequestOpen, setIsSongRequestOpen] = useState(false);
   
   useEffect(() => {
     if (id) {
@@ -266,7 +268,10 @@ export default function Profile() {
                   ))}
               </div>
               
-              <Button className="mt-4 w-full">
+              <Button 
+                className="mt-4 w-full"
+                onClick={() => setIsSongRequestOpen(true)}
+              >
                 <Music className="mr-2 h-4 w-4" />
                 Request a Song
               </Button>
@@ -301,6 +306,15 @@ export default function Profile() {
           </GlassmorphicCard>
         </div>
       </div>
+      
+      {/* Song Request Modal */}
+      {user && (
+        <SongRequestModal
+          isOpen={isSongRequestOpen}
+          onClose={() => setIsSongRequestOpen(false)}
+          dj={user}
+        />
+      )}
     </div>
   );
 }
