@@ -15,22 +15,24 @@ export const SubPromoterSelector = ({ control }: SubPromoterSelectorProps) => {
     user.role === "promoter" || user.role === "dj" || user.role === "fan"
   );
   
+  console.log("Sub promoters available:", potentialSubPromoters.length);
+  
   return (
     <FormField
       control={control}
       name="subPromoters"
       render={({ field }) => (
-        <FormItem>
-          <FormLabel>Sub-Promoters</FormLabel>
+        <FormItem className="border p-4 rounded-md bg-card/50 mt-6">
+          <FormLabel className="text-lg font-semibold">Sub-Promoters</FormLabel>
           <FormDescription>
             Select individuals who will help promote this event and sell tickets
           </FormDescription>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-4">
             {potentialSubPromoters.map((promoter) => (
               <div 
                 key={promoter.id}
                 className={`
-                  flex items-center p-2 rounded-md cursor-pointer border
+                  flex items-center p-3 rounded-md cursor-pointer border
                   ${field.value?.includes(promoter.id) 
                     ? 'border-primary bg-primary/10' 
                     : 'border-white/10 hover:bg-primary/5'}
@@ -41,13 +43,14 @@ export const SubPromoterSelector = ({ control }: SubPromoterSelectorProps) => {
                     ? currentValue.filter(id => id !== promoter.id)
                     : [...currentValue, promoter.id];
                   field.onChange(newValue);
+                  console.log("Selected sub-promoters:", newValue);
                 }}
               >
-                <Avatar className="h-8 w-8 mr-2">
+                <Avatar className="h-8 w-8 mr-3">
                   <AvatarImage src={promoter.avatar} alt={promoter.name} />
                   <AvatarFallback>{promoter.name.charAt(0)}</AvatarFallback>
                 </Avatar>
-                <span>{promoter.name}</span>
+                <span className="font-medium">{promoter.name}</span>
               </div>
             ))}
           </div>

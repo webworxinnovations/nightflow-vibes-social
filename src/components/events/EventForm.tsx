@@ -87,6 +87,8 @@ export const EventForm = () => {
     }, 1500);
   }
 
+  console.log("Form rendering, current values:", form.watch());
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -95,11 +97,16 @@ export const EventForm = () => {
           <EventVenueFields control={form.control} />
         </div>
         
-        <EventLineupSelector control={form.control} />
+        <div className="bg-muted/30 p-4 rounded-lg border">
+          <h2 className="text-xl font-semibold mb-4">Event Lineup & Promoters</h2>
+          <EventLineupSelector control={form.control} />
+          
+          <div className="mt-6">
+            <SubPromoterSelector control={form.control} />
+          </div>
+        </div>
         
-        <SubPromoterSelector control={form.control} />
-        
-        <div className="flex justify-end space-x-4">
+        <div className="flex justify-end space-x-4 pt-4">
           <Button variant="outline" type="button" onClick={() => navigate(-1)}>
             Cancel
           </Button>
