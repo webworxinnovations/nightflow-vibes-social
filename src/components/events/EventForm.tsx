@@ -1,0 +1,106 @@
+
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useNavigate } from "react-router-dom";
+import { toast } from "@/components/ui/use-toast";
+import { Form } from "@/components/ui/form";
+import { Button } from "@/components/ui/button";
+import { EventDetailsFields } from "./EventDetailsFields";
+import { EventVenueFields } from "./EventVenueFields";
+import { EventLineupSelector } from "./EventLineupSelector";
+
+// Define form schema
+export const eventFormSchema = z.object({
+  title: z.string().min(3, {
+    message: "Event title must be at least 3 characters."
+  }),
+  date: z.date({
+    required_error: "A date is required."
+  }),
+  startTime: z.string({
+    required_error: "Start time is required."
+  }),
+  endTime: z.string({
+    required_error: "End time is required."
+  }),
+  venue: z.string().min(3, {
+    message: "Venue name is required."
+  }),
+  address: z.string().min(8, {
+    message: "Please enter a complete address."
+  }),
+  price: z.string().refine((val) => !isNaN(Number(val)), {
+    message: "Price must be a number."
+  }),
+  maxCapacity: z.string().refine((val) => !isNaN(Number(val)), {
+    message: "Capacity must be a number."
+  }),
+  description: z.string().min(20, {
+    message: "Description must be at least 20 characters."
+  }),
+  imageUrl: z.string().url({
+    message: "Please enter a valid URL for the image."
+  }),
+  lineup: z.array(z.string()).nonempty({
+    message: "Please select at least one DJ for the lineup."
+  })
+});
+
+export type EventFormValues = z.infer<typeof eventFormSchema>;
+
+export const EventForm = () => {
+  const navigate = useNavigate();
+
+  const form = useForm<EventFormValues>({
+    resolver: zodResolver(eventFormSchema),
+    defaultValues: {
+      title: "",
+      venue: "",
+      address: "",
+      price: "",
+      maxCapacity: "",
+      description: "",
+      imageUrl: "",
+      startTime: "",
+      endTime: "",
+      lineup: []
+    }
+  });
+
+  function onSubmit(values: EventFormValues) {
+    // In a real app, we would send this data to a backend
+    console.log("Event submission:", values);
+    
+    // Show success toast
+    toast({
+      title: "Event created successfully!",
+      description: "Your event has been posted and is now visible in the Discover page.",
+    });
+    
+    // Navigate to the events page
+    setTimeout(() => {
+      navigate('/events');
+    }, 1500);
+  }
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <EventDetailsFields control={form.control} />
+          <EventVenueFields control={form.control} />
+        </div>
+        
+        <EventLineupSelector control={form.control} />
+        
+        <div className="flex justify-end space-x-4">
+          <Button variant="outline" type="button" onClick={() => navigate(-1)}>
+            Cancel
+          </Button>
+          <Button type="submit">Create Event</Button>
+        </div>
+      </form>
+    </Form>
+  );
+};
