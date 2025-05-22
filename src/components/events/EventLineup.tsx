@@ -1,16 +1,6 @@
 
 import { UserCard } from "@/components/cards/user-card";
-
-interface User {
-  id: string;
-  name: string;
-  role: string;
-  avatar: string;
-  coverImage: string;
-  bio: string;
-  followers: number;
-  genres: string[];
-}
+import { User } from "@/lib/mock-data";
 
 interface EventLineupProps {
   lineup: User[];
