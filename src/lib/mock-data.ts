@@ -54,6 +54,36 @@ export interface SubPromoterSale {
   lastSaleDate?: string;
 }
 
+// Define the missing interfaces
+export interface Post {
+  id: string;
+  user: User;
+  content: string;
+  image?: string;
+  likes: number;
+  comments: number;
+  shares: number;
+  timestamp: string;
+  hasLiked?: boolean;
+}
+
+export interface Song {
+  id: string;
+  title: string;
+  artist: string;
+  albumArt: string;
+}
+
+export interface SongRequest {
+  id: string;
+  song: Song;
+  fan: User;
+  message?: string;
+  tipAmount: number;
+  status: 'pending' | 'accepted' | 'declined';
+  timestamp: string;
+}
+
 // Mock Users (DJs, Promoters, Fans)
 export const users: User[] = [
   {
@@ -96,7 +126,7 @@ export const users: User[] = [
     genres: ['Hip-Hop', 'R&B', 'Trap'],
     followers: 32100,
     following: 425,
-    coverImage: 'https://images.unsplash.com/photo-1520870121499-7dddb6ccbcde?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8aGlwJTIwaG9wfGVufDB8fDB8fHww',
+    coverImage: 'https://images.unsplash.com/photo-1520870121499-7dddb6ccbcde?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8aGlwJTIwaG9wfGVufDB8fDB8fHww',
     isFollowing: true,
     isLive: true
   },
