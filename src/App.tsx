@@ -16,6 +16,7 @@ import DjDashboard from "./pages/DjDashboard";
 import PromoterDashboard from "./pages/PromoterDashboard";
 import NotFound from "./pages/NotFound";
 import EventDetails from "./pages/EventDetails";
+import CreateEvent from "./pages/CreateEvent";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +36,7 @@ const App = () => (
               <Route path="profile/:id" element={<Profile />} />
               <Route path="dj-dashboard" element={<DjDashboard />} />
               <Route path="promoter-dashboard" element={<PromoterDashboard />} />
+              <Route path="create-event" element={<CreateEvent />} />
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>

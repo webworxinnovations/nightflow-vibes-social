@@ -6,34 +6,112 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { users, events } from "@/lib/mock-data";
-import { Search } from "lucide-react";
+import { Search, Filter, Plus } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Link } from "react-router-dom";
+
+// Define filter types
+type UserRole = 'all' | 'dj' | 'promoter' | 'venue';
+type EventFilter = 'all' | 'upcoming' | 'live';
+type GenreFilter = 'all' | string;
 
 export default function Discover() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("djs");
+  const [roleFilter, setRoleFilter] = useState<UserRole>('all');
+  const [eventFilter, setEventFilter] = useState<EventFilter>('all');
+  const [genreFilter, setGenreFilter] = useState<GenreFilter>('all');
   
-  const djs = users.filter((user) => user.role === 'dj');
-  const filteredDjs = djs.filter((dj) => 
-    dj.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    dj.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    dj.genres?.some((genre) => 
-      genre.toLowerCase().includes(searchQuery.toLowerCase())
+  // Extract all unique genres from users
+  const allGenres = Array.from(
+    new Set(
+      users
+        .filter(user => user.genres)
+        .flatMap(user => user.genres || [])
     )
-  );
+  ).sort();
   
-  const filteredEvents = events.filter((event) =>
-    event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    event.venue.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    event.lineup.some((dj) => 
-      dj.name.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  );
+  // Filter users based on search, role, and genre
+  const filteredUsers = users.filter((user) => {
+    // Role filter
+    if (roleFilter !== 'all' && user.role !== roleFilter) {
+      return false;
+    }
+    
+    // Genre filter
+    if (genreFilter !== 'all' && 
+        (!user.genres || !user.genres.some(genre => 
+          genre.toLowerCase() === genreFilter.toLowerCase()
+        ))
+    ) {
+      return false;
+    }
+    
+    // Search query filter
+    if (searchQuery) {
+      return (
+        user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (user.genres && user.genres.some(genre => 
+          genre.toLowerCase().includes(searchQuery.toLowerCase())
+        )) ||
+        (user.location && user.location.toLowerCase().includes(searchQuery.toLowerCase()))
+      );
+    }
+    
+    return true;
+  });
+  
+  // Filter events based on search, filter type, and associated DJs/venues/promoters
+  const filteredEvents = events.filter((event) => {
+    // Event type filter
+    if (eventFilter === 'upcoming' && event.isLive) {
+      return false;
+    }
+    if (eventFilter === 'live' && !event.isLive) {
+      return false;
+    }
+    
+    // Genre filter (check if any DJ in the lineup matches the genre)
+    if (genreFilter !== 'all') {
+      const hasMatchingDj = event.lineup.some(dj => 
+        dj.genres && dj.genres.includes(genreFilter)
+      );
+      if (!hasMatchingDj) {
+        return false;
+      }
+    }
+    
+    // Search query filter
+    if (searchQuery) {
+      return (
+        event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        event.venue.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        event.lineup.some(dj => 
+          dj.name.toLowerCase().includes(searchQuery.toLowerCase())
+        ) ||
+        event.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (event.promoter && event.promoter.name.toLowerCase().includes(searchQuery.toLowerCase()))
+      );
+    }
+    
+    return true;
+  });
   
   return (
     <div>
-      <h1 className="mb-6 text-3xl font-bold">Discover</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Discover</h1>
+        
+        {/* Add Event button for promoters - in a real app this would check user role */}
+        <Link to="/create-event">
+          <Button>
+            <Plus className="mr-2 h-4 w-4" /> Add Event
+          </Button>
+        </Link>
+      </div>
       
-      <div className="mb-6 flex items-center gap-2">
+      <div className="mb-6 flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:items-center sm:space-x-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -43,26 +121,67 @@ export default function Discover() {
             className="pl-9"
           />
         </div>
-        <Button variant="outline">Filters</Button>
+        
+        {/* Filters section */}
+        <div className="flex space-x-2">
+          {activeTab === "djs" ? (
+            <Select value={roleFilter} onValueChange={(value) => setRoleFilter(value as UserRole)}>
+              <SelectTrigger className="w-[120px]">
+                <Filter className="mr-2 h-4 w-4" />
+                <SelectValue placeholder="Filter by role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Roles</SelectItem>
+                <SelectItem value="dj">DJs</SelectItem>
+                <SelectItem value="promoter">Promoters</SelectItem>
+                <SelectItem value="venue">Venues</SelectItem>
+              </SelectContent>
+            </Select>
+          ) : (
+            <Select value={eventFilter} onValueChange={(value) => setEventFilter(value as EventFilter)}>
+              <SelectTrigger className="w-[150px]">
+                <Filter className="mr-2 h-4 w-4" />
+                <SelectValue placeholder="Filter events" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Events</SelectItem>
+                <SelectItem value="upcoming">Upcoming</SelectItem>
+                <SelectItem value="live">Live Now</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+          
+          <Select value={genreFilter} onValueChange={(value) => setGenreFilter(value as GenreFilter)}>
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="Filter by genre" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Genres</SelectItem>
+              {allGenres.map(genre => (
+                <SelectItem key={genre} value={genre}>{genre}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
       
       <Tabs defaultValue="djs" onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-2 mb-6">
-          <TabsTrigger value="djs">DJs</TabsTrigger>
+          <TabsTrigger value="djs">DJs & Venues</TabsTrigger>
           <TabsTrigger value="events">Events</TabsTrigger>
         </TabsList>
         
         <TabsContent value="djs">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-            {filteredDjs.map((dj) => (
-              <UserCard key={dj.id} user={dj} />
+            {filteredUsers.map((user) => (
+              <UserCard key={user.id} user={user} />
             ))}
             
-            {filteredDjs.length === 0 && (
+            {filteredUsers.length === 0 && (
               <div className="col-span-full py-12 text-center">
-                <h3 className="text-lg font-semibold">No DJs found</h3>
+                <h3 className="text-lg font-semibold">No matches found</h3>
                 <p className="text-muted-foreground">
-                  Try a different search term or browse through genres
+                  Try different filters or search terms
                 </p>
               </div>
             )}
@@ -79,7 +198,7 @@ export default function Discover() {
               <div className="col-span-full py-12 text-center">
                 <h3 className="text-lg font-semibold">No events found</h3>
                 <p className="text-muted-foreground">
-                  Try a different search term or check back later
+                  Try different filters or check back later
                 </p>
               </div>
             )}
@@ -87,16 +206,16 @@ export default function Discover() {
         </TabsContent>
       </Tabs>
       
-      {activeTab === "djs" && filteredDjs.length > 0 && (
+      {activeTab === "djs" && filteredUsers.length > 0 && (
         <div className="mt-6">
           <h2 className="mb-4 text-xl font-semibold">Browse by Genre</h2>
           <div className="flex flex-wrap gap-2">
-            {['House', 'Techno', 'Hip-Hop', 'R&B', 'Trance', 'Drum & Bass', 'Dubstep', 'Trap'].map((genre) => (
+            {allGenres.slice(0, 8).map((genre) => (
               <Button 
                 key={genre} 
                 variant="outline" 
-                className="border-white/10 hover:bg-primary/20"
-                onClick={() => setSearchQuery(genre)}
+                className={`border-white/10 hover:bg-primary/20 ${genreFilter === genre ? 'bg-primary/20 border-primary' : ''}`}
+                onClick={() => setGenreFilter(genre)}
               >
                 {genre}
               </Button>
