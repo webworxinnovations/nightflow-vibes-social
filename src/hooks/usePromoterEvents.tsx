@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { getEventsByPromoter } from "@/lib/mock-data";
+import { getEventsByPromoter, Event } from "@/lib/mock-data";
 
 export const usePromoterEvents = () => {
   const { currentUser } = useAuth();

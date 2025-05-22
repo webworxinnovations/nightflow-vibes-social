@@ -3,18 +3,7 @@ import React from "react";
 import { GlassmorphicCard } from "@/components/ui/glassmorphic-card";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "lucide-react";
-
-interface Event {
-  id: string;
-  title: string;
-  image: string;
-  venue: string;
-  date: string;
-  isLive: boolean;
-  ticketsSold: number;
-  maxCapacity: number;
-  price: number;
-}
+import { Event } from "@/lib/mock-data";
 
 interface ActiveEventSidebarProps {
   activeEvent: Event | undefined;
