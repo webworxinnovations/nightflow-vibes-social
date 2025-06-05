@@ -1,9 +1,9 @@
-
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { GlassmorphicCard } from "@/components/ui/glassmorphic-card";
 import { SongRequestCard } from "@/components/cards/song-request-card";
+import { LiveStreamManager } from "@/components/dj/LiveStreamManager";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
   Calendar, 
@@ -99,6 +99,7 @@ export default function DjDashboard() {
               <TabsList>
                 <TabsTrigger value="live">Live Requests</TabsTrigger>
                 <TabsTrigger value="history">Request History</TabsTrigger>
+                <TabsTrigger value="stream">Live Stream</TabsTrigger>
               </TabsList>
               
               <div className="flex items-center gap-2">
@@ -167,6 +168,10 @@ export default function DjDashboard() {
                   </p>
                 </div>
               )}
+            </TabsContent>
+            
+            <TabsContent value="stream" className="mt-4">
+              <LiveStreamManager />
             </TabsContent>
           </Tabs>
         </div>
