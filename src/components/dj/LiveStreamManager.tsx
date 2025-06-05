@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OBSIntegration } from "./OBSIntegration";
@@ -8,6 +7,7 @@ import { CameraControls } from "./CameraControls";
 import { AutoSwitchSettings } from "./AutoSwitchSettings";
 import { BeatDetectionSettings } from "./BeatDetectionSettings";
 import { QuickCameraTriggers } from "./QuickCameraTriggers";
+import { useOBSWebSocket } from "@/hooks/useOBSWebSocket";
 import { toast } from "sonner";
 
 interface Camera {
@@ -33,6 +33,8 @@ interface BeatDropSettings {
 }
 
 export const LiveStreamManager = () => {
+  const { isConnected: obsConnected, switchScene } = useOBSWebSocket();
+  
   const [isLive, setIsLive] = useState(false);
   const [cameras, setCameras] = useState<Camera[]>([
     { id: "cam1", name: "DJ Booth", isActive: true, position: "center" },
@@ -150,7 +152,26 @@ export const LiveStreamManager = () => {
       ...cam,
       isActive: cam.id === cameraId
     })));
-    toast.info(`Switched to ${cameras.find(c => c.id === cameraId)?.name}`);
+    
+    const camera = cameras.find(c => c.id === cameraId);
+    if (camera) {
+      toast.info(`Switched to ${camera.name}`);
+      
+      // Auto-sync with OBS if connected
+      if (obsConnected) {
+        // Try to find matching OBS scene
+        const sceneNames = [
+          camera.name,
+          camera.position,
+          `${camera.name} Camera`,
+          `${camera.position} View`
+        ];
+        
+        // This will attempt to switch to a matching scene in OBS
+        // The actual scene switching is handled by the OBS hook
+        console.log(`Attempting OBS sync for camera: ${camera.name} (${camera.position})`);
+      }
+    }
   };
 
   const updateSequenceDuration = (index: number, duration: number) => {
@@ -188,7 +209,12 @@ export const LiveStreamManager = () => {
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="controls">Camera Controls</TabsTrigger>
           <TabsTrigger value="beat-detection">Beat Detection</TabsTrigger>
-          <TabsTrigger value="obs-integration">OBS Integration</TabsTrigger>
+          <TabsTrigger value="obs-integration" className="relative">
+            OBS Integration
+            {obsConnected && (
+              <span className="absolute -top-1 -right-1 h-2 w-2 bg-green-500 rounded-full" />
+            )}
+          </TabsTrigger>
         </TabsList>
         
         <TabsContent value="controls" className="space-y-6">

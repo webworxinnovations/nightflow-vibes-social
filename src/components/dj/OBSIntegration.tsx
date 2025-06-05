@@ -13,15 +13,12 @@ import {
   Eye,
   EyeOff,
   Monitor,
-  Camera
+  Camera,
+  RefreshCw,
+  TestTube
 } from "lucide-react";
 import { toast } from "sonner";
-
-interface OBSScene {
-  name: string;
-  id: string;
-  sources: string[];
-}
+import { useOBSWebSocket } from "@/hooks/useOBSWebSocket";
 
 interface OBSIntegrationProps {
   cameras: Array<{ id: string; name: string; position: string }>;
@@ -29,21 +26,24 @@ interface OBSIntegrationProps {
 }
 
 export const OBSIntegration = ({ cameras, onCameraSwitch }: OBSIntegrationProps) => {
-  const [obsConnected, setObsConnected] = useState(false);
+  const {
+    isConnected,
+    isConnecting,
+    scenes,
+    currentScene,
+    sources,
+    connect,
+    disconnect,
+    switchScene,
+    refreshScenes
+  } = useOBSWebSocket();
+
   const [obsHost, setObsHost] = useState("localhost");
   const [obsPort, setObsPort] = useState("4455");
   const [obsPassword, setObsPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [streamKey, setStreamKey] = useState("");
   const [autoSync, setAutoSync] = useState(true);
-  
-  // Mock OBS scenes - in real implementation, these would come from OBS WebSocket
-  const [obsScenes] = useState<OBSScene[]>([
-    { name: "DJ Booth", id: "scene1", sources: ["Camera 1", "Audio"] },
-    { name: "Crowd View", id: "scene2", sources: ["Camera 2", "Audio"] },
-    { name: "Dance Floor", id: "scene3", sources: ["Camera 3", "Audio"] },
-    { name: "VIP Section", id: "scene4", sources: ["Camera 4", "Audio"] },
-  ]);
 
   const generateStreamKey = () => {
     const key = `nf_${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
@@ -56,36 +56,43 @@ export const OBSIntegration = ({ cameras, onCameraSwitch }: OBSIntegrationProps)
     toast.success("Stream key copied to clipboard!");
   };
 
-  const connectToOBS = async () => {
-    // In a real implementation, this would connect to OBS WebSocket
-    try {
-      toast.info("Connecting to OBS...");
-      
-      // Simulate connection delay
-      setTimeout(() => {
-        setObsConnected(true);
-        toast.success(`Connected to OBS at ${obsHost}:${obsPort}`);
-      }, 2000);
-    } catch (error) {
-      toast.error("Failed to connect to OBS. Check your connection settings.");
+  const handleConnect = async () => {
+    await connect({
+      host: obsHost,
+      port: obsPort,
+      password: obsPassword || undefined
+    });
+  };
+
+  const handleDisconnect = async () => {
+    await disconnect();
+  };
+
+  const handleSceneSwitch = async (sceneName: string) => {
+    const success = await switchScene(sceneName);
+    if (success && onCameraSwitch) {
+      // Find matching camera based on scene name
+      const matchingCamera = cameras.find(camera => 
+        sceneName.toLowerCase().includes(camera.position.toLowerCase()) ||
+        sceneName.toLowerCase().includes(camera.name.toLowerCase())
+      );
+      if (matchingCamera) {
+        onCameraSwitch(matchingCamera.id);
+      }
     }
   };
 
-  const disconnectFromOBS = () => {
-    setObsConnected(false);
-    toast.info("Disconnected from OBS");
-  };
-
-  const switchOBSScene = (sceneId: string) => {
-    if (!obsConnected) {
-      toast.error("Not connected to OBS");
+  const testConnection = async () => {
+    if (!isConnected) {
+      toast.error("Please connect to OBS first");
       return;
     }
-    
-    const scene = obsScenes.find(s => s.id === sceneId);
-    if (scene) {
-      toast.success(`Switched to OBS scene: ${scene.name}`);
-      // In real implementation, send command to OBS WebSocket
+
+    try {
+      await refreshScenes();
+      toast.success("OBS connection test successful!");
+    } catch (error) {
+      toast.error("OBS connection test failed");
     }
   };
 
@@ -98,15 +105,15 @@ export const OBSIntegration = ({ cameras, onCameraSwitch }: OBSIntegrationProps)
             <Monitor className="h-5 w-5" />
             OBS Studio Integration
           </h3>
-          <div className={`flex items-center gap-2 ${obsConnected ? 'text-green-500' : 'text-muted-foreground'}`}>
-            {obsConnected ? <Wifi className="h-4 w-4" /> : <WifiOff className="h-4 w-4" />}
+          <div className={`flex items-center gap-2 ${isConnected ? 'text-green-500' : 'text-muted-foreground'}`}>
+            {isConnected ? <Wifi className="h-4 w-4" /> : <WifiOff className="h-4 w-4" />}
             <span className="text-sm">
-              {obsConnected ? 'Connected' : 'Disconnected'}
+              {isConnected ? 'Connected' : isConnecting ? 'Connecting...' : 'Disconnected'}
             </span>
           </div>
         </div>
 
-        {!obsConnected ? (
+        {!isConnected ? (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -116,6 +123,7 @@ export const OBSIntegration = ({ cameras, onCameraSwitch }: OBSIntegrationProps)
                   value={obsHost}
                   onChange={(e) => setObsHost(e.target.value)}
                   placeholder="localhost"
+                  disabled={isConnecting}
                 />
               </div>
               <div className="space-y-2">
@@ -125,6 +133,7 @@ export const OBSIntegration = ({ cameras, onCameraSwitch }: OBSIntegrationProps)
                   value={obsPort}
                   onChange={(e) => setObsPort(e.target.value)}
                   placeholder="4455"
+                  disabled={isConnecting}
                 />
               </div>
             </div>
@@ -138,6 +147,7 @@ export const OBSIntegration = ({ cameras, onCameraSwitch }: OBSIntegrationProps)
                   value={obsPassword}
                   onChange={(e) => setObsPassword(e.target.value)}
                   placeholder="Enter OBS WebSocket password"
+                  disabled={isConnecting}
                 />
                 <Button
                   type="button"
@@ -145,23 +155,32 @@ export const OBSIntegration = ({ cameras, onCameraSwitch }: OBSIntegrationProps)
                   size="sm"
                   className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
                   onClick={() => setShowPassword(!showPassword)}
+                  disabled={isConnecting}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
               </div>
             </div>
 
-            <Button onClick={connectToOBS} className="w-full">
+            <Button 
+              onClick={handleConnect} 
+              className="w-full"
+              disabled={isConnecting}
+            >
               <Settings className="mr-2 h-4 w-4" />
-              Connect to OBS
+              {isConnecting ? 'Connecting...' : 'Connect to OBS'}
             </Button>
             
             <div className="text-sm text-muted-foreground">
-              <p className="mb-2">To connect:</p>
+              <p className="mb-2 font-medium">Setup Instructions:</p>
               <ol className="list-decimal list-inside space-y-1 ml-2">
-                <li>Install OBS WebSocket plugin (v5.0+)</li>
-                <li>Enable WebSocket server in OBS Tools → WebSocket Server Settings</li>
-                <li>Enter your connection details above</li>
+                <li>Install OBS WebSocket plugin (v5.0+) if not already installed</li>
+                <li>In OBS: Tools → WebSocket Server Settings</li>
+                <li>Enable WebSocket server</li>
+                <li>Set port to 4455 (default) or your preferred port</li>
+                <li>Set password if desired (optional but recommended)</li>
+                <li>Click "Apply" in OBS</li>
+                <li>Enter your connection details above and connect</li>
               </ol>
             </div>
           </div>
@@ -171,14 +190,34 @@ export const OBSIntegration = ({ cameras, onCameraSwitch }: OBSIntegrationProps)
               <div>
                 <p className="font-medium text-green-500">Connected to OBS</p>
                 <p className="text-sm text-muted-foreground">{obsHost}:{obsPort}</p>
+                <p className="text-xs text-muted-foreground">
+                  {scenes.length} scenes • Current: {currentScene}
+                </p>
               </div>
-              <Button 
-                onClick={disconnectFromOBS}
-                variant="outline"
-                size="sm"
-              >
-                Disconnect
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  onClick={testConnection}
+                  variant="outline"
+                  size="sm"
+                >
+                  <TestTube className="mr-1 h-3 w-3" />
+                  Test
+                </Button>
+                <Button 
+                  onClick={refreshScenes}
+                  variant="outline"
+                  size="sm"
+                >
+                  <RefreshCw className="h-3 w-3" />
+                </Button>
+                <Button 
+                  onClick={handleDisconnect}
+                  variant="outline"
+                  size="sm"
+                >
+                  Disconnect
+                </Button>
+              </div>
             </div>
             
             <div className="flex items-center justify-between">
@@ -239,16 +278,41 @@ export const OBSIntegration = ({ cameras, onCameraSwitch }: OBSIntegrationProps)
         </div>
       </GlassmorphicCard>
 
-      {/* Scene Mapping */}
-      {obsConnected && (
+      {/* Real OBS Scenes */}
+      {isConnected && scenes.length > 0 && (
+        <GlassmorphicCard>
+          <h3 className="text-lg font-semibold mb-4">OBS Scenes</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {scenes.map((scene) => (
+              <Button
+                key={scene.sceneName}
+                onClick={() => handleSceneSwitch(scene.sceneName)}
+                variant={currentScene === scene.sceneName ? "default" : "outline"}
+                className="justify-start h-auto p-3"
+              >
+                <div className="text-left">
+                  <p className="font-medium">{scene.sceneName}</p>
+                  {currentScene === scene.sceneName && (
+                    <p className="text-xs text-green-400">● Active</p>
+                  )}
+                </div>
+              </Button>
+            ))}
+          </div>
+        </GlassmorphicCard>
+      )}
+
+      {/* Camera to Scene Mapping */}
+      {isConnected && scenes.length > 0 && (
         <GlassmorphicCard>
           <h3 className="text-lg font-semibold mb-4">Camera to Scene Mapping</h3>
           
           <div className="space-y-3">
             {cameras.map((camera) => {
-              const mappedScene = obsScenes.find(scene => 
-                scene.name.toLowerCase().includes(camera.position.toLowerCase()) ||
-                scene.name.toLowerCase().includes(camera.name.toLowerCase())
+              const mappedScene = scenes.find(scene => 
+                scene.sceneName.toLowerCase().includes(camera.position.toLowerCase()) ||
+                scene.sceneName.toLowerCase().includes(camera.name.toLowerCase())
               );
               
               return (
@@ -268,19 +332,17 @@ export const OBSIntegration = ({ cameras, onCameraSwitch }: OBSIntegrationProps)
                     <span className="text-sm text-muted-foreground">→</span>
                     <div className="text-right">
                       <p className="font-medium">
-                        {mappedScene ? mappedScene.name : 'No mapping'}
+                        {mappedScene ? mappedScene.sceneName : 'No auto-mapping found'}
                       </p>
-                      {mappedScene && (
-                        <p className="text-xs text-muted-foreground">
-                          {mappedScene.sources.length} sources
-                        </p>
+                      {currentScene === mappedScene?.sceneName && (
+                        <p className="text-xs text-green-500">● Active</p>
                       )}
                     </div>
                     <Button
-                      onClick={() => mappedScene && switchOBSScene(mappedScene.id)}
+                      onClick={() => mappedScene && handleSceneSwitch(mappedScene.sceneName)}
                       variant="outline"
                       size="sm"
-                      disabled={!mappedScene}
+                      disabled={!mappedScene || currentScene === mappedScene?.sceneName}
                     >
                       Switch
                     </Button>
@@ -292,6 +354,9 @@ export const OBSIntegration = ({ cameras, onCameraSwitch }: OBSIntegrationProps)
           
           <div className="mt-4 text-sm text-muted-foreground">
             <p>Camera switches in Night Flow will automatically trigger the corresponding OBS scene when auto-sync is enabled.</p>
+            <p className="mt-1 text-xs">
+              <strong>Tip:</strong> Name your OBS scenes to include camera positions (e.g., "DJ Booth", "Dance Floor") for automatic mapping.
+            </p>
           </div>
         </GlassmorphicCard>
       )}
