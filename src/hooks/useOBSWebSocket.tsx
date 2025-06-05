@@ -39,7 +39,7 @@ export const useOBSWebSocket = () => {
       const sceneList = await obs.call('GetSceneList');
       
       setScenes(sceneList.scenes.map((scene: any, index: number) => ({
-        sceneName: scene.sceneName,
+        sceneName: String(scene.sceneName),
         sceneIndex: index
       })));
       
@@ -49,22 +49,22 @@ export const useOBSWebSocket = () => {
       // Get sources from each scene
       for (const scene of sceneList.scenes) {
         try {
-          const sceneItems = await obs.call('GetSceneItemList', { sceneName: scene.sceneName });
+          const sceneItems = await obs.call('GetSceneItemList', { sceneName: String(scene.sceneName) });
           sceneItems.sceneItems.forEach((item: any) => {
-            if (!allSources.find(s => s.sourceName === item.sourceName)) {
+            if (!allSources.find(s => s.sourceName === String(item.sourceName))) {
               allSources.push({
-                sourceName: item.sourceName,
-                sourceType: item.sourceKind || 'unknown'
+                sourceName: String(item.sourceName),
+                sourceType: String(item.sourceKind || 'unknown')
               });
             }
           });
         } catch (error) {
-          console.warn(`Failed to get sources for scene ${scene.sceneName}:`, error);
+          console.warn(`Failed to get sources for scene ${String(scene.sceneName)}:`, error);
         }
       }
       
       setSources(allSources);
-      setCurrentScene(sceneList.currentProgramSceneName);
+      setCurrentScene(String(sceneList.currentProgramSceneName));
       setIsConnected(true);
       
       toast.success(`Connected to OBS at ${config.host}:${config.port}`);
@@ -120,7 +120,7 @@ export const useOBSWebSocket = () => {
     try {
       // Get the scene item ID first
       const sceneItems = await obs.call('GetSceneItemList', { sceneName: currentScene });
-      const sceneItem = sceneItems.sceneItems.find((item: any) => item.sourceName === sourceName);
+      const sceneItem = sceneItems.sceneItems.find((item: any) => String(item.sourceName) === sourceName);
       
       if (!sceneItem) {
         toast.error(`Source "${sourceName}" not found in current scene`);
@@ -129,7 +129,7 @@ export const useOBSWebSocket = () => {
 
       await obs.call('SetSceneItemEnabled', {
         sceneName: currentScene,
-        sceneItemId: sceneItem.sceneItemId,
+        sceneItemId: Number(sceneItem.sceneItemId),
         sceneItemEnabled: visible
       });
       return true;
@@ -146,10 +146,10 @@ export const useOBSWebSocket = () => {
     try {
       const sceneList = await obs.call('GetSceneList');
       setScenes(sceneList.scenes.map((scene: any, index: number) => ({
-        sceneName: scene.sceneName,
+        sceneName: String(scene.sceneName),
         sceneIndex: index
       })));
-      setCurrentScene(sceneList.currentProgramSceneName);
+      setCurrentScene(String(sceneList.currentProgramSceneName));
     } catch (error: any) {
       console.error('Failed to refresh scenes:', error);
       toast.error('Failed to refresh OBS scenes');
@@ -159,8 +159,8 @@ export const useOBSWebSocket = () => {
   // Set up event listeners
   useEffect(() => {
     const handleSceneChanged = (data: any) => {
-      setCurrentScene(data.sceneName);
-      console.log('OBS scene changed to:', data.sceneName);
+      setCurrentScene(String(data.sceneName));
+      console.log('OBS scene changed to:', String(data.sceneName));
     };
 
     const handleConnectionClosed = () => {
