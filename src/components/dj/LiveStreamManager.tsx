@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { GlassmorphicCard } from "@/components/ui/glassmorphic-card";
@@ -6,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { OBSIntegration } from "./OBSIntegration";
 import { 
   Video, 
   VideoOff, 
@@ -320,228 +321,248 @@ export const LiveStreamManager = () => {
         </GlassmorphicCard>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Beat Drop Settings */}
-        <GlassmorphicCard>
-          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Music className="h-5 w-5" />
-            Beat Drop Detection
-          </h3>
-          
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="beat-detection">Enable Beat Detection</Label>
-              <Switch
-                id="beat-detection"
-                checked={beatDropSettings.enabled}
-                onCheckedChange={(enabled) => setBeatDropSettings(prev => ({ ...prev, enabled }))}
-              />
-            </div>
-            
-            {beatDropSettings.enabled && (
-              <>
-                <div className="space-y-2">
-                  <Label>Detection Sensitivity: {beatDropSettings.sensitivity}%</Label>
-                  <Slider
-                    value={[beatDropSettings.sensitivity]}
-                    onValueChange={([value]) => setBeatDropSettings(prev => ({ ...prev, sensitivity: value }))}
-                    max={100}
-                    min={10}
-                    step={5}
-                    className="w-full"
-                  />
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>Low</span>
-                    <span>High</span>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Primary Beat Drop Camera</Label>
-                    <Select 
-                      value={beatDropSettings.primaryCamera} 
-                      onValueChange={(value) => setBeatDropSettings(prev => ({ ...prev, primaryCamera: value }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {cameras.map((camera) => (
-                          <SelectItem key={camera.id} value={camera.id}>
-                            {camera.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label>Secondary Camera</Label>
-                    <Select 
-                      value={beatDropSettings.secondaryCamera} 
-                      onValueChange={(value) => setBeatDropSettings(prev => ({ ...prev, secondaryCamera: value }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {cameras.map((camera) => (
-                          <SelectItem key={camera.id} value={camera.id}>
-                            {camera.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Beat Drop Duration: {beatDropSettings.duration}s</Label>
-                    <Slider
-                      value={[beatDropSettings.duration]}
-                      onValueChange={([value]) => setBeatDropSettings(prev => ({ ...prev, duration: value }))}
-                      max={30}
-                      min={3}
-                      step={1}
-                      className="w-full"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label>Pre-Drop Delay: {beatDropSettings.preDropDelay}s</Label>
-                    <Slider
-                      value={[beatDropSettings.preDropDelay]}
-                      onValueChange={([value]) => setBeatDropSettings(prev => ({ ...prev, preDropDelay: value }))}
-                      max={10}
-                      min={0}
-                      step={1}
-                      className="w-full"
-                    />
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-        </GlassmorphicCard>
-
-        {/* Camera Controls */}
-        <GlassmorphicCard>
-          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Camera className="h-5 w-5" />
-            Camera Controls
-          </h3>
-          
-          <div className="space-y-4">
-            {cameras.map((camera) => (
-              <div 
-                key={camera.id}
-                className={`p-3 rounded-lg border-2 transition-colors ${
-                  camera.isActive 
-                    ? 'border-primary bg-primary/10' 
-                    : 'border-border hover:border-primary/50'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="font-medium">{camera.name}</span>
-                    <p className="text-sm text-muted-foreground">{camera.position}</p>
-                    {(camera.id === beatDropSettings.primaryCamera || camera.id === beatDropSettings.secondaryCamera) && (
-                      <p className="text-xs text-orange-500 font-medium">
-                        {camera.id === beatDropSettings.primaryCamera ? 'Primary Beat Drop' : 'Secondary Beat Drop'}
-                      </p>
-                    )}
-                  </div>
-                  <Button
-                    variant={camera.isActive ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => switchCamera(camera.id)}
-                    disabled={!isLive}
-                  >
-                    {camera.isActive ? 'Active' : 'Switch'}
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </GlassmorphicCard>
-      </div>
-
-      {/* Auto-Switch Settings */}
-      <GlassmorphicCard>
-        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <Settings className="h-5 w-5" />
-          Auto-Switch Settings
-        </h3>
+      {/* Main Tabs for Stream Management */}
+      <Tabs defaultValue="controls" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="controls">Camera Controls</TabsTrigger>
+          <TabsTrigger value="beat-detection">Beat Detection</TabsTrigger>
+          <TabsTrigger value="obs-integration">OBS Integration</TabsTrigger>
+        </TabsList>
         
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="auto-switch">Enable Auto-Switch</Label>
-            <Switch
-              id="auto-switch"
-              checked={autoSwitch}
-              onCheckedChange={setAutoSwitch}
-            />
-          </div>
-          
-          {autoSwitch && (
-            <div className="space-y-4">
-              <h4 className="font-medium">Camera Sequence</h4>
-              {sequences.map((sequence, index) => {
-                const camera = cameras.find(c => c.id === sequence.cameraId);
-                return (
-                  <div key={index} className="space-y-2">
+        <TabsContent value="controls" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Camera Controls */}
+            <GlassmorphicCard>
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <Camera className="h-5 w-5" />
+                Camera Controls
+              </h3>
+              
+              <div className="space-y-4">
+                {cameras.map((camera) => (
+                  <div 
+                    key={camera.id}
+                    className={`p-3 rounded-lg border-2 transition-colors ${
+                      camera.isActive 
+                        ? 'border-primary bg-primary/10' 
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                  >
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">{camera?.name}</span>
-                      <span className="text-sm text-muted-foreground">
-                        {sequence.duration}s
-                      </span>
+                      <div>
+                        <span className="font-medium">{camera.name}</span>
+                        <p className="text-sm text-muted-foreground">{camera.position}</p>
+                        {(camera.id === beatDropSettings.primaryCamera || camera.id === beatDropSettings.secondaryCamera) && (
+                          <p className="text-xs text-orange-500 font-medium">
+                            {camera.id === beatDropSettings.primaryCamera ? 'Primary Beat Drop' : 'Secondary Beat Drop'}
+                          </p>
+                        )}
+                      </div>
+                      <Button
+                        variant={camera.isActive ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => switchCamera(camera.id)}
+                        disabled={!isLive}
+                      >
+                        {camera.isActive ? 'Active' : 'Switch'}
+                      </Button>
                     </div>
+                  </div>
+                ))}
+              </div>
+            </GlassmorphicCard>
+
+            {/* Auto-Switch Settings */}
+            <GlassmorphicCard>
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <Settings className="h-5 w-5" />
+                Auto-Switch Settings
+              </h3>
+              
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="auto-switch">Enable Auto-Switch</Label>
+                  <Switch
+                    id="auto-switch"
+                    checked={autoSwitch}
+                    onCheckedChange={setAutoSwitch}
+                  />
+                </div>
+                
+                {autoSwitch && (
+                  <div className="space-y-4">
+                    <h4 className="font-medium">Camera Sequence</h4>
+                    {sequences.map((sequence, index) => {
+                      const camera = cameras.find(c => c.id === sequence.cameraId);
+                      return (
+                        <div key={index} className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium">{camera?.name}</span>
+                            <span className="text-sm text-muted-foreground">
+                              {sequence.duration}s
+                            </span>
+                          </div>
+                          <Slider
+                            value={[sequence.duration]}
+                            onValueChange={([value]) => updateSequenceDuration(index, value)}
+                            max={120}
+                            min={5}
+                            step={5}
+                            className="w-full"
+                          />
+                          <div className="flex justify-between text-xs text-muted-foreground">
+                            <span>5s</span>
+                            <span>120s</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </GlassmorphicCard>
+          </div>
+
+          {/* Beat Drop Triggers */}
+          <GlassmorphicCard>
+            <h3 className="text-lg font-semibold mb-4">Quick Camera Triggers</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {cameras.map((camera) => (
+                <Button
+                  key={camera.id}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => switchCamera(camera.id)}
+                  disabled={!isLive}
+                  className="h-12"
+                >
+                  <div className="text-center">
+                    <div className="text-xs text-muted-foreground">{camera.position}</div>
+                    <div className="font-medium">{camera.name}</div>
+                  </div>
+                </Button>
+              ))}
+            </div>
+            <p className="text-sm text-muted-foreground mt-3">
+              Quick switch cameras during key moments in your set
+            </p>
+          </GlassmorphicCard>
+        </TabsContent>
+
+        <TabsContent value="beat-detection" className="space-y-6">
+          {/* Beat Drop Settings */}
+          <GlassmorphicCard>
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <Music className="h-5 w-5" />
+              Beat Drop Detection
+            </h3>
+            
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="beat-detection">Enable Beat Detection</Label>
+                <Switch
+                  id="beat-detection"
+                  checked={beatDropSettings.enabled}
+                  onCheckedChange={(enabled) => setBeatDropSettings(prev => ({ ...prev, enabled }))}
+                />
+              </div>
+              
+              {beatDropSettings.enabled && (
+                <>
+                  <div className="space-y-2">
+                    <Label>Detection Sensitivity: {beatDropSettings.sensitivity}%</Label>
                     <Slider
-                      value={[sequence.duration]}
-                      onValueChange={([value]) => updateSequenceDuration(index, value)}
-                      max={120}
-                      min={5}
+                      value={[beatDropSettings.sensitivity]}
+                      onValueChange={([value]) => setBeatDropSettings(prev => ({ ...prev, sensitivity: value }))}
+                      max={100}
+                      min={10}
                       step={5}
                       className="w-full"
                     />
                     <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>5s</span>
-                      <span>120s</span>
+                      <span>Low</span>
+                      <span>High</span>
                     </div>
                   </div>
-                );
-              })}
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Primary Beat Drop Camera</Label>
+                      <Select 
+                        value={beatDropSettings.primaryCamera} 
+                        onValueChange={(value) => setBeatDropSettings(prev => ({ ...prev, primaryCamera: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {cameras.map((camera) => (
+                            <SelectItem key={camera.id} value={camera.id}>
+                              {camera.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label>Secondary Camera</Label>
+                      <Select 
+                        value={beatDropSettings.secondaryCamera} 
+                        onValueChange={(value) => setBeatDropSettings(prev => ({ ...prev, secondaryCamera: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {cameras.map((camera) => (
+                            <SelectItem key={camera.id} value={camera.id}>
+                              {camera.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Beat Drop Duration: {beatDropSettings.duration}s</Label>
+                      <Slider
+                        value={[beatDropSettings.duration]}
+                        onValueChange={([value]) => setBeatDropSettings(prev => ({ ...prev, duration: value }))}
+                        max={30}
+                        min={3}
+                        step={1}
+                        className="w-full"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label>Pre-Drop Delay: {beatDropSettings.preDropDelay}s</Label>
+                      <Slider
+                        value={[beatDropSettings.preDropDelay]}
+                        onValueChange={([value]) => setBeatDropSettings(prev => ({ ...prev, preDropDelay: value }))}
+                        max={10}
+                        min={0}
+                        step={1}
+                        className="w-full"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
-          )}
-        </div>
-      </GlassmorphicCard>
+          </GlassmorphicCard>
+        </TabsContent>
 
-      {/* Beat Drop Triggers */}
-      <GlassmorphicCard>
-        <h3 className="text-lg font-semibold mb-4">Quick Camera Triggers</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {cameras.map((camera) => (
-            <Button
-              key={camera.id}
-              variant="outline"
-              size="sm"
-              onClick={() => switchCamera(camera.id)}
-              disabled={!isLive}
-              className="h-12"
-            >
-              <div className="text-center">
-                <div className="text-xs text-muted-foreground">{camera.position}</div>
-                <div className="font-medium">{camera.name}</div>
-              </div>
-            </Button>
-          ))}
-        </div>
-        <p className="text-sm text-muted-foreground mt-3">
-          Quick switch cameras during key moments in your set
-        </p>
-      </GlassmorphicCard>
+        <TabsContent value="obs-integration">
+          <OBSIntegration 
+            cameras={cameras}
+            onCameraSwitch={switchCamera}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
