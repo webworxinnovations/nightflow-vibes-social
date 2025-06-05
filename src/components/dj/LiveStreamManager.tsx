@@ -14,7 +14,8 @@ import {
   Settings,
   Camera,
   Timer,
-  Users
+  Users,
+  Monitor
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -95,6 +96,16 @@ export const LiveStreamManager = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const getCameraEmoji = (position: string) => {
+    switch (position) {
+      case 'center': return '🎧';
+      case 'back': return '👥';
+      case 'floor': return '💃';
+      case 'side': return '🍸';
+      default: return '📹';
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Live Stream Status */}
@@ -140,6 +151,55 @@ export const LiveStreamManager = () => {
           </Button>
         </div>
       </GlassmorphicCard>
+
+      {/* Multi-Camera Preview */}
+      {isLive && (
+        <GlassmorphicCard>
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Monitor className="h-5 w-5" />
+            Camera Preview
+          </h3>
+          
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {cameras.map((camera) => (
+              <div 
+                key={camera.id}
+                className={`relative aspect-video rounded-lg border-2 transition-all cursor-pointer ${
+                  camera.isActive 
+                    ? 'border-red-500 ring-2 ring-red-500/20' 
+                    : 'border-border hover:border-primary/50'
+                }`}
+                onClick={() => switchCamera(camera.id)}
+              >
+                {/* Camera Feed Simulation */}
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 via-blue-600/20 to-indigo-800/20 rounded-lg flex items-center justify-center">
+                  <div className="text-center text-white">
+                    <div className="text-2xl mb-1">{getCameraEmoji(camera.position)}</div>
+                    <div className="text-xs font-medium">{camera.name}</div>
+                  </div>
+                </div>
+                
+                {/* Live Indicator */}
+                {camera.isActive && (
+                  <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                    <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                    LIVE
+                  </div>
+                )}
+                
+                {/* Camera Name */}
+                <div className="absolute bottom-2 left-2 bg-black/50 backdrop-blur-sm text-white text-xs px-2 py-1 rounded">
+                  {camera.position}
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          <p className="text-sm text-muted-foreground mt-3">
+            Click on any camera to switch the main live feed
+          </p>
+        </GlassmorphicCard>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Camera Controls */}
