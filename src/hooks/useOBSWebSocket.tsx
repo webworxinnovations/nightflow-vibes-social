@@ -37,18 +37,33 @@ export const useOBSWebSocket = () => {
       
       // Get initial data
       const sceneList = await obs.call('GetSceneList');
-      const sourcesList = await obs.call('GetSourcesList');
       
       setScenes(sceneList.scenes.map((scene: any, index: number) => ({
         sceneName: scene.sceneName,
         sceneIndex: index
       })));
       
-      setSources(sourcesList.sources.map((source: any) => ({
-        sourceName: source.sourceName,
-        sourceType: source.sourceKind
-      })));
+      // Note: OBS WebSocket v5 doesn't have GetSourcesList, we'll get sources from scenes
+      const allSources: OBSSource[] = [];
       
+      // Get sources from each scene
+      for (const scene of sceneList.scenes) {
+        try {
+          const sceneItems = await obs.call('GetSceneItemList', { sceneName: scene.sceneName });
+          sceneItems.sceneItems.forEach((item: any) => {
+            if (!allSources.find(s => s.sourceName === item.sourceName)) {
+              allSources.push({
+                sourceName: item.sourceName,
+                sourceType: item.sourceKind || 'unknown'
+              });
+            }
+          });
+        } catch (error) {
+          console.warn(`Failed to get sources for scene ${scene.sceneName}:`, error);
+        }
+      }
+      
+      setSources(allSources);
       setCurrentScene(sceneList.currentProgramSceneName);
       setIsConnected(true);
       
@@ -103,9 +118,18 @@ export const useOBSWebSocket = () => {
     }
 
     try {
+      // Get the scene item ID first
+      const sceneItems = await obs.call('GetSceneItemList', { sceneName: currentScene });
+      const sceneItem = sceneItems.sceneItems.find((item: any) => item.sourceName === sourceName);
+      
+      if (!sceneItem) {
+        toast.error(`Source "${sourceName}" not found in current scene`);
+        return false;
+      }
+
       await obs.call('SetSceneItemEnabled', {
         sceneName: currentScene,
-        sceneItemId: sourceName,
+        sceneItemId: sceneItem.sceneItemId,
         sceneItemEnabled: visible
       });
       return true;
