@@ -15,9 +15,19 @@ import {
   Camera,
   Timer,
   Users,
-  Monitor
+  Monitor,
+  Zap,
+  Music,
+  Volume2
 } from "lucide-react";
 import { toast } from "sonner";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Camera {
   id: string;
@@ -30,6 +40,15 @@ interface CameraSequence {
   cameraId: string;
   duration: number; // in seconds
   triggerType: 'manual' | 'timer' | 'beat-drop';
+}
+
+interface BeatDropSettings {
+  enabled: boolean;
+  sensitivity: number;
+  primaryCamera: string;
+  secondaryCamera: string;
+  duration: number;
+  preDropDelay: number; // seconds before beat drop to switch
 }
 
 export const LiveStreamManager = () => {
@@ -47,10 +66,21 @@ export const LiveStreamManager = () => {
     { cameraId: "cam3", duration: 20, triggerType: 'beat-drop' },
   ]);
   
+  const [beatDropSettings, setBeatDropSettings] = useState<BeatDropSettings>({
+    enabled: true,
+    sensitivity: 75,
+    primaryCamera: "cam1",
+    secondaryCamera: "cam3",
+    duration: 8,
+    preDropDelay: 2
+  });
+  
   const [autoSwitch, setAutoSwitch] = useState(true);
   const [currentCamera, setCurrentCamera] = useState("cam1");
   const [viewers, setViewers] = useState(0);
   const [streamDuration, setStreamDuration] = useState(0);
+  const [beatDetected, setBeatDetected] = useState(false);
+  const [nextBeatDrop, setNextBeatDrop] = useState<number | null>(null);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -58,10 +88,66 @@ export const LiveStreamManager = () => {
       interval = setInterval(() => {
         setStreamDuration(prev => prev + 1);
         setViewers(prev => Math.max(0, prev + Math.floor(Math.random() * 3) - 1));
+        
+        // Simulate beat detection
+        if (beatDropSettings.enabled && Math.random() < 0.02) { // 2% chance per second
+          simulateBeatDrop();
+        }
       }, 1000);
     }
     return () => clearInterval(interval);
-  }, [isLive]);
+  }, [isLive, beatDropSettings.enabled]);
+
+  const simulateBeatDrop = () => {
+    setBeatDetected(true);
+    const countdown = beatDropSettings.preDropDelay;
+    setNextBeatDrop(countdown);
+    
+    toast.info(`Beat drop detected! Switching to ${cameras.find(c => c.id === beatDropSettings.primaryCamera)?.name} in ${countdown}s`, {
+      duration: countdown * 1000,
+    });
+    
+    // Pre-drop countdown
+    const countdownInterval = setInterval(() => {
+      setNextBeatDrop(prev => {
+        if (prev === null || prev <= 1) {
+          clearInterval(countdownInterval);
+          triggerBeatDropCamera();
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    
+    setTimeout(() => setBeatDetected(false), (countdown + beatDropSettings.duration) * 1000);
+  };
+
+  const triggerBeatDropCamera = () => {
+    switchCamera(beatDropSettings.primaryCamera);
+    
+    // Switch to secondary camera after half the duration
+    setTimeout(() => {
+      if (beatDropSettings.secondaryCamera && beatDropSettings.secondaryCamera !== beatDropSettings.primaryCamera) {
+        switchCamera(beatDropSettings.secondaryCamera);
+      }
+    }, (beatDropSettings.duration / 2) * 1000);
+    
+    // Return to normal sequence after beat drop duration
+    setTimeout(() => {
+      if (autoSwitch && sequences.length > 0) {
+        const normalSequence = sequences.find(s => s.triggerType === 'timer');
+        if (normalSequence) {
+          switchCamera(normalSequence.cameraId);
+        }
+      }
+    }, beatDropSettings.duration * 1000);
+  };
+
+  const manualBeatDrop = () => {
+    if (!isLive) return;
+    simulateBeatDrop();
+    toast.success("Manual beat drop triggered!");
+  };
 
   const toggleLiveStream = () => {
     setIsLive(!isLive);
@@ -71,6 +157,8 @@ export const LiveStreamManager = () => {
     } else {
       setStreamDuration(0);
       setViewers(0);
+      setBeatDetected(false);
+      setNextBeatDrop(null);
       toast.info("Live stream ended");
     }
   };
@@ -128,27 +216,47 @@ export const LiveStreamManager = () => {
                   <Timer className="h-4 w-4" />
                   {formatTime(streamDuration)}
                 </div>
+                {beatDetected && (
+                  <div className="flex items-center gap-1 text-orange-500 animate-pulse">
+                    <Volume2 className="h-4 w-4" />
+                    Beat Detected
+                    {nextBeatDrop && ` (${nextBeatDrop}s)`}
+                  </div>
+                )}
               </div>
             )}
           </div>
           
-          <Button 
-            onClick={toggleLiveStream}
-            variant={isLive ? "destructive" : "default"}
-            size="lg"
-          >
-            {isLive ? (
-              <>
-                <Pause className="mr-2 h-4 w-4" />
-                End Stream
-              </>
-            ) : (
-              <>
-                <Play className="mr-2 h-4 w-4" />
-                Go Live
-              </>
+          <div className="flex gap-2">
+            {isLive && (
+              <Button 
+                onClick={manualBeatDrop}
+                variant="outline"
+                size="lg"
+                className="bg-orange-500/10 border-orange-500 text-orange-500 hover:bg-orange-500/20"
+              >
+                <Zap className="mr-2 h-4 w-4" />
+                Manual Beat Drop
+              </Button>
             )}
-          </Button>
+            <Button 
+              onClick={toggleLiveStream}
+              variant={isLive ? "destructive" : "default"}
+              size="lg"
+            >
+              {isLive ? (
+                <>
+                  <Pause className="mr-2 h-4 w-4" />
+                  End Stream
+                </>
+              ) : (
+                <>
+                  <Play className="mr-2 h-4 w-4" />
+                  Go Live
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       </GlassmorphicCard>
 
@@ -168,6 +276,10 @@ export const LiveStreamManager = () => {
                   camera.isActive 
                     ? 'border-red-500 ring-2 ring-red-500/20' 
                     : 'border-border hover:border-primary/50'
+                } ${
+                  beatDetected && (camera.id === beatDropSettings.primaryCamera || camera.id === beatDropSettings.secondaryCamera)
+                    ? 'ring-4 ring-orange-500/30 animate-pulse'
+                    : ''
                 }`}
                 onClick={() => switchCamera(camera.id)}
               >
@@ -187,6 +299,13 @@ export const LiveStreamManager = () => {
                   </div>
                 )}
                 
+                {/* Beat Drop Indicator */}
+                {(camera.id === beatDropSettings.primaryCamera || camera.id === beatDropSettings.secondaryCamera) && (
+                  <div className="absolute top-2 right-2 bg-orange-500 text-white text-xs px-2 py-1 rounded-full">
+                    🔥
+                  </div>
+                )}
+                
                 {/* Camera Name */}
                 <div className="absolute bottom-2 left-2 bg-black/50 backdrop-blur-sm text-white text-xs px-2 py-1 rounded">
                   {camera.position}
@@ -196,12 +315,117 @@ export const LiveStreamManager = () => {
           </div>
           
           <p className="text-sm text-muted-foreground mt-3">
-            Click on any camera to switch the main live feed
+            Click on any camera to switch the main live feed. Cameras with 🔥 are set for beat drops.
           </p>
         </GlassmorphicCard>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Beat Drop Settings */}
+        <GlassmorphicCard>
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Music className="h-5 w-5" />
+            Beat Drop Detection
+          </h3>
+          
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="beat-detection">Enable Beat Detection</Label>
+              <Switch
+                id="beat-detection"
+                checked={beatDropSettings.enabled}
+                onCheckedChange={(enabled) => setBeatDropSettings(prev => ({ ...prev, enabled }))}
+              />
+            </div>
+            
+            {beatDropSettings.enabled && (
+              <>
+                <div className="space-y-2">
+                  <Label>Detection Sensitivity: {beatDropSettings.sensitivity}%</Label>
+                  <Slider
+                    value={[beatDropSettings.sensitivity]}
+                    onValueChange={([value]) => setBeatDropSettings(prev => ({ ...prev, sensitivity: value }))}
+                    max={100}
+                    min={10}
+                    step={5}
+                    className="w-full"
+                  />
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>Low</span>
+                    <span>High</span>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Primary Beat Drop Camera</Label>
+                    <Select 
+                      value={beatDropSettings.primaryCamera} 
+                      onValueChange={(value) => setBeatDropSettings(prev => ({ ...prev, primaryCamera: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {cameras.map((camera) => (
+                          <SelectItem key={camera.id} value={camera.id}>
+                            {camera.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Secondary Camera</Label>
+                    <Select 
+                      value={beatDropSettings.secondaryCamera} 
+                      onValueChange={(value) => setBeatDropSettings(prev => ({ ...prev, secondaryCamera: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {cameras.map((camera) => (
+                          <SelectItem key={camera.id} value={camera.id}>
+                            {camera.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Beat Drop Duration: {beatDropSettings.duration}s</Label>
+                    <Slider
+                      value={[beatDropSettings.duration]}
+                      onValueChange={([value]) => setBeatDropSettings(prev => ({ ...prev, duration: value }))}
+                      max={30}
+                      min={3}
+                      step={1}
+                      className="w-full"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Pre-Drop Delay: {beatDropSettings.preDropDelay}s</Label>
+                    <Slider
+                      value={[beatDropSettings.preDropDelay]}
+                      onValueChange={([value]) => setBeatDropSettings(prev => ({ ...prev, preDropDelay: value }))}
+                      max={10}
+                      min={0}
+                      step={1}
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </GlassmorphicCard>
+
         {/* Camera Controls */}
         <GlassmorphicCard>
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
@@ -223,6 +447,11 @@ export const LiveStreamManager = () => {
                   <div>
                     <span className="font-medium">{camera.name}</span>
                     <p className="text-sm text-muted-foreground">{camera.position}</p>
+                    {(camera.id === beatDropSettings.primaryCamera || camera.id === beatDropSettings.secondaryCamera) && (
+                      <p className="text-xs text-orange-500 font-medium">
+                        {camera.id === beatDropSettings.primaryCamera ? 'Primary Beat Drop' : 'Secondary Beat Drop'}
+                      </p>
+                    )}
                   </div>
                   <Button
                     variant={camera.isActive ? "default" : "outline"}
@@ -237,61 +466,61 @@ export const LiveStreamManager = () => {
             ))}
           </div>
         </GlassmorphicCard>
-
-        {/* Auto-Switch Settings */}
-        <GlassmorphicCard>
-          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Settings className="h-5 w-5" />
-            Auto-Switch Settings
-          </h3>
-          
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="auto-switch">Enable Auto-Switch</Label>
-              <Switch
-                id="auto-switch"
-                checked={autoSwitch}
-                onCheckedChange={setAutoSwitch}
-              />
-            </div>
-            
-            {autoSwitch && (
-              <div className="space-y-4">
-                <h4 className="font-medium">Camera Sequence</h4>
-                {sequences.map((sequence, index) => {
-                  const camera = cameras.find(c => c.id === sequence.cameraId);
-                  return (
-                    <div key={index} className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">{camera?.name}</span>
-                        <span className="text-sm text-muted-foreground">
-                          {sequence.duration}s
-                        </span>
-                      </div>
-                      <Slider
-                        value={[sequence.duration]}
-                        onValueChange={([value]) => updateSequenceDuration(index, value)}
-                        max={120}
-                        min={5}
-                        step={5}
-                        className="w-full"
-                      />
-                      <div className="flex justify-between text-xs text-muted-foreground">
-                        <span>5s</span>
-                        <span>120s</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </GlassmorphicCard>
       </div>
+
+      {/* Auto-Switch Settings */}
+      <GlassmorphicCard>
+        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          <Settings className="h-5 w-5" />
+          Auto-Switch Settings
+        </h3>
+        
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="auto-switch">Enable Auto-Switch</Label>
+            <Switch
+              id="auto-switch"
+              checked={autoSwitch}
+              onCheckedChange={setAutoSwitch}
+            />
+          </div>
+          
+          {autoSwitch && (
+            <div className="space-y-4">
+              <h4 className="font-medium">Camera Sequence</h4>
+              {sequences.map((sequence, index) => {
+                const camera = cameras.find(c => c.id === sequence.cameraId);
+                return (
+                  <div key={index} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">{camera?.name}</span>
+                      <span className="text-sm text-muted-foreground">
+                        {sequence.duration}s
+                      </span>
+                    </div>
+                    <Slider
+                      value={[sequence.duration]}
+                      onValueChange={([value]) => updateSequenceDuration(index, value)}
+                      max={120}
+                      min={5}
+                      step={5}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>5s</span>
+                      <span>120s</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </GlassmorphicCard>
 
       {/* Beat Drop Triggers */}
       <GlassmorphicCard>
-        <h3 className="text-lg font-semibold mb-4">Beat Drop Camera Triggers</h3>
+        <h3 className="text-lg font-semibold mb-4">Quick Camera Triggers</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {cameras.map((camera) => (
             <Button
@@ -310,7 +539,7 @@ export const LiveStreamManager = () => {
           ))}
         </div>
         <p className="text-sm text-muted-foreground mt-3">
-          Quick switch cameras during beat drops or key moments in your set
+          Quick switch cameras during key moments in your set
         </p>
       </GlassmorphicCard>
     </div>
