@@ -1,10 +1,9 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { GlassmorphicCard } from "@/components/ui/glassmorphic-card";
-import { useStreamKey } from "@/hooks/useStreamKey";
+import { useRealTimeStream } from "@/hooks/useRealTimeStream";
 import { 
   Copy, 
   Eye, 
@@ -14,12 +13,24 @@ import {
   ExternalLink,
   Play,
   Users,
-  Timer
+  Timer,
+  Activity
 } from "lucide-react";
 import { toast } from "sonner";
 
 export const StreamKeyManager = () => {
-  const { streamData, generateStreamKey, revokeStreamKey, isLive, viewerCount } = useStreamKey();
+  const { 
+    streamConfig, 
+    streamStatus, 
+    isLoading,
+    generateStreamKey, 
+    revokeStreamKey, 
+    isLive, 
+    viewerCount,
+    duration,
+    bitrate
+  } = useRealTimeStream();
+  
   const [showKey, setShowKey] = useState(false);
 
   const copyToClipboard = (text: string, type: string) => {
@@ -34,6 +45,12 @@ export const StreamKeyManager = () => {
     return key;
   };
 
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
   return (
     <div className="space-y-6">
       {/* Stream Status */}
@@ -41,7 +58,7 @@ export const StreamKeyManager = () => {
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold flex items-center gap-2">
             <Key className="h-5 w-5" />
-            Nightflow Stream Key
+            Nightflow Stream Configuration
           </h3>
           
           {isLive && (
@@ -54,23 +71,52 @@ export const StreamKeyManager = () => {
                 <Users className="h-4 w-4" />
                 {viewerCount} viewers
               </div>
+              <div className="flex items-center gap-1 text-muted-foreground">
+                <Timer className="h-4 w-4" />
+                {formatTime(duration)}
+              </div>
+              <div className="flex items-center gap-1 text-muted-foreground">
+                <Activity className="h-4 w-4" />
+                {(bitrate / 1000).toFixed(1)}k
+              </div>
             </div>
           )}
         </div>
 
-        {streamData.streamKey ? (
+        {streamConfig ? (
           <div className="space-y-4">
+            {/* Connection Status */}
+            <div className={`p-3 rounded-lg border ${
+              isLive 
+                ? 'bg-green-500/10 border-green-500/20 text-green-400' 
+                : 'bg-blue-500/10 border-blue-500/20 text-blue-400'
+            }`}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">
+                    {isLive ? '🔴 Broadcasting Live' : '📡 Ready to Stream'}
+                  </p>
+                  <p className="text-sm opacity-80">
+                    {isLive 
+                      ? `Live for ${formatTime(duration)} with ${viewerCount} viewers`
+                      : 'Start streaming from OBS to go live'
+                    }
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* RTMP URL */}
             <div className="space-y-2">
               <Label>RTMP Server URL</Label>
               <div className="flex gap-2">
                 <Input
-                  value={streamData.rtmpUrl}
+                  value={streamConfig.rtmpUrl}
                   readOnly
                   className="font-mono text-sm"
                 />
                 <Button
-                  onClick={() => copyToClipboard(streamData.rtmpUrl, 'RTMP URL')}
+                  onClick={() => copyToClipboard(streamConfig.rtmpUrl, 'RTMP URL')}
                   variant="outline"
                   size="sm"
                 >
@@ -84,7 +130,7 @@ export const StreamKeyManager = () => {
               <Label>Stream Key</Label>
               <div className="flex gap-2">
                 <Input
-                  value={formatStreamKey(streamData.streamKey)}
+                  value={formatStreamKey(streamConfig.streamKey)}
                   readOnly
                   type={showKey ? "text" : "password"}
                   className="font-mono text-sm"
@@ -97,7 +143,7 @@ export const StreamKeyManager = () => {
                   {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
                 <Button
-                  onClick={() => copyToClipboard(streamData.streamKey, 'Stream key')}
+                  onClick={() => copyToClipboard(streamConfig.streamKey, 'Stream key')}
                   variant="outline"
                   size="sm"
                 >
@@ -106,24 +152,24 @@ export const StreamKeyManager = () => {
               </div>
             </div>
 
-            {/* Stream URL for viewers */}
+            {/* HLS Viewer URL */}
             <div className="space-y-2">
-              <Label>Viewer URL</Label>
+              <Label>Viewer URL (HLS)</Label>
               <div className="flex gap-2">
                 <Input
-                  value={streamData.streamUrl}
+                  value={streamConfig.hlsUrl}
                   readOnly
                   className="font-mono text-sm"
                 />
                 <Button
-                  onClick={() => copyToClipboard(streamData.streamUrl, 'Viewer URL')}
+                  onClick={() => copyToClipboard(streamConfig.hlsUrl, 'Viewer URL')}
                   variant="outline"
                   size="sm"
                 >
                   <Copy className="h-4 w-4" />
                 </Button>
                 <Button
-                  onClick={() => window.open(streamData.streamUrl, '_blank')}
+                  onClick={() => window.open(streamConfig.hlsUrl, '_blank')}
                   variant="outline"
                   size="sm"
                 >
@@ -137,17 +183,25 @@ export const StreamKeyManager = () => {
                 onClick={generateStreamKey}
                 variant="outline"
                 className="flex-1"
+                disabled={isLoading}
               >
-                Generate New Key
+                {isLoading ? 'Generating...' : 'Generate New Key'}
               </Button>
               <Button
                 onClick={revokeStreamKey}
                 variant="destructive"
                 size="sm"
+                disabled={isLive}
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
             </div>
+            
+            {isLive && (
+              <p className="text-sm text-orange-400">
+                ⚠️ Cannot revoke stream key while live
+              </p>
+            )}
           </div>
         ) : (
           <div className="text-center py-6">
@@ -156,9 +210,9 @@ export const StreamKeyManager = () => {
             <p className="text-sm text-muted-foreground mb-4">
               Generate a stream key to start broadcasting from OBS
             </p>
-            <Button onClick={generateStreamKey}>
+            <Button onClick={generateStreamKey} disabled={isLoading}>
               <Play className="mr-2 h-4 w-4" />
-              Generate Stream Key
+              {isLoading ? 'Generating...' : 'Generate Stream Key'}
             </Button>
           </div>
         )}
