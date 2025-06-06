@@ -1,15 +1,10 @@
-
 import { GlassmorphicCard } from "@/components/ui/glassmorphic-card";
 import { Button } from "@/components/ui/button";
 import { Music, Ticket, Users } from "lucide-react";
-import { songs, formatDate } from "@/lib/mock-data";
+import { songs, SongRequest, formatDate } from "@/lib/mock-data";
 
 interface DjSidebarProps {
-  requests: Array<{
-    id: string;
-    status: 'pending' | 'accepted' | 'declined';
-    [key: string]: any;
-  }>;
+  requests: SongRequest[];
   djEvents: Array<{
     id: string;
     title: string;

@@ -2,13 +2,10 @@
 import { TabsContent } from "@/components/ui/tabs";
 import { SongRequestCard } from "@/components/cards/song-request-card";
 import { Music, BarChart3 } from "lucide-react";
+import { SongRequest } from "@/lib/mock-data";
 
 interface RequestsTabsContentProps {
-  filteredRequests: Array<{
-    id: string;
-    status: 'pending' | 'accepted' | 'declined';
-    [key: string]: any;
-  }>;
+  filteredRequests: SongRequest[];
   onAccept: (id: string) => void;
   onDecline: (id: string) => void;
 }
