@@ -1,169 +1,153 @@
 
-import { useState, useEffect } from "react";
+import { useStreamKey } from "@/hooks/useStreamKey";
 import { GlassmorphicCard } from "@/components/ui/glassmorphic-card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { 
-  Heart, 
-  MessageCircle, 
-  Share2, 
-  Users,
+  Play, 
+  Users, 
+  Timer,
   Volume2,
-  VolumeX,
-  Maximize
+  Maximize,
+  Settings,
+  Share
 } from "lucide-react";
-import { toast } from "sonner";
+import { useState, useEffect } from "react";
 
-interface LiveStreamViewerProps {
-  djName: string;
-  eventName: string;
-  isLive: boolean;
-}
-
-export const LiveStreamViewer = ({ djName, eventName, isLive }: LiveStreamViewerProps) => {
-  const [viewers, setViewers] = useState(0);
-  const [likes, setLikes] = useState(0);
-  const [hasLiked, setHasLiked] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const [messages, setMessages] = useState<string[]>([
-    "Amazing set! 🔥",
-    "This beat is incredible!",
-    "Love the energy tonight!",
-    "Can't stop dancing! 💃",
-  ]);
+export const LiveStreamViewer = () => {
+  const { streamData, isLive, viewerCount } = useStreamKey();
+  const [streamDuration, setStreamDuration] = useState(0);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
+    let interval: NodeJS.Timeout;
     if (isLive) {
-      const interval = setInterval(() => {
-        setViewers(prev => Math.max(0, prev + Math.floor(Math.random() * 5) - 2));
-        if (Math.random() < 0.3) {
-          setLikes(prev => prev + Math.floor(Math.random() * 3) + 1);
-        }
-      }, 2000);
-      
-      return () => clearInterval(interval);
+      interval = setInterval(() => {
+        setStreamDuration(prev => prev + 1);
+      }, 1000);
+    } else {
+      setStreamDuration(0);
     }
+    return () => clearInterval(interval);
   }, [isLive]);
 
-  const handleLike = () => {
-    if (!hasLiked) {
-      setLikes(prev => prev + 1);
-      setHasLiked(true);
-      toast.success("Liked! ❤️");
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const shareStream = () => {
+    if (streamData.streamUrl) {
+      navigator.clipboard.writeText(streamData.streamUrl);
+      // In a real app, this would open a share dialog
+      alert(`Stream URL copied! Share this link:\n${streamData.streamUrl}`);
     }
   };
 
-  const handleShare = () => {
-    navigator.clipboard.writeText(window.location.href);
-    toast.success("Stream link copied!");
-  };
-
-  if (!isLive) {
-    return (
-      <GlassmorphicCard className="aspect-video flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-4xl mb-4">📹</div>
-          <h3 className="text-lg font-semibold">Stream Offline</h3>
-          <p className="text-muted-foreground">{djName} is not currently live</p>
-        </div>
-      </GlassmorphicCard>
-    );
-  }
-
   return (
-    <div className="space-y-4">
-      <GlassmorphicCard className="relative overflow-hidden">
-        {/* Live Stream Video Area */}
-        <div className="aspect-video bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-800 relative">
-          {/* Live Badge */}
-          <Badge className="absolute top-4 left-4 bg-red-500 text-white">
-            🔴 LIVE
-          </Badge>
+    <GlassmorphicCard>
+      <div className="space-y-4">
+        {/* Stream Header */}
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold">Live Stream</h3>
           
-          {/* Viewer Count */}
-          <div className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm rounded-full px-3 py-1 flex items-center gap-1 text-white text-sm">
-            <Users className="h-4 w-4" />
-            {viewers}
-          </div>
-          
-          {/* Stream Controls */}
-          <div className="absolute bottom-4 left-4 flex gap-2">
-            <Button
-              size="icon"
-              variant="secondary"
-              className="bg-black/50 backdrop-blur-sm hover:bg-black/70"
-              onClick={() => setIsMuted(!isMuted)}
-            >
-              {isMuted ? (
-                <VolumeX className="h-4 w-4 text-white" />
-              ) : (
-                <Volume2 className="h-4 w-4 text-white" />
-              )}
-            </Button>
-            
-            <Button
-              size="icon"
-              variant="secondary"
-              className="bg-black/50 backdrop-blur-sm hover:bg-black/70"
-            >
-              <Maximize className="h-4 w-4 text-white" />
-            </Button>
-          </div>
-          
-          {/* Simulated Camera Feed */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center text-white">
-              <div className="text-6xl mb-4">🎧</div>
-              <h2 className="text-2xl font-bold">{djName}</h2>
-              <p className="text-lg opacity-80">{eventName}</p>
+          {isLive && (
+            <div className="flex items-center gap-4 text-sm">
+              <div className="flex items-center gap-1 text-red-500">
+                <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                LIVE
+              </div>
+              <div className="flex items-center gap-1">
+                <Users className="h-4 w-4" />
+                {viewerCount}
+              </div>
+              <div className="flex items-center gap-1">
+                <Timer className="h-4 w-4" />
+                {formatTime(streamDuration)}
+              </div>
             </div>
-          </div>
+          )}
         </div>
-        
-        {/* Stream Info */}
-        <div className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-semibold">{djName} - Live Set</h3>
-              <p className="text-sm text-muted-foreground">{eventName}</p>
-            </div>
-            
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleLike}
-                className={hasLiked ? "text-red-500 border-red-500" : ""}
-              >
-                <Heart className={`h-4 w-4 mr-1 ${hasLiked ? 'fill-current' : ''}`} />
-                {likes}
-              </Button>
+
+        {/* Video Player */}
+        <div className={`relative aspect-video bg-black rounded-lg overflow-hidden ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}>
+          {isLive && streamData.streamUrl ? (
+            <div className="w-full h-full flex items-center justify-center">
+              {/* This would be replaced with actual video player in production */}
+              <div className="text-center text-white">
+                <div className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+                  <Play className="h-8 w-8 fill-white" />
+                </div>
+                <h4 className="text-xl font-bold mb-2">Live Stream Active</h4>
+                <p className="text-gray-300">Broadcasting from OBS Studio</p>
+                <p className="text-sm text-gray-400 mt-2">
+                  In production, this would show your actual OBS stream
+                </p>
+              </div>
               
-              <Button variant="outline" size="sm">
-                <MessageCircle className="h-4 w-4 mr-1" />
-                Chat
-              </Button>
-              
-              <Button variant="outline" size="sm" onClick={handleShare}>
-                <Share2 className="h-4 w-4 mr-1" />
-                Share
-              </Button>
+              {/* Video Controls Overlay */}
+              <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-white text-sm">
+                  <Volume2 className="h-4 w-4" />
+                  <div className="w-20 h-1 bg-white/30 rounded">
+                    <div className="w-3/4 h-full bg-white rounded"></div>
+                  </div>
+                </div>
+                
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => setIsFullscreen(!isFullscreen)}
+                    variant="secondary"
+                    size="sm"
+                  >
+                    <Maximize className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    onClick={shareStream}
+                    variant="secondary"
+                    size="sm"
+                  >
+                    <Share className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-center text-muted-foreground">
+              <div>
+                <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Play className="h-8 w-8" />
+                </div>
+                <h4 className="text-lg font-medium mb-2">Stream Offline</h4>
+                <p className="text-sm">
+                  {streamData.streamKey 
+                    ? "Start streaming from OBS to go live" 
+                    : "Generate a stream key to get started"
+                  }
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Stream Stats */}
+        {isLive && (
+          <div className="grid grid-cols-3 gap-4 p-4 bg-muted/50 rounded-lg">
+            <div className="text-center">
+              <div className="text-lg font-bold text-red-500">{viewerCount}</div>
+              <div className="text-xs text-muted-foreground">Viewers</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-bold">{formatTime(streamDuration)}</div>
+              <div className="text-xs text-muted-foreground">Duration</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-bold text-green-500">HD</div>
+              <div className="text-xs text-muted-foreground">Quality</div>
             </div>
           </div>
-        </div>
-      </GlassmorphicCard>
-      
-      {/* Live Chat */}
-      <GlassmorphicCard>
-        <h4 className="font-semibold mb-3">Live Chat</h4>
-        <div className="space-y-2 max-h-32 overflow-y-auto">
-          {messages.map((message, index) => (
-            <div key={index} className="text-sm p-2 bg-muted/50 rounded">
-              <span className="font-medium text-primary">Fan{index + 1}:</span> {message}
-            </div>
-          ))}
-        </div>
-      </GlassmorphicCard>
-    </div>
+        )}
+      </div>
+    </GlassmorphicCard>
   );
 };
