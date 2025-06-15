@@ -96,24 +96,25 @@ export default function SubPromoterDashboard() {
           
           <Card>
             <CardHeader>
-              <Tabs defaultValue="overview" onValueChange={setActiveTab}>
-                <div className="flex items-center justify-between">
-                  <CardTitle>My Performance</CardTitle>
-                  <TabsList>
-                    <TabsTrigger value="overview">Overview</TabsTrigger>
-                    <TabsTrigger value="events">Events</TabsTrigger>
-                  </TabsList>
-                </div>
-              </Tabs>
+              <div className="flex items-center justify-between">
+                <CardTitle>My Performance</CardTitle>
+              </div>
             </CardHeader>
             <CardContent>
-              <TabsContent value="overview" className="mt-0 space-y-4">
-                <SubPromoterPerformanceChart data={performanceData} />
-              </TabsContent>
-              
-              <TabsContent value="events" className="mt-0">
-                <SubPromoterEventsTable events={upcomingEvents} onShowQrCode={showQrCode} />
-              </TabsContent>
+              <Tabs defaultValue="overview" onValueChange={setActiveTab}>
+                <TabsList>
+                  <TabsTrigger value="overview">Overview</TabsTrigger>
+                  <TabsTrigger value="events">Events</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="overview" className="mt-4 space-y-4">
+                  <SubPromoterPerformanceChart data={performanceData} />
+                </TabsContent>
+                
+                <TabsContent value="events" className="mt-4">
+                  <SubPromoterEventsTable events={upcomingEvents} onShowQrCode={showQrCode} />
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
         </div>
