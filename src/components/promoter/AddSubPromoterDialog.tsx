@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/use-toast";
 import { useSubPromoters } from "@/contexts/SubPromoterContext";
-import { useAuth } from "@/contexts/AuthContext";
+import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 
 interface AddSubPromoterDialogProps {
   isOpen: boolean;
@@ -21,7 +21,7 @@ export const AddSubPromoterDialog = ({ isOpen, onOpenChange }: AddSubPromoterDia
   });
   
   const { addSubPromoter } = useSubPromoters();
-  const { currentUser } = useAuth();
+  const { user } = useSupabaseAuth();
 
   const handleAddSubPromoter = () => {
     if (!newPromoter.name || !newPromoter.email) {
@@ -34,7 +34,7 @@ export const AddSubPromoterDialog = ({ isOpen, onOpenChange }: AddSubPromoterDia
     }
 
     // Get the current promoter ID
-    const promoterId = currentUser?.id || "6"; // Default to mock promoter if not logged in
+    const promoterId = user?.id || "6"; // Default to mock promoter if not logged in
 
     // Use our context to add the new sub-promoter - including parentPromoterId
     addSubPromoter({
