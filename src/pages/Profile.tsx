@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 import { users, events, getDjById, getPostsByUser, Post } from "@/lib/mock-data";
-import { useAuth } from "@/contexts/AuthContext";
+import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { SongRequestModal } from "@/components/tipdrop/song-request-modal";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { ProfileInfo } from "@/components/profile/ProfileInfo";
@@ -14,7 +14,7 @@ import { ProfileNotFound } from "@/components/profile/ProfileNotFound";
 export default function Profile() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { currentUser } = useAuth();
+  const { user: currentUser } = useSupabaseAuth();
   
   // If no ID is provided in the URL, show the current user's profile
   const profileId = id || currentUser?.id;
@@ -22,7 +22,7 @@ export default function Profile() {
   // Redirect to login if trying to view personal profile without being logged in
   useEffect(() => {
     if (!id && !currentUser) {
-      navigate("/signup", { replace: true });
+      navigate("/auth", { replace: true });
     }
   }, [id, currentUser, navigate]);
   
