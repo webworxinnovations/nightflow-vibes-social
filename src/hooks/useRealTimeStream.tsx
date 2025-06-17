@@ -23,17 +23,32 @@ export const useRealTimeStream = () => {
       return config.streamKey;
     } catch (error) {
       console.error('Failed to generate stream key:', error);
-      toast.error('Failed to generate stream key');
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error('Failed to generate stream key');
+      }
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  const revokeStreamKey = useCallback(() => {
-    setStreamConfig(null);
-    localStorage.removeItem('nightflow_stream_config');
-    streamingService.disconnect();
-    toast.info('Stream key revoked');
+  const revokeStreamKey = useCallback(async () => {
+    try {
+      await streamingService.revokeStreamKey();
+      setStreamConfig(null);
+      setStreamStatus({
+        isLive: false,
+        viewerCount: 0,
+        duration: 0,
+        bitrate: 0,
+        resolution: ''
+      });
+      toast.info('Stream key revoked');
+    } catch (error) {
+      console.error('Failed to revoke stream key:', error);
+      toast.error('Failed to revoke stream key');
+    }
   }, []);
 
   const validateAndConnect = useCallback(async (streamKey: string) => {
@@ -50,42 +65,51 @@ export const useRealTimeStream = () => {
     return true;
   }, []);
 
+  // Load current stream on mount
+  useEffect(() => {
+    const loadCurrentStream = async () => {
+      setIsLoading(true);
+      try {
+        const config = await streamingService.getCurrentStream();
+        if (config) {
+          setStreamConfig(config);
+          
+          // Start monitoring if we have a stream
+          if (config.streamKey) {
+            validateAndConnect(config.streamKey);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load current stream:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadCurrentStream();
+  }, [validateAndConnect]);
+
   // Set up status monitoring when stream config changes
   useEffect(() => {
     if (!streamConfig?.streamKey) return;
 
     const unsubscribe = streamingService.onStatusUpdate((status) => {
-      setStreamStatus(status);
-      
-      // Show live status changes
-      if (status.isLive && !streamStatus.isLive) {
-        toast.success('🔴 Stream is now LIVE!');
-      } else if (!status.isLive && streamStatus.isLive) {
-        toast.info('Stream ended');
-      }
+      setStreamStatus(prevStatus => {
+        // Show live status changes
+        if (status.isLive && !prevStatus.isLive) {
+          toast.success('🔴 Stream is now LIVE!');
+        } else if (!status.isLive && prevStatus.isLive) {
+          toast.info('Stream ended');
+        }
+        
+        return status;
+      });
     });
-
-    // Start monitoring
-    validateAndConnect(streamConfig.streamKey);
 
     return () => {
       unsubscribe();
     };
-  }, [streamConfig?.streamKey, validateAndConnect]);
-
-  // Load saved config on mount
-  useEffect(() => {
-    const saved = localStorage.getItem('nightflow_stream_config');
-    if (saved) {
-      try {
-        const config = JSON.parse(saved);
-        setStreamConfig(config);
-      } catch (error) {
-        console.error('Failed to load saved stream config:', error);
-        localStorage.removeItem('nightflow_stream_config');
-      }
-    }
-  }, []);
+  }, [streamConfig?.streamKey]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -107,3 +131,4 @@ export const useRealTimeStream = () => {
     resolution: streamStatus.resolution
   };
 };
+
