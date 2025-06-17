@@ -1,8 +1,12 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { supabase, Profile } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
+
+// Define Profile type from the Database types
+type Profile = Database['public']['Tables']['profiles']['Row'];
 
 interface AuthContextType {
   user: User | null;
