@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { EventCard } from "@/components/cards/event-card";
 import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Event } from "@/lib/mock-data";
+import { Event } from "@/hooks/useEvents";
 
 interface EventsTabsProps {
   events: Event[];
