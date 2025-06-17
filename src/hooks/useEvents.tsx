@@ -41,6 +41,7 @@ export interface Event {
   maxCapacity?: number;
   promoter?: string;
   isLive?: boolean;
+  vibe?: number;
 }
 
 export const useEvents = () => {
