@@ -14,7 +14,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   isConfigured: boolean;
-  signUp: (email: string, password: string, username: string, fullName?: string) => Promise<void>;
+  signUp: (email: string, password: string, username: string, fullName?: string, role?: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => Promise<void>;
@@ -88,33 +88,30 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   };
 
-  const signUp = async (email: string, password: string, username: string, fullName?: string) => {
+  const signUp = async (email: string, password: string, username: string, fullName?: string, role?: string) => {
     setLoading(true);
     try {
+      const redirectUrl = `${window.location.origin}/`;
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            username,
+            full_name: fullName,
+            role: role || 'fan'
+          }
+        }
       });
 
       if (error) throw error;
 
-      if (data.user) {
-        // Create profile
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: data.user.id,
-            username,
-            full_name: fullName,
-            role: 'fan'
-          });
-
-        if (profileError) {
-          console.error('Error creating profile:', profileError);
-          toast.error('Account created but profile setup failed');
-        } else {
-          toast.success('Account created successfully! Please check your email to verify.');
-        }
+      if (data.user && !data.session) {
+        toast.success('Account created successfully! Please check your email to verify.');
+      } else if (data.session) {
+        toast.success('Account created and signed in successfully!');
       }
     } catch (error) {
       if (error instanceof Error) {

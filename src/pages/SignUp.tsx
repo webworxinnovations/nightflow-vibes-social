@@ -60,9 +60,7 @@ export default function SignUp() {
     setIsSubmitting(true);
 
     try {
-      await signUp(values.email, values.password, values.username, values.name);
-      
-      toast.success("Account created successfully! Please check your email to verify.");
+      await signUp(values.email, values.password, values.username, values.name, values.role);
       
       // Redirect to home after successful signup
       navigate("/");
