@@ -18,3 +18,7 @@ export const isSupabaseConfigured = () => {
 // Re-export types from the main Supabase integration
 export type { Database } from '@/integrations/supabase/types'
 export * from '@/integrations/supabase/types'
+
+// Add the missing Profile and Stream types
+export type Profile = Database['public']['Tables']['profiles']['Row']
+export type Stream = Database['public']['Tables']['streams']['Row']

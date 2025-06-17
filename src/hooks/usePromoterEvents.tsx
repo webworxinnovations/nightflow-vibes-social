@@ -27,7 +27,20 @@ export const usePromoterEvents = () => {
         .order('start_time', { ascending: true });
 
       if (error) throw error;
-      return data || [];
+      
+      // Transform data to include compatibility properties
+      return (data || []).map(event => ({
+        ...event,
+        // Add compatibility mappings
+        date: event.start_time ? new Date(event.start_time).toISOString().split('T')[0] : undefined,
+        time: event.start_time ? new Date(event.start_time).toLocaleTimeString() : undefined,
+        venue: event.venue_name,
+        address: event.venue_address,
+        price: event.ticket_price,
+        capacity: event.ticket_capacity,
+        attendees: event.tickets_sold,
+        image: event.cover_image_url
+      }));
     },
     enabled: !!user,
   });

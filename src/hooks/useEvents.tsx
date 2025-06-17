@@ -26,6 +26,15 @@ export interface Event {
     full_name?: string;
     avatar_url?: string;
   };
+  // Add compatibility properties for existing components
+  date?: string;
+  time?: string;
+  venue?: string;
+  address?: string;
+  price?: number;
+  capacity?: number;
+  attendees?: number;
+  image?: string;
 }
 
 export const useEvents = () => {
@@ -47,7 +56,20 @@ export const useEvents = () => {
         .order('start_time', { ascending: true });
 
       if (error) throw error;
-      return data || [];
+      
+      // Transform data to include compatibility properties
+      return (data || []).map(event => ({
+        ...event,
+        // Add compatibility mappings
+        date: event.start_time ? new Date(event.start_time).toISOString().split('T')[0] : undefined,
+        time: event.start_time ? new Date(event.start_time).toLocaleTimeString() : undefined,
+        venue: event.venue_name,
+        address: event.venue_address,
+        price: event.ticket_price,
+        capacity: event.ticket_capacity,
+        attendees: event.tickets_sold,
+        image: event.cover_image_url
+      }));
     },
   });
 };
@@ -75,7 +97,20 @@ export const useUserEvents = () => {
         .order('start_time', { ascending: true });
 
       if (error) throw error;
-      return data || [];
+      
+      // Transform data to include compatibility properties
+      return (data || []).map(event => ({
+        ...event,
+        // Add compatibility mappings
+        date: event.start_time ? new Date(event.start_time).toISOString().split('T')[0] : undefined,
+        time: event.start_time ? new Date(event.start_time).toLocaleTimeString() : undefined,
+        venue: event.venue_name,
+        address: event.venue_address,
+        price: event.ticket_price,
+        capacity: event.ticket_capacity,
+        attendees: event.tickets_sold,
+        image: event.cover_image_url
+      }));
     },
     enabled: !!user,
   });
@@ -100,7 +135,22 @@ export const useEvent = (eventId: string) => {
         .single();
 
       if (error) throw error;
-      return data;
+      
+      if (!data) return null;
+      
+      // Transform data to include compatibility properties
+      return {
+        ...data,
+        // Add compatibility mappings
+        date: data.start_time ? new Date(data.start_time).toISOString().split('T')[0] : undefined,
+        time: data.start_time ? new Date(data.start_time).toLocaleTimeString() : undefined,
+        venue: data.venue_name,
+        address: data.venue_address,
+        price: data.ticket_price,
+        capacity: data.ticket_capacity,
+        attendees: data.tickets_sold,
+        image: data.cover_image_url
+      };
     },
     enabled: !!eventId,
   });

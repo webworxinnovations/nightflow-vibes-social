@@ -1,9 +1,9 @@
 
 import { useState } from "react";
 import { GlassmorphicCard } from "@/components/ui/glassmorphic-card";
-import { useAuth } from "@/contexts/AuthContext";
+import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { useSubPromoters } from "@/contexts/SubPromoterContext";
-import { users, Event } from "@/lib/mock-data";
+import { users } from "@/lib/mock-data";
 import { usePromoterEvents } from "@/hooks/usePromoterEvents";
 import { useSelectedEvent } from "@/hooks/useSelectedEvent";
 
@@ -17,9 +17,9 @@ import { FeaturedDJsSidebar } from "@/components/dashboard/FeaturedDJsSidebar";
 
 export default function PromoterDashboard() {
   const [activeTab, setActiveTab] = useState("events");
-  const { currentUser } = useAuth();
+  const { user, profile } = useSupabaseAuth();
   const { getSubPromotersForPromoter } = useSubPromoters();
-  const { promoterEvents, promoterId } = usePromoterEvents();
+  const { promoterEvents, promoterId, isLoading } = usePromoterEvents();
   const { selectedEventId, setSelectedEventId } = useSelectedEvent();
   
   // Get sub-promoters for this promoter from our context
@@ -47,6 +47,14 @@ export default function PromoterDashboard() {
   const subPromoterTicketsSold = mySubPromoters.reduce(
     (acc, curr) => acc + curr.ticketsSold, 0
   );
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
   
   return (
     <div>
