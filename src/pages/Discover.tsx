@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { UserCard } from "@/components/cards/user-card";
 import { EventCard } from "@/components/cards/event-card";
@@ -16,6 +17,27 @@ type UserRole = 'all' | 'dj' | 'promoter' | 'venue';
 type EventFilter = 'all' | 'upcoming' | 'live';
 type GenreFilter = 'all' | string;
 
+// Safe date transformation function
+const createSafeDate = (dateString: string, timeString?: string): string => {
+  try {
+    // Default time if not provided
+    const time = timeString || '20:00';
+    const dateTimeString = `${dateString}T${time}`;
+    const date = new Date(dateTimeString);
+    
+    // Check if the date is valid
+    if (isNaN(date.getTime())) {
+      console.warn(`Invalid date: ${dateTimeString}, using current date`);
+      return new Date().toISOString();
+    }
+    
+    return date.toISOString();
+  } catch (error) {
+    console.error('Error creating date:', error);
+    return new Date().toISOString();
+  }
+};
+
 // Transform mock events to match the Event interface
 const transformMockEventToEvent = (mockEvent: any): Event => ({
   id: mockEvent.id,
@@ -23,8 +45,8 @@ const transformMockEventToEvent = (mockEvent: any): Event => ({
   description: mockEvent.description || '',
   venue_name: mockEvent.venue,
   venue_address: mockEvent.address,
-  start_time: new Date(`${mockEvent.date}T${mockEvent.time || '20:00'}`).toISOString(),
-  end_time: new Date(`${mockEvent.date}T23:59`).toISOString(),
+  start_time: createSafeDate(mockEvent.date, mockEvent.time),
+  end_time: createSafeDate(mockEvent.date, '23:59'),
   cover_image_url: mockEvent.image,
   ticket_price: mockEvent.price,
   ticket_capacity: mockEvent.maxCapacity,
