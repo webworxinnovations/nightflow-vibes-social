@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -54,6 +53,7 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state change:', event, session);
       setSession(session);
       setUser(session?.user ?? null);
       
@@ -91,7 +91,13 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const signUp = async (email: string, password: string, username: string, fullName?: string, role?: string) => {
     setLoading(true);
     try {
+      console.log('Attempting signup with:', { email, username, fullName, role });
+      
       const redirectUrl = `${window.location.origin}/`;
+      
+      // Ensure role is a valid enum value
+      const validRoles = ['dj', 'fan', 'promoter', 'venue', 'sub_promoter'];
+      const userRole = role && validRoles.includes(role) ? role : 'fan';
       
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -99,14 +105,19 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         options: {
           emailRedirectTo: redirectUrl,
           data: {
-            username,
-            full_name: fullName,
-            role: role || 'fan'
+            username: username,
+            full_name: fullName || '',
+            role: userRole
           }
         }
       });
 
-      if (error) throw error;
+      console.log('Signup response:', { data, error });
+
+      if (error) {
+        console.error('Signup error:', error);
+        throw error;
+      }
 
       if (data.user && !data.session) {
         toast.success('Account created successfully! Please check your email to verify.');
@@ -114,6 +125,7 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         toast.success('Account created and signed in successfully!');
       }
     } catch (error) {
+      console.error('Signup error:', error);
       if (error instanceof Error) {
         toast.error(error.message);
       } else {
