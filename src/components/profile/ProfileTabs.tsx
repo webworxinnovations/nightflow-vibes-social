@@ -16,7 +16,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Image, X, Plus, Sparkles, Calendar, Photo } from "lucide-react";
+import { Image, X, Plus, Sparkles, Calendar } from "lucide-react";
 
 interface ProfileTabsProps {
   posts: Post[];
@@ -88,7 +88,7 @@ export function ProfileTabs({
               value="media"
               className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500/40 data-[state=active]:to-purple-500/40 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 font-semibold"
             >
-              <Photo className="mr-2 h-4 w-4" />
+              <Image className="mr-2 h-4 w-4" />
               Media
             </TabsTrigger>
           </TabsList>
@@ -189,7 +189,7 @@ export function ProfileTabs({
             {posts.filter((post) => post.image).length === 0 && (
               <div className="col-span-full py-16 text-center premium-card rounded-3xl">
                 <div className="mb-6">
-                  <Photo className="h-16 w-16 text-blue-400 mx-auto mb-4 animate-pulse" />
+                  <Image className="h-16 w-16 text-blue-400 mx-auto mb-4 animate-pulse" />
                 </div>
                 <h3 className="text-2xl font-bold gradient-text mb-3">No media yet</h3>
                 <p className="text-gray-300 text-lg mb-6">
@@ -200,7 +200,7 @@ export function ProfileTabs({
                     className="premium-button rounded-xl px-8 py-3 font-semibold text-lg" 
                     onClick={() => setIsPostDialogOpen(true)}
                   >
-                    <Photo className="mr-2 h-5 w-5" />
+                    <Image className="mr-2 h-5 w-5" />
                     Upload Your First Photo
                   </Button>
                 )}
