@@ -154,6 +154,11 @@ export default function Profile() {
     return <ProfileNotFound />;
   }
 
+  // Convert profile role to match the expected format (sub_promoter -> sub-promoter)
+  const convertRole = (role: string) => {
+    return role === 'sub_promoter' ? 'sub-promoter' : role;
+  };
+
   // Convert profile to expected format for existing components
   const userForComponents = {
     id: profile.id,
@@ -162,7 +167,7 @@ export default function Profile() {
     avatar: profile.avatar_url,
     bio: profile.bio,
     location: profile.location,
-    role: profile.role,
+    role: convertRole(profile.role) as "dj" | "fan" | "promoter" | "venue" | "sub-promoter",
     isLive: false, // You can implement this based on streams table
     coverImage: null,
     genres: [], // You can add this field to profiles table if needed
