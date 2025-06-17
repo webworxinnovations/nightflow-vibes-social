@@ -11,17 +11,9 @@ export default function AppLayout() {
   const location = useLocation();
 
   useEffect(() => {
-    console.log('AppLayout: Auth state', { 
-      user: !!user, 
-      loading, 
-      path: location.pathname,
-      isConfigured 
-    });
-    
     // Only redirect if not loading and we have a definitive auth state
     if (!loading && isConfigured) {
       if (!user && location.pathname !== "/" && location.pathname !== "/auth") {
-        console.log('AppLayout: Redirecting to auth page');
         navigate("/auth");
       }
     }

@@ -23,7 +23,6 @@ export default function AuthPage() {
 
   useEffect(() => {
     if (user && !loading) {
-      console.log('AuthPage: User authenticated, redirecting to home');
       navigate("/home");
     }
   }, [user, loading, navigate]);
@@ -62,7 +61,7 @@ export default function AuthPage() {
     }
   };
 
-  // Show loading spinner while auth is initializing
+  // If still loading auth state, show loading
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
