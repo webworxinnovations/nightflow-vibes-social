@@ -16,9 +16,9 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { Music, Users, Building2, User } from "lucide-react";
-import { UserRole, useAuth } from "@/contexts/AuthContext";
+import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -42,7 +42,7 @@ type SignUpFormValues = z.infer<typeof formSchema>;
 
 export default function SignUp() {
   const navigate = useNavigate();
-  const { setCurrentUser } = useAuth();
+  const { signUp } = useSupabaseAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<SignUpFormValues>({
@@ -56,41 +56,22 @@ export default function SignUp() {
     },
   });
 
-  function onSubmit(values: SignUpFormValues) {
+  async function onSubmit(values: SignUpFormValues) {
     setIsSubmitting(true);
 
-    // In a real app, we would send this data to a server
-    setTimeout(() => {
-      // Mock user creation
-      const newUser = {
-        id: Date.now().toString(),
-        name: values.name,
-        username: values.username,
-        avatar: "/placeholder.svg",
-        role: values.role as UserRole,
-      };
-
-      // Set current user in auth context
-      setCurrentUser(newUser);
-
-      toast({
-        title: "Account created successfully!",
-        description: `Welcome to NightFlow, ${values.name}!`,
-      });
-
-      // Redirect based on role
-      if (values.role === "fan") {
-        navigate("/discover");
-      } else if (values.role === "dj") {
-        navigate("/dj-dashboard");
-      } else if (values.role === "promoter") {
-        navigate("/promoter-dashboard");
-      } else {
-        navigate("/venue-dashboard");
-      }
-
+    try {
+      await signUp(values.email, values.password, values.username, values.name);
+      
+      toast.success("Account created successfully! Please check your email to verify.");
+      
+      // Redirect to home after successful signup
+      navigate("/");
+    } catch (error) {
+      console.error('Signup error:', error);
+      // Error is already handled in the signUp function with toast
+    } finally {
       setIsSubmitting(false);
-    }, 1000);
+    }
   }
 
   return (
@@ -246,7 +227,7 @@ export default function SignUp() {
 
       <p className="text-center text-sm text-muted-foreground mt-6">
         Already have an account?{" "}
-        <Button variant="link" className="p-0" onClick={() => navigate("/")}>
+        <Button variant="link" className="p-0" onClick={() => navigate("/auth")}>
           Sign in
         </Button>
       </p>
