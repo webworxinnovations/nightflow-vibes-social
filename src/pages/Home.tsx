@@ -79,15 +79,22 @@ export default function Home() {
   const transformedLiveEvents: Event[] = liveEvents.map(transformMockEventToEvent);
   
   return (
-    <div className="flex flex-col gap-6">
-      <h1 className="gradient-text text-3xl font-bold">NightFlow</h1>
+    <div className="flex flex-col gap-6 p-6">
+      <h1 className="text-3xl font-bold text-white drop-shadow-[0_0_12px_rgba(20,184,166,0.8)]" style={{
+        background: 'linear-gradient(45deg, #14b8a6, #06b6d4, #3b82f6)',
+        WebkitBackgroundClip: 'text',
+        WebkitTextFillColor: 'transparent',
+        filter: 'drop-shadow(0 0 8px rgba(20, 184, 166, 0.6))'
+      }}>NightFlow</h1>
       
       {/* Live Now Section */}
       {(liveDjs.length > 0 || liveEvents.length > 0) && (
         <section>
           <div className="mb-4 flex items-center">
-            <div className="mr-2 h-3 w-3 rounded-full bg-red-500"></div>
-            <h2 className="text-xl font-semibold">Live Now</h2>
+            <div className="mr-2 h-3 w-3 rounded-full bg-red-500 animate-pulse" style={{
+              boxShadow: '0 0 8px rgba(239, 68, 68, 0.8)'
+            }}></div>
+            <h2 className="text-xl font-semibold text-white drop-shadow-[0_0_8px_rgba(20,184,166,0.6)]">Live Now</h2>
           </div>
           
           <div className="overflow-x-auto">
@@ -176,7 +183,7 @@ export default function Home() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
         {/* Left Sidebar */}
         <div className="hidden lg:block">
-          <h2 className="mb-4 text-xl font-semibold">Popular DJs</h2>
+          <h2 className="mb-4 text-xl font-semibold text-white drop-shadow-[0_0_8px_rgba(20,184,166,0.6)]">Popular DJs</h2>
           <div className="space-y-4">
             {users
               .filter((user) => user.role === 'dj')
@@ -186,15 +193,15 @@ export default function Home() {
               ))}
           </div>
           
-          <Separator className="my-6 bg-white/10" />
+          <Separator className="my-6 bg-teal-400/30" />
           
-          <h2 className="mb-4 text-xl font-semibold">Trending Genres</h2>
+          <h2 className="mb-4 text-xl font-semibold text-white drop-shadow-[0_0_8px_rgba(20,184,166,0.6)]">Trending Genres</h2>
           <div className="space-y-2">
             {['House', 'Techno', 'Hip-Hop', 'Drum & Bass', 'Trance'].map((genre) => (
               <Button 
                 key={genre} 
                 variant="outline" 
-                className="w-full justify-start border-white/10 text-left hover:bg-white/5"
+                className="w-full justify-start border-teal-400/30 bg-slate-800/60 text-slate-200 text-left hover:bg-teal-500/20 hover:border-teal-400/50 hover:text-white transition-all duration-300"
               >
                 #{genre}
               </Button>
@@ -204,7 +211,7 @@ export default function Home() {
         
         {/* Feed */}
         <div className="lg:col-span-2">
-          <h2 className="mb-4 text-xl font-semibold">Your Feed</h2>
+          <h2 className="mb-4 text-xl font-semibold text-white drop-shadow-[0_0_8px_rgba(20,184,166,0.6)]">Your Feed</h2>
           <div className="space-y-4">
             {posts.map((post) => (
               <PostCard key={post.id} post={post} />
@@ -214,25 +221,32 @@ export default function Home() {
         
         {/* Right Sidebar */}
         <div className="hidden lg:block">
-          <h2 className="mb-4 text-xl font-semibold">Upcoming Events</h2>
+          <h2 className="mb-4 text-xl font-semibold text-white drop-shadow-[0_0_8px_rgba(20,184,166,0.6)]">Upcoming Events</h2>
           <div className="space-y-4">
             {transformedLiveEvents.concat(transformedLiveEvents).slice(0, 2).map((event) => (
               <EventCard key={event.id} event={event} compact />
             ))}
             
-            <Button className="w-full" variant="outline">
+            <Button className="w-full bg-teal-500/80 hover:bg-teal-500 text-white border-teal-400/50" variant="outline">
               View All Events
             </Button>
           </div>
           
-          <Separator className="my-6 bg-white/10" />
+          <Separator className="my-6 bg-teal-400/30" />
           
-          <GlassmorphicCard>
-            <h3 className="mb-2 text-lg font-semibold gradient-text">TipDrop</h3>
-            <p className="text-sm text-muted-foreground">
+          <GlassmorphicCard className="bg-slate-800/90 border-teal-400/40 backdrop-blur-xl">
+            <h3 className="mb-2 text-lg font-semibold text-white drop-shadow-[0_0_8px_rgba(20,184,166,0.8)]" style={{
+              background: 'linear-gradient(45deg, #14b8a6, #06b6d4, #3b82f6)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              filter: 'drop-shadow(0 0 6px rgba(20, 184, 166, 0.6))'
+            }}>TipDrop</h3>
+            <p className="text-sm text-slate-300 mb-4 leading-relaxed">
               Request songs from your favorite DJs and support them with tips.
             </p>
-            <Button className="mt-4 w-full">Learn More</Button>
+            <Button className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white font-semibold shadow-lg shadow-teal-400/30 transition-all duration-300">
+              Learn More
+            </Button>
           </GlassmorphicCard>
         </div>
       </div>
