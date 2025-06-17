@@ -22,14 +22,14 @@ export default function AuthPage() {
   const { signIn, signUp, user, loading } = useSupabaseAuth();
   const navigate = useNavigate();
 
-  // Add a timeout for the initial auth loading
+  // Add a longer timeout for the initial auth loading (30 seconds instead of 10)
   useEffect(() => {
     const timer = setTimeout(() => {
       if (loading) {
-        console.warn('AuthPage: Auth loading timeout reached');
+        console.warn('AuthPage: Auth loading timeout reached after 30 seconds');
         setAuthTimeout(true);
       }
-    }, 10000); // 10 second timeout
+    }, 30000); // Increased to 30 seconds
 
     return () => clearTimeout(timer);
   }, [loading]);
@@ -83,9 +83,9 @@ export default function AuthPage() {
           <CardContent className="p-6 text-center">
             <h2 className="text-xl font-semibold mb-4">Connection Issue</h2>
             <p className="text-muted-foreground mb-4">
-              We're having trouble connecting to our authentication service. 
+              We're having trouble connecting to our authentication service.
             </p>
-            <Button onClick={() => window.location.reload()} className="w-full">
+            <Button onClick={() => window.location.reload()} className="w-full mb-4">
               Retry
             </Button>
             <div className="mt-4">
@@ -99,6 +99,7 @@ export default function AuthPage() {
     );
   }
 
+  // Show loading spinner while auth is initializing
   if (loading && !authTimeout) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">

@@ -43,42 +43,7 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     
     console.log('SupabaseAuthProvider: Initializing auth state');
     
-    // Get initial session
-    const initializeAuth = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('SupabaseAuthProvider: Error getting session:', error);
-        }
-        
-        if (!mounted) return;
-        
-        console.log('SupabaseAuthProvider: Initial session:', session ? 'Found' : 'None');
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          await loadProfile(session.user.id);
-        } else {
-          setProfile(null);
-        }
-      } catch (error) {
-        console.error('SupabaseAuthProvider: Error in initializeAuth:', error);
-        if (mounted) {
-          setSession(null);
-          setUser(null);
-          setProfile(null);
-        }
-      } finally {
-        if (mounted) {
-          console.log('SupabaseAuthProvider: Setting loading to false');
-          setLoading(false);
-        }
-      }
-    };
-
-    // Listen for auth changes
+    // Set up auth state listener first
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -95,9 +60,41 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         setProfile(null);
       }
       
-      // Ensure loading is false after auth state changes
+      // Always set loading to false after auth state change
       setLoading(false);
     });
+
+    // Get initial session
+    const initializeAuth = async () => {
+      try {
+        console.log('SupabaseAuthProvider: Getting initial session');
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('SupabaseAuthProvider: Error getting session:', error);
+        }
+        
+        if (!mounted) return;
+        
+        console.log('SupabaseAuthProvider: Initial session:', session ? 'Found' : 'None');
+        
+        // Only update state if there's no session from the auth state change listener
+        if (!session) {
+          setSession(null);
+          setUser(null);
+          setProfile(null);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('SupabaseAuthProvider: Error in initializeAuth:', error);
+        if (mounted) {
+          setSession(null);
+          setUser(null);
+          setProfile(null);
+          setLoading(false);
+        }
+      }
+    };
 
     // Initialize auth
     initializeAuth();
