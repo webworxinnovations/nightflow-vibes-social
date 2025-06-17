@@ -39,7 +39,13 @@ export const usePromoterEvents = () => {
         price: event.ticket_price,
         capacity: event.ticket_capacity,
         attendees: event.tickets_sold,
-        image: event.cover_image_url
+        image: event.cover_image_url,
+        // Add missing properties for component compatibility
+        lineup: [],
+        ticketsSold: event.tickets_sold,
+        maxCapacity: event.ticket_capacity,
+        promoter: event.organizer?.username || event.organizer?.full_name,
+        isLive: event.status === 'live'
       }));
     },
     enabled: !!user,

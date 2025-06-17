@@ -35,6 +35,12 @@ export interface Event {
   capacity?: number;
   attendees?: number;
   image?: string;
+  // Add missing properties that components expect
+  lineup?: any[];
+  ticketsSold?: number;
+  maxCapacity?: number;
+  promoter?: string;
+  isLive?: boolean;
 }
 
 export const useEvents = () => {
@@ -68,7 +74,13 @@ export const useEvents = () => {
         price: event.ticket_price,
         capacity: event.ticket_capacity,
         attendees: event.tickets_sold,
-        image: event.cover_image_url
+        image: event.cover_image_url,
+        // Add missing properties for component compatibility
+        lineup: [],
+        ticketsSold: event.tickets_sold,
+        maxCapacity: event.ticket_capacity,
+        promoter: event.organizer?.username || event.organizer?.full_name,
+        isLive: event.status === 'live'
       }));
     },
   });
@@ -109,7 +121,13 @@ export const useUserEvents = () => {
         price: event.ticket_price,
         capacity: event.ticket_capacity,
         attendees: event.tickets_sold,
-        image: event.cover_image_url
+        image: event.cover_image_url,
+        // Add missing properties for component compatibility
+        lineup: [],
+        ticketsSold: event.tickets_sold,
+        maxCapacity: event.ticket_capacity,
+        promoter: event.organizer?.username || event.organizer?.full_name,
+        isLive: event.status === 'live'
       }));
     },
     enabled: !!user,
@@ -149,7 +167,13 @@ export const useEvent = (eventId: string) => {
         price: data.ticket_price,
         capacity: data.ticket_capacity,
         attendees: data.tickets_sold,
-        image: data.cover_image_url
+        image: data.cover_image_url,
+        // Add missing properties for component compatibility
+        lineup: [],
+        ticketsSold: data.tickets_sold,
+        maxCapacity: data.ticket_capacity,
+        promoter: data.organizer?.username || data.organizer?.full_name,
+        isLive: data.status === 'live'
       };
     },
     enabled: !!eventId,
