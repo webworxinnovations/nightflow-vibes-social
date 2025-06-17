@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { PostCard } from "@/components/cards/post-card";
 import { EventCard } from "@/components/cards/event-card";
 import { Post, User } from "@/lib/mock-data";
-import { useAuth } from "@/contexts/AuthContext";
+import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { 
   Dialog, 
   DialogContent, 
@@ -39,7 +39,7 @@ export function ProfileTabs({
   const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
   const [postContent, setPostContent] = useState("");
   const [imageUrl, setImageUrl] = useState("");
-  const { currentUser } = useAuth();
+  const { user: currentUser } = useSupabaseAuth();
   const { toast } = useToast();
 
   const handleCreatePost = () => {
