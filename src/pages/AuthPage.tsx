@@ -17,12 +17,26 @@ export default function AuthPage() {
   const [fullName, setFullName] = useState("");
   const [role, setRole] = useState<"dj" | "fan" | "promoter" | "venue">("fan");
   const [isLoading, setIsLoading] = useState(false);
+  const [authTimeout, setAuthTimeout] = useState(false);
   
   const { signIn, signUp, user, loading } = useSupabaseAuth();
   const navigate = useNavigate();
 
+  // Add a timeout for the initial auth loading
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (loading) {
+        console.warn('AuthPage: Auth loading timeout reached');
+        setAuthTimeout(true);
+      }
+    }, 10000); // 10 second timeout
+
+    return () => clearTimeout(timer);
+  }, [loading]);
+
   useEffect(() => {
     if (user && !loading) {
+      console.log('AuthPage: User authenticated, redirecting to home');
       navigate("/home");
     }
   }, [user, loading, navigate]);
@@ -53,7 +67,7 @@ export default function AuthPage() {
 
     setIsLoading(true);
     try {
-      await signUp(email, password, username, fullName);
+      await signUp(email, password, username, fullName, role);
     } catch (error) {
       console.error("Sign up error:", error);
     } finally {
@@ -61,10 +75,37 @@ export default function AuthPage() {
     }
   };
 
-  if (loading) {
+  // Show timeout message if auth is taking too long
+  if (authTimeout) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md bg-card/80 backdrop-blur-lg border-white/10">
+          <CardContent className="p-6 text-center">
+            <h2 className="text-xl font-semibold mb-4">Connection Issue</h2>
+            <p className="text-muted-foreground mb-4">
+              We're having trouble connecting to our authentication service. 
+            </p>
+            <Button onClick={() => window.location.reload()} className="w-full">
+              Retry
+            </Button>
+            <div className="mt-4">
+              <Link to="/" className="text-sm text-muted-foreground hover:text-primary">
+                ← Back to Home
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (loading && !authTimeout) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-white">Loading authentication...</p>
+        </div>
       </div>
     );
   }

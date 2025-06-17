@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -38,22 +39,53 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [isConfigured] = useState(true);
 
   useEffect(() => {
+    let mounted = true;
+    
+    console.log('SupabaseAuthProvider: Initializing auth state');
+    
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        loadProfile(session.user.id);
-      } else {
-        setLoading(false);
+    const initializeAuth = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('SupabaseAuthProvider: Error getting session:', error);
+        }
+        
+        if (!mounted) return;
+        
+        console.log('SupabaseAuthProvider: Initial session:', session ? 'Found' : 'None');
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          await loadProfile(session.user.id);
+        } else {
+          setProfile(null);
+        }
+      } catch (error) {
+        console.error('SupabaseAuthProvider: Error in initializeAuth:', error);
+        if (mounted) {
+          setSession(null);
+          setUser(null);
+          setProfile(null);
+        }
+      } finally {
+        if (mounted) {
+          console.log('SupabaseAuthProvider: Setting loading to false');
+          setLoading(false);
+        }
       }
-    });
+    };
 
     // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state change:', event, session);
+      console.log('SupabaseAuthProvider: Auth state change:', event, session ? 'Session exists' : 'No session');
+      
+      if (!mounted) return;
+      
       setSession(session);
       setUser(session?.user ?? null);
       
@@ -61,15 +93,24 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         await loadProfile(session.user.id);
       } else {
         setProfile(null);
-        setLoading(false);
       }
+      
+      // Ensure loading is false after auth state changes
+      setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    // Initialize auth
+    initializeAuth();
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const loadProfile = async (userId: string) => {
     try {
+      console.log('SupabaseAuthProvider: Loading profile for user:', userId);
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('*')
@@ -77,14 +118,13 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         .single();
 
       if (error && error.code !== 'PGRST116') {
-        console.error('Error loading profile:', error);
+        console.error('SupabaseAuthProvider: Error loading profile:', error);
       } else {
+        console.log('SupabaseAuthProvider: Profile loaded:', profile ? 'Success' : 'Not found');
         setProfile(profile);
       }
     } catch (error) {
-      console.error('Error loading profile:', error);
-    } finally {
-      setLoading(false);
+      console.error('SupabaseAuthProvider: Error in loadProfile:', error);
     }
   };
 
