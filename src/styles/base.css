@@ -91,42 +91,43 @@
   }
 
   body {
-    @apply bg-gradient-to-br from-slate-900 via-teal-900 to-cyan-900 text-foreground dark min-h-screen;
+    @apply bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-foreground dark min-h-screen;
     overflow-x: hidden;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
     background-attachment: fixed;
     background-image: 
-      radial-gradient(circle at 10% 20%, rgba(13, 148, 136, 0.2) 0%, transparent 40%),
-      radial-gradient(circle at 90% 80%, rgba(6, 182, 212, 0.2) 0%, transparent 40%),
-      radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.15) 0%, transparent 60%),
-      radial-gradient(circle at 25% 75%, rgba(34, 211, 238, 0.15) 0%, transparent 50%),
-      radial-gradient(circle at 75% 25%, rgba(16, 185, 129, 0.12) 0%, transparent 45%);
+      radial-gradient(circle at 10% 20%, rgba(13, 148, 136, 0.15) 0%, transparent 40%),
+      radial-gradient(circle at 90% 80%, rgba(6, 182, 212, 0.12) 0%, transparent 40%),
+      radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.08) 0%, transparent 60%),
+      radial-gradient(circle at 25% 75%, rgba(34, 211, 238, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 75% 25%, rgba(16, 185, 129, 0.08) 0%, transparent 45%);
     background-size: 800px 800px, 1000px 1000px, 1200px 1200px, 900px 900px, 1100px 1100px;
     animation: ocean-drift 25s ease-in-out infinite;
+    color: #ffffff;
   }
   
-  /* Ultra-enhanced scrollbar with ocean theme */
+  /* Enhanced scrollbar with better contrast */
   ::-webkit-scrollbar {
     width: 16px;
   }
   
   ::-webkit-scrollbar-track {
-    background: linear-gradient(180deg, rgba(0, 0, 0, 0.4), rgba(13, 148, 136, 0.2));
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.6), rgba(13, 148, 136, 0.15));
     border-radius: 16px;
-    border: 3px solid rgba(13, 148, 136, 0.15);
+    border: 3px solid rgba(13, 148, 136, 0.2);
     box-shadow: 
-      inset 0 0 10px rgba(0, 0, 0, 0.5),
+      inset 0 0 10px rgba(0, 0, 0, 0.7),
       inset 0 0 20px rgba(13, 148, 136, 0.1);
   }
   
   ::-webkit-scrollbar-thumb {
     background: linear-gradient(180deg, #0d9488, #06b6d4, #3b82f6, #22d3ee);
     border-radius: 16px;
-    border: 3px solid rgba(0, 0, 0, 0.3);
+    border: 3px solid rgba(0, 0, 0, 0.4);
     box-shadow: 
-      0 0 15px rgba(13, 148, 136, 0.8),
-      0 0 30px rgba(6, 182, 212, 0.5),
-      0 0 45px rgba(59, 130, 246, 0.3),
+      0 0 15px rgba(13, 148, 136, 0.9),
+      0 0 30px rgba(6, 182, 212, 0.6),
+      0 0 45px rgba(59, 130, 246, 0.4),
       inset 0 1px 0 rgba(255, 255, 255, 0.3);
     position: relative;
   }
@@ -141,13 +142,42 @@
     transform: scale(1.05);
   }
 
-  /* Enhanced selection with ocean glow */
+  /* Enhanced selection with better contrast */
   ::selection {
-    background: linear-gradient(45deg, rgba(13, 148, 136, 0.6), rgba(6, 182, 212, 0.4));
+    background: linear-gradient(45deg, rgba(13, 148, 136, 0.7), rgba(6, 182, 212, 0.5));
     color: white;
     text-shadow: 
-      0 0 10px rgba(13, 148, 136, 0.9),
-      0 0 20px rgba(6, 182, 212, 0.7),
-      0 0 30px rgba(59, 130, 246, 0.5);
+      0 0 10px rgba(13, 148, 136, 1),
+      0 0 20px rgba(6, 182, 212, 0.8),
+      0 0 30px rgba(59, 130, 246, 0.6);
+  }
+
+  /* Improved text contrast and readability */
+  h1, h2, h3, h4, h5, h6 {
+    color: #ffffff;
+    text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  }
+
+  /* Better contrast for regular text */
+  p, span, div {
+    color: rgba(255, 255, 255, 0.95);
+  }
+
+  /* Ensure muted text is still readable */
+  .text-muted-foreground {
+    color: rgba(255, 255, 255, 0.7) !important;
+  }
+
+  /* Better button text contrast */
+  button {
+    color: #ffffff;
+    text-shadow: 0 0 8px rgba(0, 0, 0, 0.4);
+  }
+
+  /* Card backgrounds with better contrast */
+  .card, .glassmorphism {
+    background: rgba(15, 23, 42, 0.85) !important;
+    border: 1px solid rgba(13, 148, 136, 0.3);
+    backdrop-filter: blur(20px);
   }
 }
