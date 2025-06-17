@@ -49,31 +49,44 @@ export function MobileNav() {
   const navItems = buildNavItems();
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 h-16 border-t border-white/10 bg-nightflow-dark-lighter backdrop-blur-lg">
-      <div className="grid h-full" style={{ gridTemplateColumns: `repeat(${navItems.length}, 1fr)` }}>
+    <div className="fixed bottom-0 left-0 right-0 z-50 h-20 backdrop-blur-xl bg-black/40 border-t border-white/10">
+      {/* Glow effect */}
+      <div className="absolute inset-0 bg-gradient-to-t from-purple-500/20 via-pink-500/10 to-transparent" />
+      
+      <div className="relative z-10 grid h-full px-2" style={{ gridTemplateColumns: `repeat(${navItems.length}, 1fr)` }}>
         {navItems.map((item, index) => (
           <NavLink
             key={index}
             to={item.path}
             className={({ isActive }) =>
               cn(
-                'flex flex-col items-center justify-center',
+                'flex flex-col items-center justify-center transition-all duration-300 rounded-2xl mx-1 my-2',
                 isActive
-                  ? 'text-primary'
-                  : 'text-muted-foreground hover:text-primary'
+                  ? 'text-white bg-gradient-to-t from-purple-500/30 to-pink-500/20 border border-purple-400/30 shadow-lg shadow-purple-500/20'
+                  : 'text-gray-400 hover:text-white hover:bg-white/5'
               )
             }
           >
             {({ isActive }) => (
               <>
-                <item.icon
-                  size={20}
-                  className={cn(
-                    'mb-1',
-                    isActive && 'animate-pulse-glow'
+                <div className="relative">
+                  <item.icon
+                    size={24}
+                    className={cn(
+                      'mb-1 transition-all duration-300',
+                      isActive && 'drop-shadow-[0_0_8px_rgba(168,85,247,0.8)]'
+                    )}
+                  />
+                  {isActive && (
+                    <div className="absolute inset-0 bg-purple-400/30 rounded-full blur-lg animate-pulse" />
                   )}
-                />
-                <span className="text-xs">{item.label}</span>
+                </div>
+                <span className={cn(
+                  "text-xs font-medium transition-all duration-300",
+                  isActive ? "text-white" : "text-gray-400"
+                )}>
+                  {item.label}
+                </span>
               </>
             )}
           </NavLink>
