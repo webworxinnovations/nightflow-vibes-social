@@ -2,10 +2,10 @@
 import { NavLink } from 'react-router-dom';
 import { Home, Search, Calendar, User, Music, Building2, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useAuth } from '@/contexts/AuthContext';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 
 export function MobileNav() {
-  const { currentUser } = useAuth();
+  const { profile } = useSupabaseAuth();
 
   // Base navigation items for all users
   const baseNavItems = [
@@ -16,9 +16,9 @@ export function MobileNav() {
   
   // Get appropriate dashboard link based on user role
   const getDashboardItem = () => {
-    if (!currentUser) return null;
+    if (!profile) return null;
     
-    switch (currentUser.role) {
+    switch (profile.role) {
       case 'dj':
         return { icon: Music, path: '/dj-dashboard', label: 'DJ' };
       case 'promoter':
@@ -31,7 +31,7 @@ export function MobileNav() {
   };
   
   // Profile item is always shown
-  const profileItem = { icon: User, path: `/profile/${currentUser?.id || 'me'}`, label: 'Profile' };
+  const profileItem = { icon: User, path: `/profile/${profile?.username || 'me'}`, label: 'Profile' };
   
   // Build final navigation items
   const buildNavItems = () => {
