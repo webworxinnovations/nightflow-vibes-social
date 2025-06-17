@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { SubPromoter, users } from "@/lib/mock-data";
 import { v4 as uuidv4 } from "uuid";
-import { useAuth } from "@/contexts/AuthContext";
+import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 
 // Define the context type
 type SubPromoterContextType = {
@@ -18,7 +18,7 @@ const SubPromoterContext = createContext<SubPromoterContextType | undefined>(und
 export const SubPromoterProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Initialize with sub-promoters from mock data
   const [subPromoters, setSubPromoters] = useState<SubPromoter[]>([]);
-  const { currentUser } = useAuth();
+  const { user } = useSupabaseAuth();
 
   // Load existing sub-promoters from localStorage on mount
   useEffect(() => {
