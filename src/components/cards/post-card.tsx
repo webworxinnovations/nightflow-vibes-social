@@ -30,7 +30,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
+import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 
 interface PostCardProps {
   post: Post;
@@ -43,9 +43,9 @@ export function PostCard({ post, className, onDelete }: PostCardProps) {
   const [likeCount, setLikeCount] = useState(post.likes);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const { toast } = useToast();
-  const { currentUser } = useAuth();
+  const { profile } = useSupabaseAuth();
   
-  const isOwnPost = currentUser?.id === post.user.id;
+  const isOwnPost = profile?.id === post.user.id;
 
   const handleLike = () => {
     if (liked) {
