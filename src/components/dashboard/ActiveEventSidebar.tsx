@@ -3,7 +3,7 @@ import React from "react";
 import { GlassmorphicCard } from "@/components/ui/glassmorphic-card";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "lucide-react";
-import { Event } from "@/lib/mock-data";
+import { Event } from "@/hooks/useEvents";
 
 interface ActiveEventSidebarProps {
   activeEvent: Event | undefined;
@@ -40,7 +40,7 @@ export const ActiveEventSidebar = ({ activeEvent }: ActiveEventSidebarProps) => 
             <div>
               <p className="text-xs text-muted-foreground">Revenue</p>
               <p className="font-medium">
-                ${activeEvent.ticketsSold * activeEvent.price}
+                ${(activeEvent.ticketsSold || 0) * (activeEvent.price || 0)}
               </p>
             </div>
           </div>

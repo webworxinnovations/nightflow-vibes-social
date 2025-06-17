@@ -6,6 +6,7 @@ import { useSubPromoters } from "@/contexts/SubPromoterContext";
 import { users } from "@/lib/mock-data";
 import { usePromoterEvents } from "@/hooks/usePromoterEvents";
 import { useSelectedEvent } from "@/hooks/useSelectedEvent";
+import { Event } from "@/hooks/useEvents";
 
 // Import refactored components
 import { AnalyticsCards } from "@/components/dashboard/AnalyticsCards";
