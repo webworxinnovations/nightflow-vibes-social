@@ -13,46 +13,13 @@ import {
 } from "@/components/ui/select";
 import { events, formatDate } from "@/lib/mock-data";
 import { Event } from "@/hooks/useEvents";
-
-// Transform mock events to match the Event interface
-const transformMockEventToEvent = (mockEvent: any): Event => ({
-  id: mockEvent.id,
-  title: mockEvent.title,
-  description: mockEvent.description || '',
-  venue_name: mockEvent.venue,
-  venue_address: mockEvent.address,
-  start_time: new Date(`${mockEvent.date}T${mockEvent.time || '20:00'}`).toISOString(),
-  end_time: new Date(`${mockEvent.date}T23:59`).toISOString(),
-  cover_image_url: mockEvent.image,
-  ticket_price: mockEvent.price,
-  ticket_capacity: mockEvent.maxCapacity,
-  tickets_sold: mockEvent.ticketsSold || 0,
-  status: mockEvent.isLive ? 'live' : 'published',
-  organizer_id: 'mock-organizer',
-  stream_id: null,
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
-  // Compatibility properties
-  date: mockEvent.date,
-  time: mockEvent.time,
-  venue: mockEvent.venue,
-  address: mockEvent.address,
-  price: mockEvent.price,
-  capacity: mockEvent.maxCapacity,
-  attendees: mockEvent.ticketsSold,
-  image: mockEvent.image,
-  lineup: mockEvent.lineup || [],
-  ticketsSold: mockEvent.ticketsSold,
-  maxCapacity: mockEvent.maxCapacity,
-  promoter: mockEvent.promoter?.name,
-  isLive: mockEvent.isLive
-});
+import { transformMockEventToEvent } from "@/utils/eventTransformers";
 
 export default function Events() {
   const [view, setView] = useState("grid");
   const [currentMonth, setCurrentMonth] = useState(new Date());
   
-  // Transform mock events to Event type
+  // Transform mock events to Event type using the utility function
   const transformedEvents: Event[] = events.map(transformMockEventToEvent);
   
   const prevMonth = () => {
