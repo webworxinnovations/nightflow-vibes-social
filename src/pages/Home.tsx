@@ -9,10 +9,49 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { users, posts, getLiveEvents, getLiveDjs } from "@/lib/mock-data";
 import { Flame } from "lucide-react";
+import { Event } from "@/hooks/useEvents";
+
+// Transform mock events to match the Event interface
+const transformMockEventToEvent = (mockEvent: any): Event => ({
+  id: mockEvent.id,
+  title: mockEvent.title,
+  description: mockEvent.description || '',
+  venue_name: mockEvent.venue,
+  venue_address: mockEvent.address,
+  start_time: new Date(`${mockEvent.date}T${mockEvent.time || '20:00'}`).toISOString(),
+  end_time: new Date(`${mockEvent.date}T23:59`).toISOString(),
+  cover_image_url: mockEvent.image,
+  ticket_price: mockEvent.price,
+  ticket_capacity: mockEvent.maxCapacity,
+  tickets_sold: mockEvent.ticketsSold || 0,
+  status: mockEvent.isLive ? 'live' : 'published',
+  organizer_id: 'mock-organizer',
+  stream_id: null,
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+  // Compatibility properties
+  date: mockEvent.date,
+  time: mockEvent.time,
+  venue: mockEvent.venue,
+  address: mockEvent.address,
+  price: mockEvent.price,
+  capacity: mockEvent.maxCapacity,
+  attendees: mockEvent.ticketsSold,
+  image: mockEvent.image,
+  lineup: mockEvent.lineup || [],
+  ticketsSold: mockEvent.ticketsSold,
+  maxCapacity: mockEvent.maxCapacity,
+  promoter: mockEvent.promoter?.name,
+  isLive: mockEvent.isLive,
+  vibe: mockEvent.vibe
+});
 
 export default function Home() {
   const [liveDjs, setLiveDjs] = useState(getLiveDjs());
   const [liveEvents, setLiveEvents] = useState(getLiveEvents());
+  
+  // Transform live events to Event type
+  const transformedLiveEvents: Event[] = liveEvents.map(transformMockEventToEvent);
   
   return (
     <div className="flex flex-col gap-6">
@@ -152,7 +191,7 @@ export default function Home() {
         <div className="hidden lg:block">
           <h2 className="mb-4 text-xl font-semibold">Upcoming Events</h2>
           <div className="space-y-4">
-            {liveEvents.concat(liveEvents).slice(0, 2).map((event) => (
+            {transformedLiveEvents.concat(transformedLiveEvents).slice(0, 2).map((event) => (
               <EventCard key={event.id} event={event} compact />
             ))}
             

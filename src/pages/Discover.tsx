@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { UserCard } from "@/components/cards/user-card";
 import { EventCard } from "@/components/cards/event-card";
@@ -9,11 +10,46 @@ import { Search, Filter, Plus } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { Event } from "@/hooks/useEvents";
 
 // Define filter types
 type UserRole = 'all' | 'dj' | 'promoter' | 'venue';
 type EventFilter = 'all' | 'upcoming' | 'live';
 type GenreFilter = 'all' | string;
+
+// Transform mock events to match the Event interface
+const transformMockEventToEvent = (mockEvent: any): Event => ({
+  id: mockEvent.id,
+  title: mockEvent.title,
+  description: mockEvent.description || '',
+  venue_name: mockEvent.venue,
+  venue_address: mockEvent.address,
+  start_time: new Date(`${mockEvent.date}T${mockEvent.time || '20:00'}`).toISOString(),
+  end_time: new Date(`${mockEvent.date}T23:59`).toISOString(),
+  cover_image_url: mockEvent.image,
+  ticket_price: mockEvent.price,
+  ticket_capacity: mockEvent.maxCapacity,
+  tickets_sold: mockEvent.ticketsSold || 0,
+  status: mockEvent.isLive ? 'live' : 'published',
+  organizer_id: 'mock-organizer',
+  stream_id: null,
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+  // Compatibility properties
+  date: mockEvent.date,
+  time: mockEvent.time,
+  venue: mockEvent.venue,
+  address: mockEvent.address,
+  price: mockEvent.price,
+  capacity: mockEvent.maxCapacity,
+  attendees: mockEvent.ticketsSold,
+  image: mockEvent.image,
+  lineup: mockEvent.lineup || [],
+  ticketsSold: mockEvent.ticketsSold,
+  maxCapacity: mockEvent.maxCapacity,
+  promoter: mockEvent.promoter?.name,
+  isLive: mockEvent.isLive
+});
 
 export default function Discover() {
   const { isCreatorRole } = useAuth();
@@ -22,6 +58,9 @@ export default function Discover() {
   const [roleFilter, setRoleFilter] = useState<UserRole>('all');
   const [eventFilter, setEventFilter] = useState<EventFilter>('all');
   const [genreFilter, setGenreFilter] = useState<GenreFilter>('all');
+  
+  // Transform mock events to Event type
+  const transformedEvents: Event[] = events.map(transformMockEventToEvent);
   
   // Extract all unique genres from users
   const allGenres = Array.from(
@@ -64,7 +103,7 @@ export default function Discover() {
   });
   
   // Filter events based on search, filter type, and associated DJs/venues/promoters
-  const filteredEvents = events.filter((event) => {
+  const filteredEvents = transformedEvents.filter((event) => {
     // Event type filter
     if (eventFilter === 'upcoming' && event.isLive) {
       return false;
@@ -75,7 +114,7 @@ export default function Discover() {
     
     // Genre filter (check if any DJ in the lineup matches the genre)
     if (genreFilter !== 'all') {
-      const hasMatchingDj = event.lineup.some(dj => 
+      const hasMatchingDj = event.lineup && event.lineup.some(dj => 
         dj.genres && dj.genres.includes(genreFilter)
       );
       if (!hasMatchingDj) {
@@ -87,12 +126,12 @@ export default function Discover() {
     if (searchQuery) {
       return (
         event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        event.venue.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        event.lineup.some(dj => 
+        (event.venue && event.venue.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (event.lineup && event.lineup.some(dj => 
           dj.name.toLowerCase().includes(searchQuery.toLowerCase())
-        ) ||
-        event.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (event.promoter && event.promoter.name.toLowerCase().includes(searchQuery.toLowerCase()))
+        )) ||
+        (event.address && event.address.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (event.promoter && event.promoter.toLowerCase().includes(searchQuery.toLowerCase()))
       );
     }
     
