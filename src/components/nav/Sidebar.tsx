@@ -1,126 +1,125 @@
 
-import { NavLink } from 'react-router-dom';
-import { cn } from '@/lib/utils';
-import {
-  Home,
-  Search,
-  Calendar,
-  User,
-  Music,
-  Users,
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { 
+  Home, 
+  Calendar, 
+  Users, 
+  Search, 
+  Settings, 
   LogOut,
-  Building2,
-  Ticket,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
-import { useAuth } from '@/contexts/AuthContext';
+  Music,
+  BarChart3,
+  UserPlus
+} from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 
 export function Sidebar() {
-  const { currentUser, logout, isCreatorRole } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { user, profile, signOut } = useSupabaseAuth();
 
-  const mainNavItems = [
-    { icon: Home, path: '/', label: 'Home' },
-    { icon: Search, path: '/discover', label: 'Discover' },
-    { icon: Calendar, path: '/events', label: 'Events' },
-    { icon: User, path: `/profile/${currentUser?.id || ''}`, label: 'Profile' }
-  ];
-
-  // Determine dashboard items based on user role
-  const getDashboardItems = () => {
-    if (!currentUser) return [];
-    
-    switch (currentUser.role) {
-      case 'dj':
-        return [{ icon: Music, path: '/dj-dashboard', label: 'DJ Dashboard' }];
-      case 'promoter':
-        return [
-          { icon: Users, path: '/promoter-dashboard', label: 'Promoter Dashboard' },
-          { icon: Users, path: '/sub-promoters', label: 'Sub-Promoters' }
-        ];
-      case 'venue':
-        return [{ icon: Building2, path: '/venue-dashboard', label: 'Venue Dashboard' }];
-      case 'fan':
-        return [{ icon: Ticket, path: '/sub-promoter-dashboard', label: 'My Promotions' }];
-      default:
-        return [];
-    }
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
   };
 
-  const userNavItems = getDashboardItems();
+  const getNavigationItems = () => {
+    const baseItems = [
+      { icon: Home, label: "Home", href: "/home" },
+      { icon: Search, label: "Discover", href: "/discover" },
+      { icon: Calendar, label: "Events", href: "/events" },
+    ];
+
+    if (profile?.role === "dj") {
+      baseItems.push({ icon: Music, label: "DJ Dashboard", href: "/dj-dashboard" });
+    } else if (profile?.role === "promoter") {
+      baseItems.push({ icon: BarChart3, label: "Promoter Dashboard", href: "/promoter-dashboard" });
+      baseItems.push({ icon: UserPlus, label: "Sub-Promoters", href: "/sub-promoter-management" });
+    } else if (profile?.role === "sub_promoter") {
+      baseItems.push({ icon: BarChart3, label: "Sub-Promoter Dashboard", href: "/sub-promoter-dashboard" });
+    }
+
+    return baseItems;
+  };
+
+  if (!user || !profile) {
+    return null;
+  }
+
+  const navigationItems = getNavigationItems();
 
   return (
-    <div className="hidden md:flex glassmorphism flex-col w-64 p-4 border-r border-white/10">
-      <div className="flex items-center mb-8 px-2">
-        <h1 className="text-2xl font-bold gradient-text">NightFlow</h1>
-      </div>
+    <div className="fixed inset-y-0 left-0 z-50 w-64 bg-card/40 backdrop-blur-xl border-r border-white/10">
+      <div className="flex h-full flex-col">
+        {/* Logo */}
+        <div className="flex h-16 items-center border-b border-white/10 px-6">
+          <Link to="/home" className="flex items-center space-x-2">
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500" />
+            <span className="text-xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+              NightFlow
+            </span>
+          </Link>
+        </div>
 
-      <nav className="space-y-2 mb-6">
-        {mainNavItems.map((item, index) => (
-          <NavLink
-            key={index}
-            to={item.path}
-            className={({ isActive }) =>
-              cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2 transition-all',
-                isActive
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-              )
-            }
-          >
-            <item.icon size={20} />
-            <span>{item.label}</span>
-          </NavLink>
-        ))}
-      </nav>
+        {/* Navigation */}
+        <nav className="flex-1 space-y-1 p-4">
+          {navigationItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = location.pathname === item.href;
+            
+            return (
+              <Link
+                key={item.href}
+                to={item.href}
+                className={cn(
+                  "flex items-center space-x-3 rounded-lg px-3 py-2 text-sm transition-colors",
+                  isActive
+                    ? "bg-primary/20 text-primary"
+                    : "text-muted-foreground hover:bg-white/5 hover:text-foreground"
+                )}
+              >
+                <Icon className="h-5 w-5" />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
 
-      {userNavItems.length > 0 && (
-        <>
-          <Separator className="my-4 bg-white/10" />
-
-          <div className="px-3 py-2">
-            <h2 className="mb-2 text-lg font-semibold tracking-tight">Dashboard</h2>
-            <nav className="space-y-2">
-              {userNavItems.map((item, index) => (
-                <NavLink
-                  key={index}
-                  to={item.path}
-                  className={({ isActive }) =>
-                    cn(
-                      'flex items-center gap-3 rounded-lg px-3 py-2 transition-all',
-                      isActive
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                    )
-                  }
-                >
-                  <item.icon size={20} />
-                  <span>{item.label}</span>
-                </NavLink>
-              ))}
-            </nav>
-          </div>
-        </>
-      )}
-
-      <div className="mt-auto">
-        <Separator className="my-4 bg-white/10" />
-        <div className="flex items-center justify-between p-2">
-          <div className="flex items-center gap-3">
-            <Avatar>
-              <AvatarImage src={currentUser?.avatar} alt={currentUser?.name || ''} />
-              <AvatarFallback>{currentUser?.name?.charAt(0) || '?'}</AvatarFallback>
+        {/* User Profile */}
+        <div className="border-t border-white/10 p-4">
+          <div className="flex items-center space-x-3">
+            <Avatar className="h-10 w-10">
+              <AvatarImage src={profile.avatar_url || ""} alt={profile.username} />
+              <AvatarFallback>
+                {profile.username?.charAt(0).toUpperCase()}
+              </AvatarFallback>
             </Avatar>
-            <div>
-              <p className="text-sm font-medium">{currentUser?.name || 'Guest'}</p>
-              <p className="text-xs text-muted-foreground">@{currentUser?.username || 'guest'}</p>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">{profile.full_name || profile.username}</p>
+              <p className="text-xs text-muted-foreground capitalize">{profile.role}</p>
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={logout}>
-            <LogOut size={18} />
-          </Button>
+          
+          <div className="mt-3 space-y-1">
+            <Link to={`/profile/${profile.username}`}>
+              <Button variant="ghost" size="sm" className="w-full justify-start">
+                <Settings className="mr-2 h-4 w-4" />
+                Profile
+              </Button>
+            </Link>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="w-full justify-start text-red-400 hover:text-red-300"
+              onClick={handleSignOut}
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Sign Out
+            </Button>
+          </div>
         </div>
       </div>
     </div>

@@ -1,12 +1,40 @@
 
-import { useState, useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { getEventsByPromoter, Event } from "@/lib/mock-data";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
+import { Event } from "./useEvents";
 
 export const usePromoterEvents = () => {
-  const { currentUser } = useAuth();
-  const promoterId = currentUser?.id || "6"; // Default to mock promoter if not logged in
-  const promoterEvents = getEventsByPromoter(promoterId);
+  const { user } = useSupabaseAuth();
   
-  return { promoterEvents, promoterId };
+  const { data: promoterEvents = [], isLoading } = useQuery({
+    queryKey: ['promoter-events', user?.id],
+    queryFn: async (): Promise<Event[]> => {
+      if (!user) return [];
+      
+      const { data, error } = await supabase
+        .from('events')
+        .select(`
+          *,
+          organizer:profiles!organizer_id(
+            id,
+            username,
+            full_name,
+            avatar_url
+          )
+        `)
+        .eq('organizer_id', user.id)
+        .order('start_time', { ascending: true });
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user,
+  });
+
+  return { 
+    promoterEvents, 
+    promoterId: user?.id || "", 
+    isLoading 
+  };
 };

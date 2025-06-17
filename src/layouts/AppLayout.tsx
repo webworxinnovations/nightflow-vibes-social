@@ -1,40 +1,58 @@
 
-import { useState } from 'react';
-import { Outlet, NavLink, useLocation } from 'react-router-dom';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { useAuth } from '@/contexts/AuthContext';
-import { 
-  Home, 
-  Search, 
-  Calendar, 
-  User, 
-  Music 
-} from 'lucide-react';
-import { MobileNav } from '@/components/nav/MobileNav';
-import { Sidebar } from '@/components/nav/Sidebar';
+import { useEffect } from "react";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
+import { Sidebar } from "@/components/nav/Sidebar";
+import { MobileNav } from "@/components/nav/MobileNav";
 
-export function AppLayout() {
+export default function AppLayout() {
+  const { user, loading, isConfigured } = useSupabaseAuth();
+  const navigate = useNavigate();
   const location = useLocation();
-  const isMobile = useIsMobile();
-  const [showTipModal, setShowTipModal] = useState(false);
-  const { currentUser } = useAuth();
+
+  useEffect(() => {
+    if (!loading && isConfigured && !user && location.pathname !== "/") {
+      navigate("/auth");
+    }
+  }, [user, loading, navigate, location.pathname, isConfigured]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!isConfigured) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Supabase Not Configured</h1>
+          <p className="text-muted-foreground">
+            Please configure your Supabase connection to use this app.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-gradient-to-br from-nightflow-dark to-nightflow-dark-lighter">
-      {!isMobile && <Sidebar />}
-      
-      <main className="flex-1 overflow-auto pb-20 md:pb-0 px-2 md:px-4">
-        <div className={cn(
-          "container mx-auto py-4",
-          isMobile ? "pt-2" : "pt-6"
-        )}>
-          <Outlet />
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+      <div className="hidden lg:flex">
+        <Sidebar />
+        <div className="flex-1 ml-64">
+          <main className="p-6">
+            <Outlet />
+          </main>
         </div>
-      </main>
-      
-      {isMobile && <MobileNav />}
+      </div>
+      <div className="lg:hidden">
+        <MobileNav />
+        <main className="p-4 pt-20">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }
