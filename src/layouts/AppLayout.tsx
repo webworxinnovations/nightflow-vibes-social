@@ -1,129 +1,91 @@
 
-import { useEffect } from "react";
-import { Outlet, useNavigate, useLocation } from "react-router-dom";
-import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
+import { Outlet, useLocation } from "react-router-dom";
 import { Sidebar } from "@/components/nav/Sidebar";
 import { MobileNav } from "@/components/nav/MobileNav";
+import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 
 export default function AppLayout() {
-  const { user, loading, isConfigured } = useSupabaseAuth();
-  const navigate = useNavigate();
+  const { user } = useSupabaseAuth();
   const location = useLocation();
 
-  useEffect(() => {
-    if (!loading && isConfigured) {
-      if (!user && location.pathname !== "/" && location.pathname !== "/auth") {
-        navigate("/auth");
-      }
-    }
-  }, [user, loading, navigate, location.pathname, isConfigured]);
-
-  if (loading) {
+  // Don't show sidebar/nav on landing page
+  if (location.pathname === "/" || !user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 flex items-center justify-center relative overflow-hidden">
-        {/* Ultra-premium animated background */}
-        <div className="absolute inset-0 floating-particles">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/30 rounded-full blur-3xl animate-float animate-mega-glow" />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-pink-500/30 rounded-full blur-3xl animate-float animate-mega-glow" style={{animationDelay: '2s'}} />
-          <div className="absolute top-3/4 left-3/4 w-64 h-64 bg-blue-500/30 rounded-full blur-3xl animate-float animate-mega-glow" style={{animationDelay: '4s'}} />
-          <div className="absolute top-1/2 left-1/2 w-32 h-32 bg-violet-500/40 rounded-full blur-2xl animate-float animate-mega-glow" style={{animationDelay: '1s'}} />
-          <div className="absolute top-1/3 right-1/3 w-48 h-48 bg-indigo-500/25 rounded-full blur-3xl animate-float animate-mega-glow" style={{animationDelay: '3s'}} />
+      <div className="min-h-screen nightclub-bg floating-particles">
+        {/* Enhanced cosmic background effects */}
+        <div className="fixed inset-0 pointer-events-none">
+          <div className="absolute top-10 left-10 w-4 h-4 bg-purple-400 rounded-full animate-viral-bounce ultra-glow" />
+          <div className="absolute top-20 right-20 w-2 h-2 bg-pink-400 rounded-full animate-viral-bounce ultra-glow" style={{animationDelay: '1s'}} />
+          <div className="absolute bottom-20 left-20 w-3 h-3 bg-blue-400 rounded-full animate-viral-bounce ultra-glow" style={{animationDelay: '0.5s'}} />
+          <div className="absolute bottom-10 right-10 w-2 h-2 bg-violet-400 rounded-full animate-viral-bounce ultra-glow" style={{animationDelay: '1.5s'}} />
+          <div className="absolute top-1/2 left-1/4 w-1 h-1 bg-cyan-400 rounded-full animate-viral-bounce ultra-glow" style={{animationDelay: '2s'}} />
+          <div className="absolute top-1/3 right-1/3 w-2 h-2 bg-fuchsia-400 rounded-full animate-viral-bounce ultra-glow" style={{animationDelay: '2.5s'}} />
+          <div className="absolute bottom-1/3 left-1/2 w-1 h-1 bg-emerald-400 rounded-full animate-viral-bounce ultra-glow" style={{animationDelay: '3s'}} />
         </div>
         
-        {/* Floating sparkles */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-20 left-20 w-2 h-2 bg-purple-400 rounded-full animate-viral-bounce" />
-          <div className="absolute top-40 right-32 w-1 h-1 bg-pink-400 rounded-full animate-viral-bounce" style={{animationDelay: '0.5s'}} />
-          <div className="absolute bottom-40 left-40 w-2 h-2 bg-blue-400 rounded-full animate-viral-bounce" style={{animationDelay: '1s'}} />
-          <div className="absolute bottom-20 right-20 w-1 h-1 bg-violet-400 rounded-full animate-viral-bounce" style={{animationDelay: '1.5s'}} />
-          <div className="absolute top-1/2 left-10 w-1 h-1 bg-cyan-400 rounded-full animate-viral-bounce" style={{animationDelay: '2s'}} />
-          <div className="absolute top-60 right-10 w-2 h-2 bg-fuchsia-400 rounded-full animate-viral-bounce" style={{animationDelay: '2.5s'}} />
+        {/* Animated gradient overlays */}
+        <div className="fixed inset-0 pointer-events-none">
+          <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-radial from-purple-500/20 to-transparent rounded-full blur-3xl animate-float" />
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-gradient-radial from-pink-500/20 to-transparent rounded-full blur-3xl animate-float" style={{animationDelay: '2s'}} />
+          <div className="absolute top-1/2 left-1/2 w-80 h-80 bg-gradient-radial from-blue-500/15 to-transparent rounded-full blur-3xl animate-float transform -translate-x-1/2 -translate-y-1/2" style={{animationDelay: '4s'}} />
         </div>
         
-        <div className="text-center relative z-10">
-          <div className="relative mb-8">
-            <div className="animate-spin rounded-full h-40 w-40 border-4 border-transparent bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 mx-auto p-1 ultra-glow">
-              <div className="rounded-full h-full w-full bg-gray-900"></div>
-            </div>
-            <div className="absolute inset-0 animate-ping rounded-full h-40 w-40 border-2 border-purple-400/50 mx-auto" />
-            <div className="absolute inset-2 animate-pulse rounded-full bg-gradient-to-r from-purple-400/30 to-pink-400/30 mx-auto ultra-glow" />
-            <div className="absolute inset-4 animate-ping rounded-full border border-blue-400/30 mx-auto" style={{animationDelay: '0.5s'}} />
-          </div>
-          <h2 className="text-6xl font-bold gradient-text mb-6 neon-text animate-viral-bounce">
-            NightFlow
-          </h2>
-          <p className="text-white/95 text-2xl font-bold mb-4 text-glow">Entering the ultimate nightlife experience...</p>
-          <p className="text-purple-300 text-lg font-medium mb-8">Where the elite connect and vibe</p>
-          <div className="mt-8 flex justify-center space-x-3">
-            <div className="w-3 h-3 bg-purple-400 rounded-full animate-viral-bounce ultra-glow" />
-            <div className="w-3 h-3 bg-pink-400 rounded-full animate-viral-bounce ultra-glow" style={{animationDelay: '0.1s'}} />
-            <div className="w-3 h-3 bg-blue-400 rounded-full animate-viral-bounce ultra-glow" style={{animationDelay: '0.2s'}} />
-            <div className="w-3 h-3 bg-violet-400 rounded-full animate-viral-bounce ultra-glow" style={{animationDelay: '0.3s'}} />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isConfigured) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 nightclub-bg">
-        <div className="text-center premium-card rounded-3xl p-16 max-w-lg mx-auto ultra-glow">
-          <h1 className="text-4xl font-bold mb-8 gradient-text neon-text">
-            Configuration Required
-          </h1>
-          <p className="text-white/90 text-xl leading-relaxed">
-            Please configure your Supabase connection to access the elite NightFlow experience.
-          </p>
-        </div>
+        <Outlet />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 relative overflow-hidden nightclub-bg">
-      {/* Ultra-enhanced background with multiple layers */}
-      <div className="absolute inset-0 floating-particles opacity-50">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-float animate-mega-glow" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-pink-500/20 rounded-full blur-3xl animate-float animate-mega-glow" style={{animationDelay: '3s'}} />
-        <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl animate-float animate-mega-glow" style={{animationDelay: '1.5s'}} />
-        <div className="absolute top-1/4 right-1/3 w-48 h-48 bg-violet-500/25 rounded-full blur-2xl animate-float animate-mega-glow" style={{animationDelay: '4.5s'}} />
-        <div className="absolute bottom-1/3 left-1/6 w-72 h-72 bg-indigo-500/20 rounded-full blur-3xl animate-float animate-mega-glow" style={{animationDelay: '2.5s'}} />
-        <div className="absolute top-2/3 right-1/6 w-56 h-56 bg-cyan-500/15 rounded-full blur-3xl animate-float animate-mega-glow" style={{animationDelay: '6s'}} />
+    <div className="min-h-screen nightclub-bg floating-particles relative overflow-hidden">
+      {/* Enhanced cosmic background for authenticated pages */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        {/* Multi-layer animated background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-900/30 via-pink-900/20 to-blue-900/30 animate-mega-glow" />
+        
+        {/* Floating orbs */}
+        <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-gradient-radial from-purple-500/30 to-transparent rounded-full blur-2xl animate-float" />
+        <div className="absolute bottom-1/4 right-1/4 w-40 h-40 bg-gradient-radial from-pink-500/25 to-transparent rounded-full blur-2xl animate-float" style={{animationDelay: '3s'}} />
+        <div className="absolute top-3/4 left-3/4 w-28 h-28 bg-gradient-radial from-blue-500/35 to-transparent rounded-full blur-2xl animate-float" style={{animationDelay: '6s'}} />
+        <div className="absolute top-1/2 right-1/2 w-36 h-36 bg-gradient-radial from-violet-500/20 to-transparent rounded-full blur-3xl animate-float" style={{animationDelay: '1.5s'}} />
+        
+        {/* Animated particles grid */}
+        <div className="absolute inset-0 opacity-40">
+          {Array.from({ length: 20 }).map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-1 h-1 bg-purple-400 rounded-full ultra-glow animate-viral-bounce"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 3}s`,
+              }}
+            />
+          ))}
+        </div>
+        
+        {/* Scanning lines effect */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute inset-x-0 h-px bg-gradient-to-r from-transparent via-purple-400/50 to-transparent animate-float" style={{top: '20%'}} />
+          <div className="absolute inset-x-0 h-px bg-gradient-to-r from-transparent via-pink-400/30 to-transparent animate-float" style={{top: '60%', animationDelay: '2s'}} />
+          <div className="absolute inset-x-0 h-px bg-gradient-to-r from-transparent via-blue-400/40 to-transparent animate-float" style={{top: '80%', animationDelay: '4s'}} />
+        </div>
       </div>
       
-      {/* Premium grid overlay with glow */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[length:80px_80px] opacity-40" />
-      
-      {/* Additional sparkle effects */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-10 left-10 w-1 h-1 bg-purple-400 rounded-full animate-viral-bounce" />
-        <div className="absolute top-20 right-20 w-1 h-1 bg-pink-400 rounded-full animate-viral-bounce" style={{animationDelay: '1s'}} />
-        <div className="absolute bottom-20 left-20 w-1 h-1 bg-blue-400 rounded-full animate-viral-bounce" style={{animationDelay: '0.5s'}} />
-        <div className="absolute bottom-10 right-10 w-1 h-1 bg-violet-400 rounded-full animate-viral-bounce" style={{animationDelay: '1.5s'}} />
-        <div className="absolute top-1/3 left-1/2 w-1 h-1 bg-cyan-400 rounded-full animate-viral-bounce" style={{animationDelay: '2s'}} />
-        <div className="absolute bottom-1/3 right-1/2 w-1 h-1 bg-fuchsia-400 rounded-full animate-viral-bounce" style={{animationDelay: '2.5s'}} />
+      {/* Desktop Sidebar */}
+      <div className="hidden sm:block relative z-20">
+        <Sidebar />
       </div>
       
-      <div className="relative z-10">
-        <div className="hidden lg:flex">
-          <Sidebar />
-          <div className="flex-1 ml-64">
-            <main className="p-8">
-              <div className="premium-card rounded-3xl min-h-[calc(100vh-4rem)] p-8 interactive-hover ultra-glow">
-                <Outlet />
-              </div>
-            </main>
-          </div>
+      {/* Main Content with enhanced styling */}
+      <div className="sm:ml-64 relative z-10">
+        <div className="min-h-screen backdrop-blur-sm">
+          <Outlet />
         </div>
-        <div className="lg:hidden">
-          <MobileNav />
-          <main className="p-6 pt-24 pb-28">
-            <div className="premium-card rounded-3xl min-h-[calc(100vh-12rem)] p-6 ultra-glow">
-              <Outlet />
-            </div>
-          </main>
-        </div>
+      </div>
+      
+      {/* Mobile Navigation */}
+      <div className="sm:hidden relative z-30">
+        <MobileNav />
       </div>
     </div>
   );
