@@ -11,14 +11,23 @@ export default function AppLayout() {
   const location = useLocation();
 
   useEffect(() => {
-    console.log('AppLayout: Auth state change', { user: !!user, loading, path: location.pathname });
+    console.log('AppLayout: Auth state', { 
+      user: !!user, 
+      loading, 
+      path: location.pathname,
+      isConfigured 
+    });
     
-    if (!loading && isConfigured && !user && location.pathname !== "/") {
-      console.log('AppLayout: Redirecting to auth page');
-      navigate("/auth");
+    // Only redirect if not loading and we have a definitive auth state
+    if (!loading && isConfigured) {
+      if (!user && location.pathname !== "/" && location.pathname !== "/auth") {
+        console.log('AppLayout: Redirecting to auth page');
+        navigate("/auth");
+      }
     }
   }, [user, loading, navigate, location.pathname, isConfigured]);
 
+  // Show loading while auth is being determined
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
@@ -30,6 +39,7 @@ export default function AppLayout() {
     );
   }
 
+  // Show configuration error if Supabase is not configured
   if (!isConfigured) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">

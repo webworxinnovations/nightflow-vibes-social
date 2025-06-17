@@ -5,7 +5,6 @@ import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
 
-// Define Profile type from the Database types
 type Profile = Database['public']['Tables']['profiles']['Row'];
 
 interface AuthContextType {
@@ -38,52 +37,37 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [isConfigured] = useState(true);
 
   useEffect(() => {
-    let mounted = true;
-    
     console.log('SupabaseAuthProvider: Initializing auth state');
     
-    // Get initial session first
-    const initializeAuth = async () => {
+    // Get initial session
+    const getInitialSession = async () => {
       try {
-        console.log('SupabaseAuthProvider: Getting initial session');
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.error('SupabaseAuthProvider: Error getting session:', error);
+          console.error('Error getting session:', error);
+          setLoading(false);
+          return;
         }
-        
-        if (!mounted) return;
-        
-        console.log('SupabaseAuthProvider: Initial session:', session ? 'Found' : 'None');
-        
+
+        console.log('Initial session:', session ? 'Found' : 'None');
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
           await loadProfile(session.user.id);
-        } else {
-          setProfile(null);
         }
         
         setLoading(false);
       } catch (error) {
-        console.error('SupabaseAuthProvider: Error in initializeAuth:', error);
-        if (mounted) {
-          setSession(null);
-          setUser(null);
-          setProfile(null);
-          setLoading(false);
-        }
+        console.error('Error in getInitialSession:', error);
+        setLoading(false);
       }
     };
 
     // Set up auth state listener
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('SupabaseAuthProvider: Auth state change:', event, session ? 'Session exists' : 'No session');
-      
-      if (!mounted) return;
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state change:', event, session ? 'Session exists' : 'No session');
       
       setSession(session);
       setUser(session?.user ?? null);
@@ -94,21 +78,22 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         setProfile(null);
       }
       
-      setLoading(false);
+      if (loading) {
+        setLoading(false);
+      }
     });
 
-    // Initialize auth
-    initializeAuth();
+    // Initialize
+    getInitialSession();
 
     return () => {
-      mounted = false;
       subscription.unsubscribe();
     };
   }, []);
 
   const loadProfile = async (userId: string) => {
     try {
-      console.log('SupabaseAuthProvider: Loading profile for user:', userId);
+      console.log('Loading profile for user:', userId);
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('*')
@@ -116,24 +101,20 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         .single();
 
       if (error && error.code !== 'PGRST116') {
-        console.error('SupabaseAuthProvider: Error loading profile:', error);
+        console.error('Error loading profile:', error);
       } else {
-        console.log('SupabaseAuthProvider: Profile loaded:', profile ? 'Success' : 'Not found');
+        console.log('Profile loaded:', profile ? 'Success' : 'Not found');
         setProfile(profile);
       }
     } catch (error) {
-      console.error('SupabaseAuthProvider: Error in loadProfile:', error);
+      console.error('Error in loadProfile:', error);
     }
   };
 
   const signUp = async (email: string, password: string, username: string, fullName?: string, role?: string) => {
     setLoading(true);
     try {
-      console.log('Attempting signup with:', { email, username, fullName, role });
-      
       const redirectUrl = `${window.location.origin}/`;
-      
-      // Ensure role is a valid enum value
       const validRoles = ['dj', 'fan', 'promoter', 'venue', 'sub_promoter'];
       const userRole = role && validRoles.includes(role) ? role : 'fan';
       
@@ -150,12 +131,7 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         }
       });
 
-      console.log('Signup response:', { data, error });
-
-      if (error) {
-        console.error('Signup error:', error);
-        throw error;
-      }
+      if (error) throw error;
 
       if (data.user && !data.session) {
         toast.success('Account created successfully! Please check your email to verify.');
@@ -163,7 +139,6 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         toast.success('Account created and signed in successfully!');
       }
     } catch (error) {
-      console.error('Signup error:', error);
       if (error instanceof Error) {
         toast.error(error.message);
       } else {
@@ -225,7 +200,6 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
       if (error) throw error;
 
-      // Update local profile state
       setProfile(prev => prev ? { ...prev, ...updates } : null);
       toast.success('Profile updated successfully');
     } catch (error) {
