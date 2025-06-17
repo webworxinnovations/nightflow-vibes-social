@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { UserCard } from "@/components/cards/user-card";
 import { EventCard } from "@/components/cards/event-card";
@@ -9,7 +8,7 @@ import { users, events } from "@/lib/mock-data";
 import { Search, Filter, Plus } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { Event } from "@/hooks/useEvents";
 
 // Define filter types
@@ -52,12 +51,18 @@ const transformMockEventToEvent = (mockEvent: any): Event => ({
 });
 
 export default function Discover() {
-  const { isCreatorRole } = useAuth();
+  const { profile } = useSupabaseAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("djs");
   const [roleFilter, setRoleFilter] = useState<UserRole>('all');
   const [eventFilter, setEventFilter] = useState<EventFilter>('all');
   const [genreFilter, setGenreFilter] = useState<GenreFilter>('all');
+  
+  // Check if user has creator role (dj, promoter, venue)
+  const isCreatorRole = () => {
+    if (!profile) return false;
+    return ["dj", "promoter", "venue"].includes(profile.role);
+  };
   
   // Transform mock events to Event type
   const transformedEvents: Event[] = events.map(transformMockEventToEvent);
