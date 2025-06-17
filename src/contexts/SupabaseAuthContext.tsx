@@ -1,7 +1,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { supabase, Profile, isSupabaseConfigured } from '@/lib/supabase';
+import { supabase, Profile } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface AuthContextType {
@@ -31,15 +31,10 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isConfigured] = useState(isSupabaseConfigured());
+  // Supabase is always configured since we're using the integrated client
+  const [isConfigured] = useState(true);
 
   useEffect(() => {
-    // Only proceed if Supabase is configured
-    if (!isConfigured || !supabase) {
-      setLoading(false);
-      return;
-    }
-
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -67,11 +62,9 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     });
 
     return () => subscription.unsubscribe();
-  }, [isConfigured]);
+  }, []);
 
   const loadProfile = async (userId: string) => {
-    if (!supabase) return;
-    
     try {
       const { data: profile, error } = await supabase
         .from('profiles')
@@ -92,11 +85,6 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
   };
 
   const signUp = async (email: string, password: string, username: string, fullName?: string) => {
-    if (!supabase) {
-      toast.error('Supabase is not configured. Please connect to Supabase first.');
-      return;
-    }
-
     setLoading(true);
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -137,11 +125,6 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
   };
 
   const signIn = async (email: string, password: string) => {
-    if (!supabase) {
-      toast.error('Supabase is not configured. Please connect to Supabase first.');
-      return;
-    }
-
     setLoading(true);
     try {
       const { error } = await supabase.auth.signInWithPassword({
@@ -165,11 +148,6 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
   };
 
   const signOut = async () => {
-    if (!supabase) {
-      toast.error('Supabase is not configured. Please connect to Supabase first.');
-      return;
-    }
-
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
@@ -186,11 +164,6 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
   };
 
   const updateProfile = async (updates: Partial<Profile>) => {
-    if (!supabase) {
-      toast.error('Supabase is not configured. Please connect to Supabase first.');
-      return;
-    }
-
     if (!user) throw new Error('No user logged in');
 
     try {
