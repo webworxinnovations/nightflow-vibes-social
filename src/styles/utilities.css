@@ -1,0 +1,63 @@
+
+@layer utilities {
+  .animate-glow {
+    animation: ocean-glow 4s ease-in-out infinite alternate;
+  }
+
+  .animate-mega-glow {
+    animation: ocean-mega-glow 5s ease-in-out infinite;
+  }
+  
+  .text-glow {
+    text-shadow: 
+      0 0 12px currentColor, 
+      0 0 24px currentColor, 
+      0 0 36px currentColor,
+      0 0 48px currentColor,
+      0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+  
+  .backdrop-nightclub {
+    background: 
+      radial-gradient(circle at 15% 85%, rgba(13, 148, 136, 0.3) 0%, transparent 50%),
+      radial-gradient(circle at 85% 15%, rgba(6, 182, 212, 0.3) 0%, transparent 50%),
+      radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.25) 0%, transparent 60%);
+  }
+
+  .pulse-ring {
+    animation: ocean-pulse-ring 3s infinite;
+  }
+
+  .animate-float {
+    animation: ocean-float 10s ease-in-out infinite;
+  }
+
+  .animate-viral-bounce {
+    animation: ocean-viral-bounce 2.5s ease-in-out infinite;
+  }
+
+  .glow-on-hover {
+    transition: all 0.4s ease;
+  }
+
+  .glow-on-hover:hover {
+    box-shadow: 
+      0 0 25px rgba(13, 148, 136, 0.6),
+      0 0 50px rgba(6, 182, 212, 0.4),
+      0 0 75px rgba(59, 130, 246, 0.3);
+    transform: scale(1.03);
+  }
+
+  /* Interactive Elements */
+  .story-link {
+    @apply relative inline-block after:content-[''] after:absolute after:w-full after:scale-x-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-primary after:origin-bottom-right after:transition-transform after:duration-300 hover:after:scale-x-100 hover:after:origin-bottom-left;
+  }
+  
+  .hover-scale {
+    @apply transition-transform duration-200 hover:scale-105;
+  }
+  
+  .pulse {
+    @apply animate-[pulse_2s_cubic-bezier(0.4,0,0.6,1)_infinite];
+  }
+}
