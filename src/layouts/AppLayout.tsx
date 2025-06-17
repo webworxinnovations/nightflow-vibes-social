@@ -11,15 +11,21 @@ export default function AppLayout() {
   const location = useLocation();
 
   useEffect(() => {
+    console.log('AppLayout: Auth state change', { user: !!user, loading, path: location.pathname });
+    
     if (!loading && isConfigured && !user && location.pathname !== "/") {
+      console.log('AppLayout: Redirecting to auth page');
       navigate("/auth");
     }
   }, [user, loading, navigate, location.pathname, isConfigured]);
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-white">Loading application...</p>
+        </div>
       </div>
     );
   }

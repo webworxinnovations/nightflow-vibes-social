@@ -35,7 +35,6 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  // Supabase is always configured since we're using the integrated client
   const [isConfigured] = useState(true);
 
   useEffect(() => {
@@ -43,7 +42,42 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     
     console.log('SupabaseAuthProvider: Initializing auth state');
     
-    // Set up auth state listener first
+    // Get initial session first
+    const initializeAuth = async () => {
+      try {
+        console.log('SupabaseAuthProvider: Getting initial session');
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('SupabaseAuthProvider: Error getting session:', error);
+        }
+        
+        if (!mounted) return;
+        
+        console.log('SupabaseAuthProvider: Initial session:', session ? 'Found' : 'None');
+        
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          await loadProfile(session.user.id);
+        } else {
+          setProfile(null);
+        }
+        
+        setLoading(false);
+      } catch (error) {
+        console.error('SupabaseAuthProvider: Error in initializeAuth:', error);
+        if (mounted) {
+          setSession(null);
+          setUser(null);
+          setProfile(null);
+          setLoading(false);
+        }
+      }
+    };
+
+    // Set up auth state listener
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -60,41 +94,8 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         setProfile(null);
       }
       
-      // Always set loading to false after auth state change
       setLoading(false);
     });
-
-    // Get initial session
-    const initializeAuth = async () => {
-      try {
-        console.log('SupabaseAuthProvider: Getting initial session');
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('SupabaseAuthProvider: Error getting session:', error);
-        }
-        
-        if (!mounted) return;
-        
-        console.log('SupabaseAuthProvider: Initial session:', session ? 'Found' : 'None');
-        
-        // Only update state if there's no session from the auth state change listener
-        if (!session) {
-          setSession(null);
-          setUser(null);
-          setProfile(null);
-          setLoading(false);
-        }
-      } catch (error) {
-        console.error('SupabaseAuthProvider: Error in initializeAuth:', error);
-        if (mounted) {
-          setSession(null);
-          setUser(null);
-          setProfile(null);
-          setLoading(false);
-        }
-      }
-    };
 
     // Initialize auth
     initializeAuth();

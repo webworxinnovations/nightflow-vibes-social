@@ -17,22 +17,9 @@ export default function AuthPage() {
   const [fullName, setFullName] = useState("");
   const [role, setRole] = useState<"dj" | "fan" | "promoter" | "venue">("fan");
   const [isLoading, setIsLoading] = useState(false);
-  const [authTimeout, setAuthTimeout] = useState(false);
   
   const { signIn, signUp, user, loading } = useSupabaseAuth();
   const navigate = useNavigate();
-
-  // Add a longer timeout for the initial auth loading (30 seconds instead of 10)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (loading) {
-        console.warn('AuthPage: Auth loading timeout reached after 30 seconds');
-        setAuthTimeout(true);
-      }
-    }, 30000); // Increased to 30 seconds
-
-    return () => clearTimeout(timer);
-  }, [loading]);
 
   useEffect(() => {
     if (user && !loading) {
@@ -75,32 +62,8 @@ export default function AuthPage() {
     }
   };
 
-  // Show timeout message if auth is taking too long
-  if (authTimeout) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md bg-card/80 backdrop-blur-lg border-white/10">
-          <CardContent className="p-6 text-center">
-            <h2 className="text-xl font-semibold mb-4">Connection Issue</h2>
-            <p className="text-muted-foreground mb-4">
-              We're having trouble connecting to our authentication service.
-            </p>
-            <Button onClick={() => window.location.reload()} className="w-full mb-4">
-              Retry
-            </Button>
-            <div className="mt-4">
-              <Link to="/" className="text-sm text-muted-foreground hover:text-primary">
-                ← Back to Home
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   // Show loading spinner while auth is initializing
-  if (loading && !authTimeout) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
         <div className="text-center">
