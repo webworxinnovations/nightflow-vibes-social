@@ -28,7 +28,7 @@ class StreamingService {
     const isProduction = window.location.hostname !== 'localhost';
     
     if (isProduction) {
-      this.baseUrl = 'wss://nightflow-streaming.railway.app';
+      this.baseUrl = 'wss://nodejs-production-aa37f.up.railway.app';
     } else {
       this.baseUrl = 'ws://localhost:3001';
     }
@@ -50,11 +50,11 @@ class StreamingService {
     const isProduction = window.location.hostname !== 'localhost';
     
     const rtmpUrl = isProduction 
-      ? 'rtmp://nightflow-streaming.railway.app/live'
+      ? 'rtmp://nodejs-production-aa37f.up.railway.app/live'
       : 'rtmp://localhost:1935/live';
         
     const hlsUrl = isProduction
-      ? `https://nightflow-streaming.railway.app/live/${streamKey}/index.m3u8`
+      ? `https://nodejs-production-aa37f.up.railway.app/live/${streamKey}/index.m3u8`
       : `http://localhost:8080/live/${streamKey}/index.m3u8`;
 
     // Save stream to database with enhanced metadata
