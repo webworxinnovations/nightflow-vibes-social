@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { GlassmorphicCard } from "@/components/ui/glassmorphic-card";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Cloud, 
