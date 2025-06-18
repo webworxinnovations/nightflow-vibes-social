@@ -6,7 +6,7 @@ import { Copy } from "lucide-react";
 import { generateTicketLink } from "@/lib/mock-data";
 import { toast } from "@/components/ui/use-toast";
 import { QRCodeSVG } from "qrcode.react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { useSubPromoters } from "@/contexts/SubPromoterContext";
 
 interface SubPromoterQrCodeDialogProps {
@@ -20,7 +20,7 @@ export const SubPromoterQrCodeDialog = ({
   onOpenChange, 
   eventId 
 }: SubPromoterQrCodeDialogProps) => {
-  const { currentUser } = useAuth();
+  const { user } = useSupabaseAuth();
   const [qrValue, setQrValue] = useState("");
   const [uniqueCode, setUniqueCode] = useState("ABC123"); // Default code
   

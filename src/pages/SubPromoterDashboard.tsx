@@ -8,21 +8,21 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { BarChart3, CreditCard, QrCode, Ticket, Clock } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { useSubPromoters } from "@/contexts/SubPromoterContext";
 import { SubPromoterEventsTable } from "@/components/subpromoter/SubPromoterEventsTable";
 import { SubPromoterPerformanceChart } from "@/components/subpromoter/SubPromoterPerformanceChart";
 import { SubPromoterQrCodeDialog } from "@/components/subpromoter/SubPromoterQrCodeDialog";
 
 export default function SubPromoterDashboard() {
-  const { currentUser } = useAuth();
+  const { user, profile } = useSupabaseAuth();
   const [activeTab, setActiveTab] = useState("overview");
   const [isQrDialogOpen, setIsQrDialogOpen] = useState(false);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   
   // Mock data for sub-promoter dashboard
   const subPromoterData = {
-    name: currentUser?.name || "Sub-Promoter",
+    name: profile?.full_name || profile?.username || "Sub-Promoter",
     eventsCount: 5,
     totalTicketsSold: 47,
     totalRevenue: 1880,
@@ -123,11 +123,11 @@ export default function SubPromoterDashboard() {
           <GlassmorphicCard>
             <div className="flex flex-col items-center text-center">
               <Avatar className="h-20 w-20 mb-4">
-                <AvatarImage src={currentUser?.avatar} alt={currentUser?.name || ''} />
-                <AvatarFallback>{currentUser?.name?.charAt(0) || '?'}</AvatarFallback>
+                <AvatarImage src={profile?.avatar_url} alt={profile?.full_name || ''} />
+                <AvatarFallback>{profile?.username?.charAt(0) || '?'}</AvatarFallback>
               </Avatar>
-              <h2 className="text-xl font-semibold mb-1">{currentUser?.name || 'Sub-Promoter'}</h2>
-              <p className="text-sm text-muted-foreground mb-3">@{currentUser?.username || 'username'}</p>
+              <h2 className="text-xl font-semibold mb-1">{profile?.full_name || profile?.username || 'Sub-Promoter'}</h2>
+              <p className="text-sm text-muted-foreground mb-3">@{profile?.username || 'username'}</p>
               <Badge variant="secondary" className="mb-4">Sub-Promoter</Badge>
               
               <div className="w-full space-y-4 mt-4">

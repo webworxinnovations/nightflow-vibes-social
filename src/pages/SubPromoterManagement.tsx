@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -6,7 +7,7 @@ import { GlassmorphicCard } from "@/components/ui/glassmorphic-card";
 import { ArrowLeft, Search, UserPlus, Ticket, Download, Share } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAuth } from "@/contexts/AuthContext";
+import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { useSubPromoters } from "@/contexts/SubPromoterContext";
 import { SubPromotersList } from "@/components/promoter/SubPromotersList";
 import { SubPromoterSalesChart } from "@/components/promoter/SubPromoterSalesChart";
@@ -14,12 +15,12 @@ import { events, getEventsByPromoter } from "@/lib/mock-data";
 
 export default function SubPromoterManagement() {
   const navigate = useNavigate();
-  const { currentUser } = useAuth();
+  const { user } = useSupabaseAuth();
   const { getSubPromotersForPromoter } = useSubPromoters();
   const [selectedEventId, setSelectedEventId] = useState<string>("");
   
   // Mock promoter ID (would come from auth in a real app)
-  const promoterId = currentUser?.id || "6"; // Default to Nightlife Productions
+  const promoterId = user?.id || "6"; // Default to Nightlife Productions
   
   // Get all events for this promoter
   const promoterEvents = getEventsByPromoter(promoterId);

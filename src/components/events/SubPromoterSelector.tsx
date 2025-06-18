@@ -7,18 +7,18 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
 import { useSubPromoters } from "@/contexts/SubPromoterContext";
-import { useAuth } from "@/contexts/AuthContext";
+import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 
 interface SubPromoterSelectorProps {
   control: Control<EventFormValues>;
 }
 
 export const SubPromoterSelector = ({ control }: SubPromoterSelectorProps) => {
-  const { currentUser } = useAuth();
+  const { user } = useSupabaseAuth();
   const { subPromoters, getSubPromotersForPromoter } = useSubPromoters();
   const [selectedPromoters, setSelectedPromoters] = useState<string[]>([]);
   
-  const promoterId = currentUser?.id || "6"; // Default to mock promoter if not logged in
+  const promoterId = user?.id || "6"; // Default to mock promoter if not logged in
   
   // Get all sub-promoters for this promoter
   const mySubPromoters = getSubPromotersForPromoter(promoterId);
