@@ -2,6 +2,7 @@
 import { Outlet, useLocation } from "react-router-dom";
 import { Sidebar } from "@/components/nav/Sidebar";
 import { MobileNav } from "@/components/nav/MobileNav";
+import { Header } from "@/components/nav/Header";
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 
 export default function AppLayout() {
@@ -74,6 +75,11 @@ export default function AppLayout() {
       {/* Desktop Sidebar */}
       <div className="hidden sm:block relative z-20">
         <Sidebar />
+      </div>
+      
+      {/* Header with sign-out */}
+      <div className="sm:ml-64 relative z-30">
+        <Header />
       </div>
       
       {/* Main Content with enhanced styling */}
