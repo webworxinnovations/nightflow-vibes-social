@@ -11,7 +11,6 @@ import { EventLineupSelector } from "./EventLineupSelector";
 import { SubPromoterSelector } from "./SubPromoterSelector";
 import { users } from "@/lib/mock-data";
 
-// Define form schema
 export const eventFormSchema = z.object({
   title: z.string().min(3, {
     message: "Event title must be at least 3 characters."
