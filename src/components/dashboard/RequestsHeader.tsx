@@ -1,45 +1,37 @@
 
-import { TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Search, Cloud } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search } from "lucide-react";
+import { TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface RequestsHeaderProps {
   searchQuery: string;
-  onSearchChange: (value: string) => void;
+  onSearchChange: (query: string) => void;
 }
 
 export const RequestsHeader = ({ searchQuery, onSearchChange }: RequestsHeaderProps) => {
   return (
-    <div className="flex items-center justify-between">
-      <TabsList>
-        <TabsTrigger value="live">Live Requests</TabsTrigger>
-        <TabsTrigger value="history">Request History</TabsTrigger>
-        <TabsTrigger value="stream">Live Stream</TabsTrigger>
-      </TabsList>
-      
-      <div className="flex items-center gap-2">
-        <div className="relative w-64">
-          <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
-            placeholder="Search requests..."
-            className="pl-8"
+            placeholder="Search requests, songs, or fans..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
+            className="pl-10"
           />
         </div>
-        <Select defaultValue="all">
-          <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="Filter" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Requests</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="accepted">Accepted</SelectItem>
-            <SelectItem value="declined">Declined</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
+      
+      <TabsList className="grid w-full grid-cols-4">
+        <TabsTrigger value="live">Live Requests</TabsTrigger>
+        <TabsTrigger value="accepted">Accepted</TabsTrigger>
+        <TabsTrigger value="stream">Live Stream</TabsTrigger>
+        <TabsTrigger value="deployment" className="flex items-center gap-2">
+          <Cloud className="h-4 w-4" />
+          Deploy
+        </TabsTrigger>
+      </TabsList>
     </div>
   );
 };

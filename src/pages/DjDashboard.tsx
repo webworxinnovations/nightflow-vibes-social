@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { LiveStreamManager } from "@/components/dj/LiveStreamManager";
+import { DeploymentGuide } from "@/components/dj/DeploymentGuide";
 import { DjStatsCards } from "@/components/dashboard/DjStatsCards";
 import { RequestsHeader } from "@/components/dashboard/RequestsHeader";
 import { RequestsTabsContent } from "@/components/dashboard/RequestsTabsContent";
@@ -67,6 +68,10 @@ export default function DjDashboard() {
             
             <TabsContent value="stream" className="mt-4">
               <LiveStreamManager />
+            </TabsContent>
+
+            <TabsContent value="deployment" className="mt-4">
+              <DeploymentGuide />
             </TabsContent>
           </Tabs>
         </div>

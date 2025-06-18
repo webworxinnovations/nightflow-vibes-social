@@ -24,36 +24,40 @@ class StreamingService {
   private statusCallbacks: Set<(status: StreamStatus) => void> = new Set();
 
   constructor() {
-    // Use environment variables for production, localhost for development
-    this.baseUrl = import.meta.env.VITE_STREAMING_SERVER_URL || 
-      (import.meta.env.MODE === 'production' 
-        ? 'wss://stream.nightflow.app' 
-        : 'ws://localhost:3001');
+    // Use production URLs for deployed app, localhost for development
+    const isProduction = window.location.hostname !== 'localhost';
+    
+    if (isProduction) {
+      this.baseUrl = 'wss://nightflow-streaming.railway.app';
+    } else {
+      this.baseUrl = 'ws://localhost:3001';
+    }
   }
 
   async generateStreamKey(): Promise<StreamConfig> {
-    // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {
       throw new Error('You must be logged in to generate a stream key');
     }
 
-    // Generate unique stream key
-    const streamKey = `nf_${user.id.slice(0, 8)}_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+    // Generate secure stream key with user identifier
+    const timestamp = Date.now();
+    const randomString = Math.random().toString(36).substring(2, 10);
+    const userPrefix = user.id.slice(0, 8);
+    const streamKey = `nf_${userPrefix}_${timestamp}_${randomString}`;
     
-    const rtmpUrl = import.meta.env.VITE_RTMP_URL || 
-      (import.meta.env.MODE === 'production' 
-        ? 'rtmp://ingest.nightflow.app/live' 
-        : 'rtmp://localhost:1935/live');
+    const isProduction = window.location.hostname !== 'localhost';
+    
+    const rtmpUrl = isProduction 
+      ? 'rtmp://nightflow-streaming.railway.app/live'
+      : 'rtmp://localhost:1935/live';
         
-    const hlsUrl = import.meta.env.VITE_HLS_BASE_URL 
-      ? `${import.meta.env.VITE_HLS_BASE_URL}/live/${streamKey}/index.m3u8`
-      : (import.meta.env.MODE === 'production'
-        ? `https://stream.nightflow.app/live/${streamKey}/index.m3u8`
-        : `http://localhost:8080/live/${streamKey}/index.m3u8`);
+    const hlsUrl = isProduction
+      ? `https://nightflow-streaming.railway.app/live/${streamKey}/index.m3u8`
+      : `http://localhost:8080/live/${streamKey}/index.m3u8`;
 
-    // Save stream to database
+    // Save stream to database with enhanced metadata
     const { data: stream, error } = await supabase
       .from('streams')
       .insert({
@@ -62,14 +66,19 @@ class StreamingService {
         rtmp_url: rtmpUrl,
         hls_url: hlsUrl,
         status: 'offline',
-        is_active: true
+        is_active: true,
+        viewer_count: 0,
+        duration: 0,
+        bitrate: 0,
+        resolution: '',
+        created_at: new Date().toISOString()
       })
       .select()
       .single();
 
     if (error) {
       console.error('Failed to save stream to database:', error);
-      throw new Error('Failed to generate stream key');
+      throw new Error('Failed to generate stream key. Please try again.');
     }
 
     const config: StreamConfig = {
@@ -80,14 +89,13 @@ class StreamingService {
       viewerCount: 0
     };
 
-    // Also store in localStorage for backward compatibility
+    // Store in localStorage as backup
     localStorage.setItem('nightflow_stream_config', JSON.stringify(config));
     
     return config;
   }
 
   async getCurrentStream(): Promise<StreamConfig | null> {
-    // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {
@@ -105,15 +113,6 @@ class StreamingService {
       .single();
 
     if (error || !stream) {
-      // Fallback to localStorage for existing users
-      const saved = localStorage.getItem('nightflow_stream_config');
-      if (saved) {
-        try {
-          return JSON.parse(saved);
-        } catch {
-          return null;
-        }
-      }
       return null;
     }
 
@@ -122,12 +121,11 @@ class StreamingService {
       streamKey: stream.stream_key,
       hlsUrl: stream.hls_url,
       isLive: stream.status === 'live',
-      viewerCount: stream.viewer_count
+      viewerCount: stream.viewer_count || 0
     };
   }
 
   async revokeStreamKey(): Promise<void> {
-    // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {
@@ -137,7 +135,11 @@ class StreamingService {
     // Deactivate current stream in database
     const { error } = await supabase
       .from('streams')
-      .update({ is_active: false })
+      .update({ 
+        is_active: false,
+        status: 'offline',
+        updated_at: new Date().toISOString()
+      })
       .eq('user_id', user.id)
       .eq('is_active', true);
 
@@ -145,17 +147,14 @@ class StreamingService {
       console.error('Failed to revoke stream in database:', error);
     }
 
-    // Clear localStorage
     localStorage.removeItem('nightflow_stream_config');
-    
-    // Disconnect websocket
     this.disconnect();
   }
 
   async getStreamStatus(streamKey: string): Promise<StreamStatus> {
     try {
-      // First try to get from streaming server
-      const response = await fetch(`${this.baseUrl.replace('ws', 'http')}/api/stream/${streamKey}/status`);
+      const httpUrl = this.baseUrl.replace('ws://', 'http://').replace('wss://', 'https://');
+      const response = await fetch(`${httpUrl}/api/stream/${streamKey}/status`);
       
       if (response.ok) {
         const status = await response.json();
@@ -176,7 +175,7 @@ class StreamingService {
         return status;
       }
     } catch (error) {
-      console.warn('Failed to get stream status from server:', error);
+      console.warn('Streaming server not available:', error);
     }
 
     // Fallback: get status from database
@@ -189,14 +188,13 @@ class StreamingService {
     if (stream) {
       return {
         isLive: stream.status === 'live',
-        viewerCount: stream.viewer_count,
-        duration: stream.duration,
-        bitrate: stream.bitrate,
-        resolution: stream.resolution
+        viewerCount: stream.viewer_count || 0,
+        duration: stream.duration || 0,
+        bitrate: stream.bitrate || 0,
+        resolution: stream.resolution || ''
       };
     }
 
-    // Final fallback: mock data for development
     return {
       isLive: false,
       viewerCount: 0,
@@ -216,7 +214,7 @@ class StreamingService {
       this.websocket = new WebSocket(wsUrl);
       
       this.websocket.onopen = () => {
-        console.log('Connected to streaming WebSocket');
+        console.log('Connected to Nightflow streaming WebSocket');
       };
       
       this.websocket.onmessage = (event) => {
@@ -238,7 +236,7 @@ class StreamingService {
             .eq('stream_key', streamKey)
             .then(({ error }) => {
               if (error) {
-                console.warn('Failed to update stream status in database:', error);
+                console.warn('Failed to update stream status:', error);
               }
             });
         } catch (error) {
@@ -247,15 +245,15 @@ class StreamingService {
       };
 
       this.websocket.onerror = (error) => {
-        console.warn('WebSocket connection failed, falling back to polling:', error);
+        console.warn('WebSocket connection failed, using database polling:', error);
         this.startPolling(streamKey);
       };
 
       this.websocket.onclose = () => {
-        console.log('WebSocket connection closed');
+        console.log('Streaming WebSocket connection closed');
       };
     } catch (error) {
-      console.warn('WebSocket not available, using polling:', error);
+      console.warn('WebSocket not available, using database polling:', error);
       this.startPolling(streamKey);
     }
   }
@@ -270,7 +268,6 @@ class StreamingService {
       }
     }, 5000);
 
-    // Store interval for cleanup
     (this as any).pollingInterval = interval;
   }
 
@@ -305,20 +302,34 @@ class StreamingService {
         .eq('is_active', true)
         .single();
 
-      if (!error && stream) {
-        return true;
-      }
-
-      // Fallback: check with streaming server
-      const response = await fetch(`${this.baseUrl.replace('ws', 'http')}/api/stream/${streamKey}/validate`);
-      return response.ok;
+      return !error && !!stream;
     } catch (error) {
       console.warn('Stream validation failed:', error);
       return false;
+    }
+  }
+
+  // New method to get streaming server status
+  async getServerStatus(): Promise<{ available: boolean; url: string }> {
+    try {
+      const httpUrl = this.baseUrl.replace('ws://', 'http://').replace('wss://', 'https://');
+      const response = await fetch(`${httpUrl}/health`, { 
+        method: 'GET',
+        signal: AbortSignal.timeout(5000) // 5 second timeout
+      });
+      
+      return {
+        available: response.ok,
+        url: httpUrl
+      };
+    } catch (error) {
+      return {
+        available: false,
+        url: this.baseUrl.replace('ws://', 'http://').replace('wss://', 'https://')
+      };
     }
   }
 }
 
 export const streamingService = new StreamingService();
 export type { StreamConfig, StreamStatus };
-
