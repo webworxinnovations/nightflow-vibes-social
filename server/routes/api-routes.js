@@ -24,8 +24,9 @@ function createApiRoutes(serverConfig, streamManager) {
     });
   });
 
-  // RAILWAY CRITICAL: Health check endpoint
+  // RAILWAY CRITICAL: Health check endpoint - FIXED ROUTE
   router.get('/health', (req, res) => {
+    console.log('🩺 Health check requested');
     res.status(200).json({ 
       status: 'healthy', 
       timestamp: new Date().toISOString(),
@@ -48,6 +49,16 @@ function createApiRoutes(serverConfig, streamManager) {
         baseUrl: `https://${req.get('host')}/live/`
       },
       memory: process.memoryUsage()
+    });
+  });
+
+  // Alternative health check route for compatibility
+  router.get('/api/health', (req, res) => {
+    console.log('🩺 API Health check requested');
+    res.status(200).json({ 
+      status: 'healthy', 
+      message: 'Streaming server is running',
+      timestamp: new Date().toISOString()
     });
   });
 
@@ -135,9 +146,11 @@ function setupErrorHandling(app) {
 
   // 404 handler
   app.use('*', (req, res) => {
+    console.log(`❌ 404 - Route not found: ${req.originalUrl}`);
     res.status(404).json({ 
       error: 'Route not found',
       path: req.originalUrl,
+      available_routes: ['/', '/health', '/api/health', '/api/streams/active'],
       timestamp: new Date().toISOString()
     });
   });
