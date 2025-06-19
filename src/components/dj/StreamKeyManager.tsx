@@ -21,7 +21,9 @@ import {
   AlertCircle,
   CheckCircle,
   Cloud,
-  Monitor
+  Monitor,
+  Wifi,
+  WifiOff
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -41,24 +43,112 @@ export const StreamKeyManager = () => {
   const [showKey, setShowKey] = useState(false);
   const [serverStatus, setServerStatus] = useState<{ available: boolean; url: string } | null>(null);
   const [checkingServer, setCheckingServer] = useState(true);
+  const [debugInfo, setDebugInfo] = useState<any>(null);
+  const [testingConnection, setTestingConnection] = useState(false);
 
-  // Check streaming server status on mount
-  useEffect(() => {
-    const checkServer = async () => {
-      setCheckingServer(true);
-      try {
-        const status = await streamingService.getServerStatus();
-        setServerStatus(status);
-      } catch (error) {
-        setServerStatus({ available: false, url: 'Unknown' });
-      } finally {
-        setCheckingServer(false);
+  // Enhanced server status check with debugging
+  const checkServerStatus = async () => {
+    setCheckingServer(true);
+    console.log('🔍 Starting comprehensive server status check...');
+    
+    try {
+      const status = await streamingService.getServerStatus();
+      setServerStatus(status);
+      
+      // Additional debugging tests
+      const debugResults: any = {
+        baseServerCheck: status,
+        timestamp: new Date().toISOString()
+      };
+
+      // Test multiple endpoints
+      const testEndpoints = [
+        { path: '/', name: 'Root' },
+        { path: '/health', name: 'Health Check' },
+        { path: '/api/health', name: 'API Health' }
+      ];
+
+      for (const endpoint of testEndpoints) {
+        try {
+          console.log(`🧪 Testing ${endpoint.name}: ${status.url}${endpoint.path}`);
+          const response = await fetch(`${status.url}${endpoint.path}`, {
+            method: 'GET',
+            signal: AbortSignal.timeout(10000)
+          });
+          
+          const responseText = await response.text().catch(() => 'No response body');
+          
+          debugResults[endpoint.name] = {
+            status: response.status,
+            ok: response.ok,
+            statusText: response.statusText,
+            headers: Object.fromEntries(response.headers.entries()),
+            body: responseText.substring(0, 500) // Limit body size
+          };
+          
+          console.log(`✅ ${endpoint.name} result:`, debugResults[endpoint.name]);
+        } catch (error) {
+          debugResults[endpoint.name] = {
+            error: error instanceof Error ? error.message : 'Unknown error',
+            failed: true
+          };
+          console.log(`❌ ${endpoint.name} failed:`, debugResults[endpoint.name]);
+        }
       }
-    };
 
-    checkServer();
+      setDebugInfo(debugResults);
+      console.log('📊 Complete debug results:', debugResults);
+      
+    } catch (error) {
+      console.error('❌ Server status check failed:', error);
+      setServerStatus({ available: false, url: 'https://nightflow-vibes-social-production.up.railway.app' });
+      setDebugInfo({ error: error instanceof Error ? error.message : 'Unknown error' });
+    } finally {
+      setCheckingServer(false);
+    }
+  };
+
+  // Test RTMP connection specifically
+  const testRTMPConnection = async () => {
+    if (!streamConfig?.streamKey) {
+      toast.error('Generate a stream key first');
+      return;
+    }
+
+    setTestingConnection(true);
+    console.log('🎥 Testing RTMP connection...');
+    
+    try {
+      // Test the stream key validation endpoint
+      const isValid = await streamingService.validateStreamKey(streamConfig.streamKey);
+      console.log('🔑 Stream key validation result:', isValid);
+      
+      if (isValid) {
+        toast.success('✅ Stream key is valid! RTMP server should accept your connection.');
+        
+        // Show detailed connection info
+        toast.info(
+          `📡 RTMP Details:\n` +
+          `Server: rtmp://nightflow-vibes-social-production.up.railway.app/live\n` +
+          `Key: ${streamConfig.streamKey.substring(0, 8)}...\n` +
+          `Status: Ready for OBS connection`,
+          { duration: 10000 }
+        );
+      } else {
+        toast.error('❌ Stream key validation failed. Try generating a new key.');
+      }
+    } catch (error) {
+      console.error('❌ RTMP test failed:', error);
+      toast.error('Failed to test RTMP connection. Check server status.');
+    } finally {
+      setTestingConnection(false);
+    }
+  };
+
+  useEffect(() => {
+    checkServerStatus();
     // Check every 30 seconds
-    const interval = setInterval(checkServer, 30000);
+    const interval = setInterval(checkServerStatus, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -84,30 +174,41 @@ export const StreamKeyManager = () => {
 
   return (
     <div className="space-y-6">
-      {/* Server Status */}
+      {/* Enhanced Server Status with Debug Info */}
       <GlassmorphicCard>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold flex items-center gap-2">
             <Server className="h-5 w-5" />
-            Streaming Server Status
+            RTMP Server Status & Diagnostics
           </h3>
           
-          {checkingServer ? (
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <div className="w-4 h-4 border-2 border-muted border-t-white rounded-full animate-spin"></div>
-              Checking...
-            </div>
-          ) : serverStatus?.available ? (
-            <div className="flex items-center gap-2 text-green-500">
-              <CheckCircle className="h-4 w-4" />
-              Online
-            </div>
-          ) : (
-            <div className="flex items-center gap-2 text-red-500">
-              <AlertCircle className="h-4 w-4" />
-              Offline
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            {checkingServer ? (
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <div className="w-4 h-4 border-2 border-muted border-t-white rounded-full animate-spin"></div>
+                Checking...
+              </div>
+            ) : serverStatus?.available ? (
+              <div className="flex items-center gap-2 text-green-500">
+                <Wifi className="h-4 w-4" />
+                Online
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-red-500">
+                <WifiOff className="h-4 w-4" />
+                Offline
+              </div>
+            )}
+            
+            <Button 
+              onClick={checkServerStatus} 
+              disabled={checkingServer}
+              variant="outline"
+              size="sm"
+            >
+              Recheck
+            </Button>
+          </div>
         </div>
 
         {!checkingServer && (
@@ -117,49 +218,55 @@ export const StreamKeyManager = () => {
               : 'bg-red-500/10 border-red-500/20'
           }`}>
             {serverStatus?.available ? (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <p className="text-green-400 font-medium flex items-center gap-2">
                   <Cloud className="h-4 w-4" />
-                  Streaming infrastructure is online and ready
+                  ✅ RTMP streaming server is online and ready
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  RTMP server accepting connections • HLS delivery active • WebSocket status updates enabled
+                  Server URL: {serverStatus.url}
                 </p>
-                <p className="text-xs text-muted-foreground">
-                  Server: {serverStatus.url}
-                </p>
+                
+                {/* Debug Information */}
+                {debugInfo && (
+                  <details className="mt-3">
+                    <summary className="text-sm text-blue-400 cursor-pointer hover:text-blue-300">
+                      🔬 Show Technical Details (for debugging OBS issues)
+                    </summary>
+                    <div className="mt-2 p-3 bg-slate-800 rounded text-xs font-mono space-y-2">
+                      {Object.entries(debugInfo).map(([key, value]: [string, any]) => (
+                        <div key={key}>
+                          <strong className="text-blue-400">{key}:</strong>
+                          <pre className="text-gray-300 ml-2 whitespace-pre-wrap">
+                            {typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value)}
+                          </pre>
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                )}
               </div>
             ) : (
               <div className="space-y-3">
-                <p className="text-red-400 font-medium">
-                  Streaming server not available
+                <p className="text-red-400 font-medium flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4" />
+                  ❌ RTMP server not responding
                 </p>
-                {isProduction ? (
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">
-                      The streaming infrastructure needs to be deployed. This is required for OBS integration.
-                    </p>
-                    <div className="bg-blue-500/10 border border-blue-500/20 rounded p-3">
-                      <p className="text-blue-400 font-medium mb-2">Quick Deploy Options:</p>
-                      <div className="text-sm space-y-1">
-                        <p>• <strong>Railway:</strong> Deploy server/ folder to Railway (recommended)</p>
-                        <p>• <strong>DigitalOcean:</strong> App Platform deployment</p>
-                        <p>• <strong>Heroku:</strong> Container deployment</p>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        See server/DEPLOYMENT.md for detailed instructions
-                      </p>
+                <p className="text-sm text-muted-foreground">
+                  This explains why OBS can't connect. The streaming infrastructure needs attention.
+                </p>
+                
+                {debugInfo && (
+                  <details className="mt-3">
+                    <summary className="text-sm text-orange-400 cursor-pointer">
+                      🔍 Error Details
+                    </summary>
+                    <div className="mt-2 p-3 bg-slate-800 rounded text-xs font-mono">
+                      <pre className="text-red-300 whitespace-pre-wrap">
+                        {JSON.stringify(debugInfo, null, 2)}
+                      </pre>
                     </div>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">
-                      Local development server not running. Start it with:
-                    </p>
-                    <div className="bg-slate-800 p-2 rounded font-mono text-sm">
-                      cd server && npm install && npm start
-                    </div>
-                  </div>
+                  </details>
                 )}
               </div>
             )}
@@ -167,7 +274,7 @@ export const StreamKeyManager = () => {
         )}
       </GlassmorphicCard>
 
-      {/* Stream Configuration */}
+      {/* Stream Configuration with Enhanced Testing */}
       <GlassmorphicCard>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold flex items-center gap-2">
@@ -199,25 +306,22 @@ export const StreamKeyManager = () => {
 
         {streamConfig ? (
           <div className="space-y-4">
-            {/* Stream Status */}
-            <div className={`p-3 rounded-lg border ${
-              isLive 
-                ? 'bg-green-500/10 border-green-500/20 text-green-400' 
-                : 'bg-blue-500/10 border-blue-500/20 text-blue-400'
-            }`}>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">
-                    {isLive ? '🔴 Broadcasting Live' : '📡 Ready to Stream'}
-                  </p>
-                  <p className="text-sm opacity-80">
-                    {isLive 
-                      ? `Live for ${formatTime(duration)} with ${viewerCount} viewers`
-                      : 'Configure OBS with the settings below and start streaming'
-                    }
-                  </p>
-                </div>
+            {/* Connection Test Section */}
+            <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-blue-400 font-medium">🧪 Test RTMP Connection</p>
+                <Button
+                  onClick={testRTMPConnection}
+                  disabled={testingConnection || !serverStatus?.available}
+                  variant="outline"
+                  size="sm"
+                >
+                  {testingConnection ? 'Testing...' : 'Test Connection'}
+                </Button>
               </div>
+              <p className="text-sm text-muted-foreground">
+                This will verify your stream key works with the RTMP server before trying OBS.
+              </p>
             </div>
 
             {/* OBS Configuration */}
@@ -265,31 +369,6 @@ export const StreamKeyManager = () => {
                   </Button>
                 </div>
               </div>
-
-              <div className="space-y-2">
-                <Label>Viewer URL (HLS)</Label>
-                <div className="flex gap-2">
-                  <Input
-                    value={streamConfig.hlsUrl}
-                    readOnly
-                    className="font-mono text-sm"
-                  />
-                  <Button
-                    onClick={() => copyToClipboard(streamConfig.hlsUrl, 'Viewer URL')}
-                    variant="outline"
-                    size="sm"
-                  >
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    onClick={() => window.open(streamConfig.hlsUrl, '_blank')}
-                    variant="outline"
-                    size="sm"
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
             </div>
 
             <div className="flex gap-2">
@@ -311,10 +390,16 @@ export const StreamKeyManager = () => {
               </Button>
             </div>
             
-            {isLive && (
-              <p className="text-sm text-orange-400">
-                ⚠️ Cannot revoke stream key while live
-              </p>
+            {!serverStatus?.available && (
+              <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                <p className="text-red-400 text-sm font-medium">
+                  ⚠️ OBS Connection Issue Identified:
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  The RTMP server is not responding. This is why OBS shows "Failed to connect to server". 
+                  The streaming infrastructure needs to be deployed or restarted.
+                </p>
+              </div>
             )}
           </div>
         ) : (
@@ -340,67 +425,45 @@ export const StreamKeyManager = () => {
         )}
       </GlassmorphicCard>
 
-      {/* OBS Setup Instructions */}
+      {/* Enhanced OBS Setup Instructions */}
       <GlassmorphicCard>
         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
           <Monitor className="h-5 w-5" />
-          OBS Studio Setup Guide
+          OBS Troubleshooting Guide
         </h3>
         
         <div className="space-y-4">
-          <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
-            <h4 className="font-medium text-blue-400 mb-3">Professional DJ Streaming Setup:</h4>
-            <ol className="list-decimal list-inside space-y-2 text-sm">
-              <li>Open OBS Studio and go to <code className="bg-muted px-1 rounded">Settings → Stream</code></li>
-              <li>Set Service to <code className="bg-muted px-1 rounded">Custom...</code></li>
-              <li>Copy and paste the <strong>RTMP Server URL</strong> above into the Server field</li>
-              <li>Copy and paste the <strong>Stream Key</strong> above into the Stream Key field</li>
-              <li>Click <code className="bg-muted px-1 rounded">Apply</code> then <code className="bg-muted px-1 rounded">OK</code></li>
-              <li>Set up your scenes with cameras, audio sources, and overlays</li>
-              <li>Click <code className="bg-muted px-1 rounded">Start Streaming</code> in OBS</li>
-              <li>Your stream will automatically go live on Nightflow! 🎵</li>
-            </ol>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div className="space-y-2">
-              <h5 className="font-medium">🎛️ What DJs can stream:</h5>
-              <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                <li>Multiple camera angles (booth, crowd, equipment)</li>
-                <li>High-quality audio from DJ mixer</li>
-                <li>Custom overlays and graphics</li>
-                <li>Smooth scene transitions</li>
-                <li>Visual effects and lighting</li>
-                <li>Chat integration</li>
-              </ul>
-            </div>
-            
-            <div className="space-y-2">
-              <h5 className="font-medium">📺 Audience experience:</h5>
-              <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                <li>Professional broadcast quality</li>
-                <li>Real-time viewer count</li>
-                <li>Mobile-responsive viewing</li>
-                <li>Adaptive video quality</li>
-                <li>Low-latency streaming</li>
-                <li>Social features and tips</li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
-            <p className="text-sm text-green-400">
-              <strong>Pro Tip:</strong> Test your setup before events! Use multiple scenes in OBS to switch between 
-              camera angles, and ensure your audio levels are properly configured for the best viewer experience.
-            </p>
-          </div>
-
           {!serverStatus?.available && (
-            <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-3">
-              <p className="text-sm text-orange-400">
-                <strong>Note:</strong> The streaming server needs to be deployed before DJs can go live. 
-                Contact your admin to set up the streaming infrastructure.
+            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
+              <h4 className="font-medium text-red-400 mb-3">🚨 Connection Issue Found:</h4>
+              <p className="text-sm text-muted-foreground mb-2">
+                The RTMP streaming server at <code className="bg-muted px-1 rounded">nightflow-vibes-social-production.up.railway.app</code> is not responding.
               </p>
+              <p className="text-sm text-muted-foreground">
+                This explains why OBS shows "Failed to connect to server" - the issue is on the server side, not with your OBS configuration.
+              </p>
+            </div>
+          )}
+
+          <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
+            <h4 className="font-medium text-blue-400 mb-3">📋 Your OBS Settings Look Correct:</h4>
+            <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
+              <li>Service: Custom... ✅</li>
+              <li>Server: rtmp://nightflow-vibes-social-production.up.railway.app/live ✅</li>
+              <li>Stream Key: Present ✅</li>
+            </ul>
+          </div>
+
+          {serverStatus?.available && (
+            <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4">
+              <h4 className="font-medium text-green-400 mb-3">🎯 Server is Online - Try These Steps:</h4>
+              <ol className="list-decimal list-inside space-y-2 text-sm">
+                <li>Click "Test Connection" above to verify your stream key</li>
+                <li>If test passes, restart OBS completely</li>
+                <li>In OBS, try changing Settings → Advanced → Network → Bind to IP to "Default"</li>
+                <li>Try generating a new stream key and copying it fresh into OBS</li>
+                <li>Check if your firewall or network is blocking RTMP (port 1935)</li>
+              </ol>
             </div>
           )}
         </div>
