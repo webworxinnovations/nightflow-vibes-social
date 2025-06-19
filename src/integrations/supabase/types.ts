@@ -9,6 +9,54 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      chat_messages: {
+        Row: {
+          created_at: string
+          id: string
+          is_tip: boolean | null
+          message: string
+          stream_id: string
+          tip_amount: number | null
+          user_id: string | null
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_tip?: boolean | null
+          message: string
+          stream_id: string
+          tip_amount?: number | null
+          user_id?: string | null
+          username: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_tip?: boolean | null
+          message?: string
+          stream_id?: string
+          tip_amount?: number | null
+          user_id?: string | null
+          username?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_stream_id_fkey"
+            columns: ["stream_id"]
+            isOneToOne: false
+            referencedRelation: "streams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_lineup: {
         Row: {
           created_at: string
@@ -172,10 +220,15 @@ export type Database = {
           full_name: string | null
           id: string
           instagram: string | null
+          last_streamed_at: string | null
           location: string | null
           role: Database["public"]["Enums"]["user_role"]
           soundcloud: string | null
           spotify: string | null
+          streaming_description: string | null
+          streaming_title: string | null
+          total_streams: number | null
+          total_tips_received: number | null
           updated_at: string
           username: string
           verified: boolean
@@ -190,10 +243,15 @@ export type Database = {
           full_name?: string | null
           id: string
           instagram?: string | null
+          last_streamed_at?: string | null
           location?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           soundcloud?: string | null
           spotify?: string | null
+          streaming_description?: string | null
+          streaming_title?: string | null
+          total_streams?: number | null
+          total_tips_received?: number | null
           updated_at?: string
           username: string
           verified?: boolean
@@ -208,10 +266,15 @@ export type Database = {
           full_name?: string | null
           id?: string
           instagram?: string | null
+          last_streamed_at?: string | null
           location?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           soundcloud?: string | null
           spotify?: string | null
+          streaming_description?: string | null
+          streaming_title?: string | null
+          total_streams?: number | null
+          total_tips_received?: number | null
           updated_at?: string
           username?: string
           verified?: boolean
@@ -280,6 +343,48 @@ export type Database = {
           {
             foreignKeyName: "song_requests_fan_id_fkey"
             columns: ["fan_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stream_viewers: {
+        Row: {
+          anonymous_id: string | null
+          id: string
+          joined_at: string
+          left_at: string | null
+          stream_id: string
+          viewer_id: string | null
+        }
+        Insert: {
+          anonymous_id?: string | null
+          id?: string
+          joined_at?: string
+          left_at?: string | null
+          stream_id: string
+          viewer_id?: string | null
+        }
+        Update: {
+          anonymous_id?: string | null
+          id?: string
+          joined_at?: string
+          left_at?: string | null
+          stream_id?: string
+          viewer_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stream_viewers_stream_id_fkey"
+            columns: ["stream_id"]
+            isOneToOne: false
+            referencedRelation: "streams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stream_viewers_viewer_id_fkey"
+            columns: ["viewer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -463,6 +568,61 @@ export type Database = {
           {
             foreignKeyName: "ticket_sales_sub_promoter_id_fkey"
             columns: ["sub_promoter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tips: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          message: string | null
+          recipient_id: string
+          song_request: string | null
+          stream_id: string | null
+          tipper_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          message?: string | null
+          recipient_id: string
+          song_request?: string | null
+          stream_id?: string | null
+          tipper_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          message?: string | null
+          recipient_id?: string
+          song_request?: string | null
+          stream_id?: string | null
+          tipper_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tips_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tips_stream_id_fkey"
+            columns: ["stream_id"]
+            isOneToOne: false
+            referencedRelation: "streams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tips_tipper_id_fkey"
+            columns: ["tipper_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
