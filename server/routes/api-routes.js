@@ -1,173 +1,170 @@
 
 const express = require('express');
-const path = require('path');
 
 function createApiRoutes(serverConfig, streamManager) {
   const router = express.Router();
-  
-  console.log('🔧 Setting up API routes...');
-  
-  // RAILWAY CRITICAL: Root endpoint must respond quickly
-  router.get('/', (req, res) => {
-    console.log('📍 Root endpoint accessed');
-    res.status(200).json({ 
-      message: 'Nightflow Streaming Server with RTMP',
-      status: 'running',
-      timestamp: new Date().toISOString(),
-      version: '2.0.2',
-      ports: {
-        api: serverConfig.RAILWAY_PORT,
-        rtmp: serverConfig.RTMP_PORT,
-        hls: serverConfig.HLS_PORT
-      },
-      env: process.env.NODE_ENV || 'development',
-      features: ['RTMP Ingestion', 'HLS Output', 'Stream Management'],
-      rtmpUrl: `rtmp://${req.get('host')}/live`,
-      testUrl: `https://${req.get('host')}/health`
-    });
-  });
 
-  // RAILWAY CRITICAL: Health check endpoint - FIXED ROUTE
+  // Health check endpoint
   router.get('/health', (req, res) => {
-    console.log('🩺 Health check requested');
-    res.status(200).json({ 
-      status: 'healthy', 
+    res.json({
+      status: 'healthy',
       timestamp: new Date().toISOString(),
-      activeStreams: streamManager.getStreamCount(),
+      server: 'nightflow-streaming-server',
+      version: '2.0.3',
       uptime: Math.floor(process.uptime()),
-      version: '2.0.2',
+      streams: {
+        active: streamManager.getStreamCount(),
+        total: streamManager.getAllStreams().length
+      },
       ports: {
         api: serverConfig.RAILWAY_PORT,
         rtmp: serverConfig.RTMP_PORT,
         hls: serverConfig.HLS_PORT
-      },
-      rtmp: {
-        port: serverConfig.RTMP_PORT,
-        active: true,
-        url: `rtmp://${req.get('host')}/live`
-      },
-      hls: {
-        port: serverConfig.HLS_PORT,
-        mediaRoot: serverConfig.mediaRoot,
-        baseUrl: `https://${req.get('host')}/live/`
-      },
-      memory: process.memoryUsage()
+      }
     });
   });
 
-  // Alternative health check route for compatibility
+  // Root endpoint
+  router.get('/', (req, res) => {
+    res.json({
+      message: 'Nightflow Streaming Server',
+      version: '2.0.3',
+      endpoints: {
+        health: '/health',
+        api: '/api/*',
+        websocket: '/ws/stream/:streamKey',
+        rtmp: `rtmp://nightflow-vibes-social-production.up.railway.app/live`,
+        hls: '/live/:streamKey/index.m3u8'
+      }
+    });
+  });
+
+  // API routes
   router.get('/api/health', (req, res) => {
-    console.log('🩺 API Health check requested');
-    res.status(200).json({ 
-      status: 'healthy', 
-      message: 'Streaming server is running',
-      timestamp: new Date().toISOString()
+    res.json({
+      status: 'ok',
+      streaming_server: 'online',
+      rtmp_ready: true,
+      hls_ready: true,
+      websocket_ready: true
     });
   });
 
-  // Stream status endpoint
+  // Get stream status
   router.get('/api/stream/:streamKey/status', (req, res) => {
     const { streamKey } = req.params;
-    
     const stream = streamManager.getStream(streamKey);
     
-    if (stream) {
-      const duration = Math.floor((Date.now() - stream.startTime) / 1000);
-      const status = {
-        isLive: true,
-        viewerCount: stream.viewerCount || Math.floor(Math.random() * 50) + 1,
-        duration,
-        bitrate: 2500,
-        resolution: '1920x1080',
-        timestamp: new Date().toISOString()
-      };
-      res.status(200).json(status);
-    } else {
-      const status = {
+    if (!stream) {
+      return res.json({
         isLive: false,
         viewerCount: 0,
         duration: 0,
         bitrate: 0,
         resolution: '',
         timestamp: new Date().toISOString()
-      };
-      res.status(200).json(status);
+      });
     }
-  });
 
-  // Stream validation endpoint
-  router.get('/api/stream/:streamKey/validate', (req, res) => {
-    const { streamKey } = req.params;
+    const duration = Math.floor((Date.now() - stream.startTime) / 1000);
     
-    if (streamKey && streamKey.startsWith('nf_')) {
-      res.status(200).json({ 
-        valid: true, 
-        message: 'Stream key is valid',
-        rtmpUrl: `rtmp://${req.get('host')}/live`,
-        hlsUrl: `http://${req.get('host')}:${serverConfig.HLS_PORT}/live/${streamKey}/index.m3u8`,
-        timestamp: new Date().toISOString()
-      });
-    } else {
-      res.status(400).json({ 
-        valid: false, 
-        error: 'Invalid stream key format',
-        timestamp: new Date().toISOString()
-      });
-    }
-  });
-
-  // List active streams
-  router.get('/api/streams/active', (req, res) => {
-    const streams = streamManager.getAllStreams().map(stream => ({
-      streamKey: stream.streamKey,
-      duration: Math.floor((Date.now() - stream.startTime) / 1000),
+    res.json({
+      isLive: stream.isLive,
       viewerCount: stream.viewerCount,
-      hlsUrl: `http://${req.get('host')}:${serverConfig.HLS_PORT}/live/${stream.streamKey}/index.m3u8`
-    }));
-    
-    res.status(200).json({
-      count: streams.length,
-      streams
+      duration: duration,
+      bitrate: 2500, // Default bitrate
+      resolution: '1920x1080', // Default resolution
+      timestamp: new Date().toISOString()
     });
   });
 
-  // Serve HLS files
-  router.use('/live', express.static(path.join(serverConfig.mediaRoot, 'live')));
+  // Validate stream key
+  router.get('/api/stream/:streamKey/validate', (req, res) => {
+    const { streamKey } = req.params;
+    
+    // Basic validation - stream key should start with 'nf_'
+    const isValid = streamKey && streamKey.startsWith('nf_') && streamKey.length > 10;
+    
+    res.json({
+      valid: isValid,
+      streamKey: streamKey
+    });
+  });
 
-  console.log('✅ API routes configured successfully');
-  console.log('📋 Available routes:');
-  console.log('   GET /');
-  console.log('   GET /health');
-  console.log('   GET /api/health');
-  console.log('   GET /api/stream/:streamKey/status');
-  console.log('   GET /api/stream/:streamKey/validate');
-  console.log('   GET /api/streams/active');
-  console.log('   GET /live/*');
+  // Get all active streams
+  router.get('/api/streams', (req, res) => {
+    const streams = streamManager.getAllStreams().map(stream => {
+      const duration = Math.floor((Date.now() - stream.startTime) / 1000);
+      return {
+        streamKey: stream.streamKey,
+        isLive: stream.isLive,
+        viewerCount: stream.viewerCount,
+        duration: duration,
+        startTime: stream.startTime
+      };
+    });
+    
+    res.json({
+      streams: streams,
+      total: streams.length
+    });
+  });
 
   return router;
 }
 
-function setupErrorHandling(app) {
-  // Error handling
-  app.use((err, req, res, next) => {
-    console.error('❌ Server error:', err);
-    res.status(500).json({ 
-      error: 'Internal server error',
-      timestamp: new Date().toISOString()
-    });
+function setupMiddleware(app) {
+  // CORS middleware
+  app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    
+    if (req.method === 'OPTIONS') {
+      res.sendStatus(200);
+    } else {
+      next();
+    }
   });
 
-  // 404 handler - MUST BE LAST
+  // JSON parsing
+  app.use(express.json());
+  
+  // Request logging
+  app.use((req, res, next) => {
+    console.log(`${req.method} ${req.path} - ${req.ip}`);
+    next();
+  });
+}
+
+function setupErrorHandling(app) {
+  // 404 handler for unmatched routes
   app.use('*', (req, res) => {
-    console.log(`❌ 404 - Route not found: ${req.method} ${req.originalUrl}`);
-    res.status(404).json({ 
+    console.log(`404 - Route not found: ${req.method} ${req.originalUrl}`);
+    res.status(404).json({
       error: 'Route not found',
       method: req.method,
       path: req.originalUrl,
-      available_routes: ['/', '/health', '/api/health', '/api/streams/active'],
-      timestamp: new Date().toISOString()
+      available_endpoints: [
+        'GET /',
+        'GET /health',
+        'GET /api/health',
+        'GET /api/stream/:streamKey/status',
+        'GET /api/stream/:streamKey/validate',
+        'GET /api/streams',
+        'WS /ws/stream/:streamKey'
+      ]
+    });
+  });
+
+  // Error handler
+  app.use((err, req, res, next) => {
+    console.error('Express error:', err);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: err.message
     });
   });
 }
 
-module.exports = { createApiRoutes, setupErrorHandling };
+module.exports = { createApiRoutes, setupMiddleware, setupErrorHandling };
