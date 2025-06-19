@@ -1,3 +1,4 @@
+
 // Railway-optimized Node.js streaming server with RTMP support
 const express = require('express');
 const ServerConfig = require('./config/server-config');
@@ -8,6 +9,10 @@ const MediaServerService = require('./services/media-server');
 
 const app = express();
 
+console.log('🚀 Starting Nightflow Streaming Server v2.0.2...');
+console.log('📍 Environment:', process.env.NODE_ENV || 'development');
+console.log('📍 PORT from env:', process.env.PORT);
+
 // Initialize components with error handling
 let serverConfig;
 let streamManager;
@@ -16,6 +21,9 @@ try {
   serverConfig = new ServerConfig();
   streamManager = new StreamManager();
   console.log('✅ Server components initialized successfully');
+  console.log(`📍 API PORT: ${serverConfig.RAILWAY_PORT} (Railway Assigned)`);
+  console.log(`📍 RTMP PORT: ${serverConfig.RTMP_PORT} (Standard)`);
+  console.log(`📍 HLS PORT: ${serverConfig.HLS_PORT} (Non-conflicting)`);
 } catch (error) {
   console.error('❌ Failed to initialize server components:', error);
   process.exit(1);
@@ -30,10 +38,25 @@ try {
   process.exit(1);
 }
 
-// Setup routes
+// Setup routes with detailed logging
 try {
-  app.use('/', createApiRoutes(serverConfig, streamManager));
+  const apiRoutes = createApiRoutes(serverConfig, streamManager);
+  app.use('/', apiRoutes);
   console.log('✅ Routes setup complete');
+  
+  // Log all registered routes for debugging
+  console.log('📋 Registered routes:');
+  app._router.stack.forEach((middleware) => {
+    if (middleware.route) {
+      console.log(`   ${Object.keys(middleware.route.methods)} ${middleware.route.path}`);
+    } else if (middleware.name === 'router') {
+      middleware.handle.stack.forEach((handler) => {
+        if (handler.route) {
+          console.log(`   ${Object.keys(handler.route.methods)} ${handler.route.path}`);
+        }
+      });
+    }
+  });
 } catch (error) {
   console.error('❌ Failed to setup routes:', error);
   process.exit(1);
@@ -42,19 +65,20 @@ try {
 // Setup error handling
 setupErrorHandling(app);
 
-console.log('🚀 Starting Nightflow Streaming Server v1.0.5...');
-console.log(`📍 API PORT: ${serverConfig.RAILWAY_PORT} (Railway Assigned)`);
-console.log(`📍 RTMP PORT: ${serverConfig.RTMP_PORT} (Standard)`);
-console.log(`📍 HLS PORT: ${serverConfig.HLS_PORT} (Non-conflicting)`);
 console.log(`🌍 NODE_ENV: ${process.env.NODE_ENV || 'development'}`);
 console.log(`📁 Media Root: ${serverConfig.mediaRoot}`);
 
 // Start Express server FIRST on Railway's assigned port
 const server = app.listen(serverConfig.RAILWAY_PORT, '0.0.0.0', () => {
   console.log(`✅ API SERVER RUNNING ON PORT ${serverConfig.RAILWAY_PORT}`);
-  console.log(`🔗 Health: https://nodejs-production-aa37f.up.railway.app/health`);
-  console.log(`🎥 RTMP: rtmp://nodejs-production-aa37f.up.railway.app/live`);
-  console.log(`📺 HLS Base: https://nodejs-production-aa37f.up.railway.app/live/`);
+  console.log(`🔗 Health: https://nightflow-vibes-social-production.up.railway.app/health`);
+  console.log(`🔗 API Health: https://nightflow-vibes-social-production.up.railway.app/api/health`);
+  console.log(`🔗 Root: https://nightflow-vibes-social-production.up.railway.app/`);
+  console.log(`🎥 RTMP: rtmp://nightflow-vibes-social-production.up.railway.app/live`);
+  console.log(`📺 HLS Base: https://nightflow-vibes-social-production.up.railway.app/live/`);
+  
+  // Test internal route registration
+  console.log('🧪 Testing internal route access...');
   
   // Start Node Media Server AFTER API server is running
   try {
