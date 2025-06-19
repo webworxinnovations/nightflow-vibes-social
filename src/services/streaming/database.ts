@@ -1,9 +1,11 @@
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import type { StreamConfig } from '@/types/streaming';
 
 export class StreamingDatabase {
   static async saveStream(config: StreamConfig, userId: string): Promise<void> {
+    console.log('💾 Saving stream to database:', { streamKey: config.streamKey, userId });
+    
     // First, deactivate any existing streams for this user
     const { error: deactivateError } = await supabase
       .from('streams')
@@ -16,7 +18,7 @@ export class StreamingDatabase {
       .eq('is_active', true);
 
     if (deactivateError) {
-      console.error('Failed to deactivate existing streams:', deactivateError);
+      console.error('⚠️ Failed to deactivate existing streams:', deactivateError);
     }
 
     // Then insert the new stream
@@ -29,17 +31,21 @@ export class StreamingDatabase {
         hls_url: config.hlsUrl,
         status: 'offline',
         is_active: true,
-        title: 'Live Stream',
-        description: 'DJ Live Stream'
+        title: 'Live DJ Stream',
+        description: 'Live DJ Performance'
       });
 
     if (error) {
-      console.error('Failed to save stream to database:', error);
+      console.error('❌ Failed to save stream to database:', error);
       throw new Error('Failed to save stream configuration');
     }
+
+    console.log('✅ Stream saved to database successfully');
   }
 
   static async getCurrentStream(userId: string): Promise<StreamConfig | null> {
+    console.log('🔍 Getting current stream for user:', userId);
+    
     const { data, error } = await supabase
       .from('streams')
       .select('*')
@@ -50,14 +56,16 @@ export class StreamingDatabase {
       .maybeSingle();
 
     if (error) {
-      console.error('Failed to get current stream:', error);
+      console.error('❌ Failed to get current stream:', error);
       return null;
     }
 
     if (!data) {
+      console.log('📭 No active stream found');
       return null;
     }
 
+    console.log('✅ Current stream found:', data.stream_key);
     return {
       rtmpUrl: data.rtmp_url,
       streamKey: data.stream_key,
@@ -68,6 +76,8 @@ export class StreamingDatabase {
   }
 
   static async revokeStream(userId: string): Promise<void> {
+    console.log('🗑️ Revoking stream for user:', userId);
+    
     const { error } = await supabase
       .from('streams')
       .update({
@@ -79,12 +89,16 @@ export class StreamingDatabase {
       .eq('is_active', true);
 
     if (error) {
-      console.error('Failed to revoke stream:', error);
+      console.error('❌ Failed to revoke stream:', error);
       throw new Error('Failed to revoke stream');
     }
+
+    console.log('✅ Stream revoked successfully');
   }
 
   static async validateStreamKey(streamKey: string): Promise<boolean> {
+    console.log('🔑 Validating stream key in database:', streamKey);
+    
     const { data, error } = await supabase
       .from('streams')
       .select('id')
@@ -93,9 +107,39 @@ export class StreamingDatabase {
       .maybeSingle();
 
     if (error) {
+      console.error('❌ Database validation error:', error);
       return false;
     }
 
-    return !!data;
+    const isValid = !!data;
+    console.log('✅ Database validation result:', isValid);
+    return isValid;
+  }
+
+  static async updateStreamStatus(streamKey: string, status: 'live' | 'offline'): Promise<void> {
+    console.log('📊 Updating stream status:', { streamKey, status });
+    
+    const updateData: any = {
+      status,
+      updated_at: new Date().toISOString()
+    };
+
+    if (status === 'live') {
+      updateData.started_at = new Date().toISOString();
+    } else {
+      updateData.ended_at = new Date().toISOString();
+    }
+
+    const { error } = await supabase
+      .from('streams')
+      .update(updateData)
+      .eq('stream_key', streamKey)
+      .eq('is_active', true);
+
+    if (error) {
+      console.error('❌ Failed to update stream status:', error);
+    } else {
+      console.log('✅ Stream status updated successfully');
+    }
   }
 }

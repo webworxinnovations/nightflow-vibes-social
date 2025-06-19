@@ -20,7 +20,7 @@ export class StreamingConfig {
   }
   
   static getRtmpUrl(): string {
-    // RTMP uses the same domain but port 1935 (Railway handles port mapping)
+    // RTMP uses the same domain - Railway handles port mapping internally
     const baseUrl = this.getBaseUrl();
     const domain = baseUrl.replace('https://', '').replace('http://', '');
     const rtmpUrl = `rtmp://${domain}/live`;
