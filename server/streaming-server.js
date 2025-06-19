@@ -1,14 +1,17 @@
+
 // Railway-optimized Node.js streaming server with RTMP support
 const express = require('express');
+const http = require('http');
 const ServerConfig = require('./config/server-config');
 const { setupMiddleware } = require('./middleware/express-middleware');
 const { createApiRoutes, setupErrorHandling } = require('./routes/api-routes');
+const { setupWebSocketRoutes } = require('./routes/websocket-routes');
 const StreamManager = require('./utils/stream-manager');
 const MediaServerService = require('./services/media-server');
 
 const app = express();
 
-console.log('🚀 Starting Nightflow Streaming Server v2.0.2...');
+console.log('🚀 Starting Nightflow Streaming Server v2.0.3...');
 console.log('📍 Environment:', process.env.NODE_ENV || 'development');
 console.log('📍 PORT from env:', process.env.PORT);
 
@@ -55,20 +58,34 @@ try {
   process.exit(1);
 }
 
-// Setup error handling (404 handler must be LAST)
+// Setup error handling (404 handler must be LAST for HTTP routes)
 setupErrorHandling(app);
 
 console.log(`🌍 NODE_ENV: ${process.env.NODE_ENV || 'development'}`);
 console.log(`📁 Media Root: ${serverConfig.mediaRoot}`);
 
-// Start Express server FIRST on Railway's assigned port
-const server = app.listen(serverConfig.RAILWAY_PORT, '0.0.0.0', () => {
-  console.log(`✅ API SERVER RUNNING ON PORT ${serverConfig.RAILWAY_PORT}`);
+// Create HTTP server (needed for WebSocket upgrade)
+const server = http.createServer(app);
+
+// Setup WebSocket routes BEFORE starting the server
+let wsHandler;
+try {
+  wsHandler = setupWebSocketRoutes(server, streamManager);
+  console.log('✅ WebSocket routes setup complete');
+} catch (error) {
+  console.error('❌ Failed to setup WebSocket routes:', error);
+  process.exit(1);
+}
+
+// Start HTTP server with WebSocket support
+server.listen(serverConfig.RAILWAY_PORT, '0.0.0.0', () => {
+  console.log(`✅ API + WebSocket SERVER RUNNING ON PORT ${serverConfig.RAILWAY_PORT}`);
   console.log(`🔗 Health: https://nightflow-vibes-social-production.up.railway.app/health`);
   console.log(`🔗 API Health: https://nightflow-vibes-social-production.up.railway.app/api/health`);
   console.log(`🔗 Root: https://nightflow-vibes-social-production.up.railway.app/`);
   console.log(`🎥 RTMP: rtmp://nightflow-vibes-social-production.up.railway.app/live`);
   console.log(`📺 HLS Base: https://nightflow-vibes-social-production.up.railway.app/live/`);
+  console.log(`🔌 WebSocket: wss://nightflow-vibes-social-production.up.railway.app/ws/stream/:streamKey`);
   
   // Test that routes are working by making an internal request
   console.log('🧪 Server is ready to handle requests');
@@ -80,6 +97,7 @@ const server = app.listen(serverConfig.RAILWAY_PORT, '0.0.0.0', () => {
     
     // Store reference for graceful shutdown
     app.locals.mediaServer = mediaServer;
+    app.locals.wsHandler = wsHandler;
     console.log('✅ Media server started successfully');
   } catch (error) {
     console.error('❌ Failed to start media server:', error);
@@ -113,6 +131,13 @@ const gracefulShutdown = (signal) => {
   // Clear keep alive interval
   if (keepAliveInterval) {
     clearInterval(keepAliveInterval);
+  }
+  
+  // Close WebSocket server
+  if (app.locals.wsHandler && app.locals.wsHandler.wss) {
+    app.locals.wsHandler.wss.close(() => {
+      console.log('✅ WebSocket server closed');
+    });
   }
   
   // Stop media server
