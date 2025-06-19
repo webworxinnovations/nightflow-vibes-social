@@ -31,7 +31,7 @@ app.get('/', (req, res) => {
     message: 'Nightflow Streaming Server',
     status: 'running',
     timestamp: new Date().toISOString(),
-    version: '1.0.0',
+    version: '1.0.1',
     environment: process.env.NODE_ENV || 'production',
     port: process.env.PORT || 'not set',
     url: `https://nodejs-production-aa37f.up.railway.app`
@@ -49,7 +49,7 @@ app.get('/health', (req, res) => {
     memory: process.memoryUsage(),
     env: 'railway',
     port: process.env.PORT || 'not set',
-    version: '1.0.0'
+    version: '1.0.1'
   });
 });
 
