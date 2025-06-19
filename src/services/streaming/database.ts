@@ -4,9 +4,25 @@ import type { StreamConfig } from '@/types/streaming';
 
 export class StreamingDatabase {
   static async saveStream(config: StreamConfig, userId: string): Promise<void> {
+    // First, deactivate any existing streams for this user
+    const { error: deactivateError } = await supabase
+      .from('streams')
+      .update({
+        is_active: false,
+        status: 'offline',
+        ended_at: new Date().toISOString()
+      })
+      .eq('user_id', userId)
+      .eq('is_active', true);
+
+    if (deactivateError) {
+      console.error('Failed to deactivate existing streams:', deactivateError);
+    }
+
+    // Then insert the new stream
     const { error } = await supabase
       .from('streams')
-      .upsert({
+      .insert({
         user_id: userId,
         stream_key: config.streamKey,
         rtmp_url: config.rtmpUrl,
@@ -15,8 +31,6 @@ export class StreamingDatabase {
         is_active: true,
         title: 'Live Stream',
         description: 'DJ Live Stream'
-      }, {
-        onConflict: 'user_id'
       });
 
     if (error) {
@@ -31,14 +45,16 @@ export class StreamingDatabase {
       .select('*')
       .eq('user_id', userId)
       .eq('is_active', true)
-      .single();
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
     if (error) {
-      if (error.code === 'PGRST116') {
-        // No stream found
-        return null;
-      }
       console.error('Failed to get current stream:', error);
+      return null;
+    }
+
+    if (!data) {
       return null;
     }
 
@@ -59,7 +75,8 @@ export class StreamingDatabase {
         status: 'offline',
         ended_at: new Date().toISOString()
       })
-      .eq('user_id', userId);
+      .eq('user_id', userId)
+      .eq('is_active', true);
 
     if (error) {
       console.error('Failed to revoke stream:', error);
@@ -73,7 +90,7 @@ export class StreamingDatabase {
       .select('id')
       .eq('stream_key', streamKey)
       .eq('is_active', true)
-      .single();
+      .maybeSingle();
 
     if (error) {
       return false;
