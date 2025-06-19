@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useOBSWebSocket } from "@/hooks/useOBSWebSocket";
+import { useStreamKey } from "@/hooks/useStreamKey";
 
 interface OBSIntegrationProps {
   cameras: Array<{ id: string; name: string; position: string }>;
@@ -38,22 +39,26 @@ export const OBSIntegration = ({ cameras, onCameraSwitch }: OBSIntegrationProps)
     refreshScenes
   } = useOBSWebSocket();
 
+  const { streamData, generateStreamKey } = useStreamKey();
+
   const [obsHost, setObsHost] = useState("localhost");
   const [obsPort, setObsPort] = useState("4455");
   const [obsPassword, setObsPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [streamKey, setStreamKey] = useState("");
   const [autoSync, setAutoSync] = useState(true);
 
-  const generateStreamKey = () => {
-    const key = `nf_${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
-    setStreamKey(key);
-    toast.success("Stream key generated!");
+  const copyStreamKey = () => {
+    if (streamData.streamKey) {
+      navigator.clipboard.writeText(streamData.streamKey);
+      toast.success("Stream key copied to clipboard!");
+    } else {
+      toast.error("No stream key available. Generate one first!");
+    }
   };
 
-  const copyStreamKey = () => {
-    navigator.clipboard.writeText(streamKey);
-    toast.success("Stream key copied to clipboard!");
+  const copyRtmpUrl = () => {
+    navigator.clipboard.writeText(streamData.rtmpUrl);
+    toast.success("RTMP URL copied to clipboard!");
   };
 
   const handleConnect = async () => {
@@ -232,47 +237,70 @@ export const OBSIntegration = ({ cameras, onCameraSwitch }: OBSIntegrationProps)
         )}
       </GlassmorphicCard>
 
-      {/* Stream Key Management */}
+      {/* Stream Configuration */}
       <GlassmorphicCard>
-        <h3 className="text-lg font-semibold mb-4">Stream Key Management</h3>
+        <h3 className="text-lg font-semibold mb-4">Night Flow Stream Configuration</h3>
         
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label>Night Flow Stream Key</Label>
+            <Label>RTMP Server URL</Label>
             <div className="flex gap-2">
               <Input
-                value={streamKey}
+                value={streamData.rtmpUrl}
+                readOnly
+                className="font-mono text-sm"
+              />
+              <Button
+                onClick={copyRtmpUrl}
+                variant="outline"
+                size="sm"
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Stream Key</Label>
+            <div className="flex gap-2">
+              <Input
+                value={streamData.streamKey || "Generate a stream key first"}
                 readOnly
                 placeholder="Click 'Generate' to create a stream key"
                 className="font-mono text-sm"
+                type={streamData.streamKey ? "password" : "text"}
               />
               <Button
                 onClick={copyStreamKey}
                 variant="outline"
                 size="sm"
-                disabled={!streamKey}
+                disabled={!streamData.streamKey}
               >
                 <Copy className="h-4 w-4" />
               </Button>
             </div>
           </div>
           
-          <Button 
-            onClick={generateStreamKey}
-            variant="outline"
-            className="w-full"
-          >
-            Generate New Stream Key
-          </Button>
+          {!streamData.streamKey && (
+            <Button 
+              onClick={generateStreamKey}
+              variant="default"
+              className="w-full"
+            >
+              Generate Stream Key
+            </Button>
+          )}
           
-          <div className="text-sm text-muted-foreground">
-            <p className="mb-2">To use with OBS:</p>
+          <div className="text-sm text-muted-foreground p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+            <p className="mb-2 font-medium">OBS Setup Instructions:</p>
             <ol className="list-decimal list-inside space-y-1 ml-2">
-              <li>Copy the stream key above</li>
+              <li>Copy the RTMP URL and Stream Key above</li>
               <li>In OBS, go to Settings → Stream</li>
               <li>Set Service to "Custom..."</li>
-              <li>Set Server to: <code className="bg-muted px-1 rounded">rtmp://stream.nightflow.app/live</code></li>
-              <li>Paste the stream key</li>
+              <li>Paste the RTMP URL in the "Server" field</li>
+              <li>Paste the Stream Key in the "Stream Key" field</li>
+              <li>Click "Apply" and "OK"</li>
+              <li>Click "Start Streaming" in OBS</li>
             </ol>
           </div>
         </div>
