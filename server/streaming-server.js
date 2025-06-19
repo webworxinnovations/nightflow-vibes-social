@@ -1,3 +1,4 @@
+
 // Node.js streaming server setup
 // Run this with: node server/streaming-server.js
 
@@ -37,82 +38,26 @@ app.get('/', (req, res) => {
   });
 });
 
+// Use environment variable for port, with Railway's default
+const API_PORT = process.env.PORT || 3001;
+const RTMP_PORT = process.env.RTMP_PORT || 1935;
+const HTTP_PORT = process.env.HTTP_PORT || 8080;
+
 // Media server configuration
 const config = {
   rtmp: {
-    port: 1935,
+    port: RTMP_PORT,
     chunk_size: 60000,
     gop_cache: true,
     ping: 30,
     ping_timeout: 60
   },
   http: {
-    port: 8080,
+    port: HTTP_PORT,
     mediaroot: './media',
     allow_origin: '*'
-  },
-  relay: {
-    ffmpeg: '/usr/local/bin/ffmpeg',
-    tasks: [
-      {
-        app: 'live',
-        mode: 'push',
-        edge: 'rtmp://127.0.0.1/hls'
-      }
-    ]
   }
 };
-
-const nms = new NodeMediaServer(config);
-
-// Stream event handlers
-nms.on('prePublish', (id, StreamPath, args) => {
-  console.log('[NodeEvent on prePublish]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
-  
-  // Extract stream key from path
-  const streamKey = StreamPath.split('/').pop();
-  
-  // Validate stream key (basic validation for demo)
-  if (!streamKey || !streamKey.startsWith('nf_')) {
-    console.log('Invalid stream key, rejecting stream');
-    return false;
-  }
-  
-  // Store stream info
-  activeStreams.set(streamKey, {
-    id,
-    streamPath: StreamPath,
-    startTime: Date.now(),
-    viewerCount: 0
-  });
-  
-  console.log(`Stream started: ${streamKey}`);
-});
-
-nms.on('donePublish', (id, StreamPath, args) => {
-  console.log('[NodeEvent on donePublish]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
-  
-  const streamKey = StreamPath.split('/').pop();
-  activeStreams.delete(streamKey);
-  
-  // Notify WebSocket clients
-  if (streamClients.has(streamKey)) {
-    const clients = streamClients.get(streamKey);
-    clients.forEach(ws => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({
-          isLive: false,
-          viewerCount: 0,
-          duration: 0,
-          bitrate: 0,
-          resolution: ''
-        }));
-      }
-    });
-  }
-  
-  console.log(`Stream ended: ${streamKey}`);
-});
 
 // API routes
 app.get('/api/stream/:streamKey/status', (req, res) => {
@@ -150,8 +95,10 @@ app.get('/api/stream/:streamKey/validate', (req, res) => {
   }
 });
 
-// WebSocket server for real-time updates
+// Create HTTP server first
 const server = require('http').createServer(app);
+
+// WebSocket server for real-time updates
 const wss = new WebSocket.Server({ server });
 
 wss.on('connection', (ws, req) => {
@@ -189,6 +136,77 @@ wss.on('connection', (ws, req) => {
   }
 });
 
+// Start the HTTP/WebSocket server first
+server.listen(API_PORT, () => {
+  console.log(`API server running on port ${API_PORT}`);
+});
+
+// Only start media server if not in Railway environment or if explicitly enabled
+if (process.env.ENABLE_MEDIA_SERVER !== 'false') {
+  try {
+    const nms = new NodeMediaServer(config);
+
+    // Stream event handlers
+    nms.on('prePublish', (id, StreamPath, args) => {
+      console.log('[NodeEvent on prePublish]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
+      
+      // Extract stream key from path
+      const streamKey = StreamPath.split('/').pop();
+      
+      // Validate stream key (basic validation for demo)
+      if (!streamKey || !streamKey.startsWith('nf_')) {
+        console.log('Invalid stream key, rejecting stream');
+        return false;
+      }
+      
+      // Store stream info
+      activeStreams.set(streamKey, {
+        id,
+        streamPath: StreamPath,
+        startTime: Date.now(),
+        viewerCount: 0
+      });
+      
+      console.log(`Stream started: ${streamKey}`);
+    });
+
+    nms.on('donePublish', (id, StreamPath, args) => {
+      console.log('[NodeEvent on donePublish]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
+      
+      const streamKey = StreamPath.split('/').pop();
+      activeStreams.delete(streamKey);
+      
+      // Notify WebSocket clients
+      if (streamClients.has(streamKey)) {
+        const clients = streamClients.get(streamKey);
+        clients.forEach(ws => {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({
+              isLive: false,
+              viewerCount: 0,
+              duration: 0,
+              bitrate: 0,
+              resolution: ''
+            }));
+          }
+        });
+      }
+      
+      console.log(`Stream ended: ${streamKey}`);
+    });
+
+    nms.run();
+    console.log('Node Media Server started');
+    console.log(`RTMP server running on port ${RTMP_PORT}`);
+    console.log(`HTTP server running on port ${HTTP_PORT}`);
+  } catch (error) {
+    console.error('Failed to start Node Media Server:', error);
+    console.log('Continuing with API server only...');
+  }
+} else {
+  console.log('Media server disabled for this environment');
+}
+
 // Periodic status updates
 setInterval(() => {
   activeStreams.forEach((stream, streamKey) => {
@@ -216,13 +234,11 @@ setInterval(() => {
   });
 }, 2000);
 
-// Start servers
-const API_PORT = 3001;
-server.listen(API_PORT, () => {
-  console.log(`API server running on port ${API_PORT}`);
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, shutting down gracefully');
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
 });
-
-nms.run();
-console.log('Node Media Server started');
-console.log('RTMP server running on port 1935');
-console.log('HTTP server running on port 8080');
