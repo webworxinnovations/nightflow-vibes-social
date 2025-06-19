@@ -31,7 +31,7 @@ app.get('/', (req, res) => {
     message: 'Nightflow Streaming Server',
     status: 'running',
     timestamp: new Date().toISOString(),
-    version: '1.0.1',
+    version: '1.0.2',
     environment: process.env.NODE_ENV || 'production',
     port: process.env.PORT || 'not set',
     url: `https://nodejs-production-aa37f.up.railway.app`
@@ -49,7 +49,7 @@ app.get('/health', (req, res) => {
     memory: process.memoryUsage(),
     env: 'railway',
     port: process.env.PORT || 'not set',
-    version: '1.0.1'
+    version: '1.0.2'
   });
 });
 
@@ -182,15 +182,15 @@ app.use('*', (req, res) => {
 });
 
 // RAILWAY CRITICAL FIX: Ensure proper port binding
-const PORT = parseInt(process.env.PORT) || 3000;
+const PORT = process.env.PORT || 3000;
 
 // RAILWAY CRITICAL: Must bind to 0.0.0.0 for Railway's load balancer to reach it
 const HOST = '0.0.0.0';
 
 console.log('=== RAILWAY DEPLOYMENT START ===');
 console.log('Railway PORT environment:', process.env.PORT);
-console.log('Parsed PORT (integer):', PORT);
-console.log('HOST binding:', HOST);
+console.log('Binding to HOST:', HOST);
+console.log('Binding to PORT:', PORT);
 console.log('Node.js version:', process.version);
 console.log('Working directory:', process.cwd());
 console.log('================================');
