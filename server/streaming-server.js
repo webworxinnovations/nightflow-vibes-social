@@ -17,7 +17,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Add request logging
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path} - Port: ${process.env.PORT}`);
   next();
 });
 
@@ -32,7 +32,9 @@ app.get('/', (req, res) => {
     status: 'running',
     timestamp: new Date().toISOString(),
     version: '1.0.0',
-    environment: process.env.NODE_ENV || 'production'
+    environment: process.env.NODE_ENV || 'production',
+    port: process.env.PORT || 'not set',
+    url: `https://nodejs-production-aa37f.up.railway.app`
   });
 });
 
@@ -46,7 +48,7 @@ app.get('/health', (req, res) => {
     uptime: Math.floor(process.uptime()),
     memory: process.memoryUsage(),
     env: 'railway',
-    port: process.env.PORT || 3001,
+    port: process.env.PORT || 'not set',
     version: '1.0.0'
   });
 });
@@ -147,12 +149,16 @@ app.post('/api/stream/:streamKey/stop', (req, res) => {
 
 // Test endpoint for debugging
 app.get('/test', (req, res) => {
-  console.log('Test endpoint hit');
+  console.log('Test endpoint hit - Environment check:');
+  console.log('PORT:', process.env.PORT);
+  console.log('NODE_ENV:', process.env.NODE_ENV);
+  
   res.status(200).json({
     message: 'Server is working!',
     timestamp: new Date().toISOString(),
-    headers: req.headers,
-    port: process.env.PORT || 3001
+    port: process.env.PORT || 'not set',
+    environment: process.env.NODE_ENV || 'not set',
+    allEnvVars: Object.keys(process.env).filter(key => key.includes('PORT') || key.includes('NODE'))
   });
 });
 
@@ -175,16 +181,32 @@ app.use('*', (req, res) => {
   });
 });
 
-// Use Railway's PORT or fallback
-const PORT = process.env.PORT || 3001;
+// CRITICAL FIX: Use Railway's PORT environment variable
+const PORT = process.env.PORT || 3000;
 const HOST = '0.0.0.0'; // Important for Railway
+
+console.log('=== STARTING SERVER ===');
+console.log('Environment PORT:', process.env.PORT);
+console.log('Using PORT:', PORT);
+console.log('Using HOST:', HOST);
 
 // Start server
 const server = app.listen(PORT, HOST, () => {
-  console.log(`🚀 Nightflow Streaming Server running on ${HOST}:${PORT}`);
-  console.log(`📍 Health check: http://${HOST}:${PORT}/health`);
+  console.log(`🚀 Nightflow Streaming Server SUCCESSFULLY started!`);
+  console.log(`📍 Server running on ${HOST}:${PORT}`);
+  console.log(`🌐 External URL: https://nodejs-production-aa37f.up.railway.app`);
+  console.log(`📊 Health check: https://nodejs-production-aa37f.up.railway.app/health`);
+  console.log(`🔧 Test endpoint: https://nodejs-production-aa37f.up.railway.app/test`);
   console.log(`🌐 Environment: ${process.env.NODE_ENV || 'production'}`);
-  console.log(`📊 Memory usage:`, process.memoryUsage());
+});
+
+// Enhanced error handling for server startup
+server.on('error', (error) => {
+  console.error('❌ SERVER STARTUP ERROR:', error);
+  if (error.code === 'EADDRINUSE') {
+    console.error(`Port ${PORT} is already in use`);
+  }
+  process.exit(1);
 });
 
 // Graceful shutdown
@@ -201,16 +223,16 @@ process.on('SIGINT', () => shutdown('SIGINT'));
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (err) => {
-  console.error('Uncaught Exception:', err);
+  console.error('❌ Uncaught Exception:', err);
   process.exit(1);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
   process.exit(1);
 });
 
 // Keep alive ping
 setInterval(() => {
-  console.log(`Server alive - Uptime: ${Math.floor(process.uptime())}s - Active streams: ${activeStreams.size}`);
+  console.log(`✅ Server alive - Uptime: ${Math.floor(process.uptime())}s - Active streams: ${activeStreams.size} - Port: ${PORT}`);
 }, 60000); // Every minute
