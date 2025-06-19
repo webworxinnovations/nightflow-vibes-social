@@ -27,12 +27,17 @@ if (!fs.existsSync(mediaRoot)) {
   fs.mkdirSync(mediaRoot, { recursive: true });
 }
 
-// RAILWAY CRITICAL: Use different ports to avoid conflicts
+// RAILWAY CRITICAL: Use Railway's assigned port for API, different ports for media services
 const RAILWAY_PORT = process.env.PORT || 3000;
-const RTMP_PORT = process.env.RTMP_PORT || 1935;
-const HLS_PORT = process.env.HLS_PORT || 8080;
+const RTMP_PORT = 1935; // Standard RTMP port
+const HLS_PORT = 8888; // Different port to avoid conflicts
 
-// RTMP and HLS configuration with Railway-specific ports
+console.log(`🔧 Port Configuration:`);
+console.log(`   - Railway API Port: ${RAILWAY_PORT}`);
+console.log(`   - RTMP Port: ${RTMP_PORT}`);
+console.log(`   - HLS Port: ${HLS_PORT}`);
+
+// RTMP and HLS configuration with non-conflicting ports
 const config = {
   rtmp: {
     port: RTMP_PORT,
@@ -52,7 +57,7 @@ const config = {
       {
         app: 'live',
         mode: 'push',
-        edge: 'rtmp://127.0.0.1:1935/hls'
+        edge: `rtmp://127.0.0.1:${RTMP_PORT}/hls`
       }
     ]
   }
@@ -112,7 +117,7 @@ app.get('/', (req, res) => {
     message: 'Nightflow Streaming Server with RTMP',
     status: 'running',
     timestamp: new Date().toISOString(),
-    version: '2.0.1',
+    version: '2.0.2',
     ports: {
       api: RAILWAY_PORT,
       rtmp: RTMP_PORT,
@@ -132,19 +137,19 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString(),
     activeStreams: activeStreams.size,
     uptime: Math.floor(process.uptime()),
-    version: '2.0.1',
+    version: '2.0.2',
     ports: {
       api: RAILWAY_PORT,
       rtmp: RTMP_PORT,
       hls: HLS_PORT
     },
     rtmp: {
-      port: config.rtmp.port,
+      port: RTMP_PORT,
       active: true,
       url: `rtmp://${req.get('host')}/live`
     },
     hls: {
-      port: config.http.port,
+      port: HLS_PORT,
       mediaRoot: mediaRoot,
       baseUrl: `https://${req.get('host')}/live/`
     },
@@ -239,34 +244,37 @@ app.use('*', (req, res) => {
   });
 });
 
-console.log('🚀 Starting Nightflow Streaming Server v2.0.1...');
-console.log(`📍 API PORT: ${RAILWAY_PORT} (Railway)`);
-console.log(`📍 RTMP PORT: ${RTMP_PORT}`);
-console.log(`📍 HLS PORT: ${HLS_PORT}`);
+console.log('🚀 Starting Nightflow Streaming Server v2.0.2...');
+console.log(`📍 API PORT: ${RAILWAY_PORT} (Railway Assigned)`);
+console.log(`📍 RTMP PORT: ${RTMP_PORT} (Standard)`);
+console.log(`📍 HLS PORT: ${HLS_PORT} (Non-conflicting)`);
 console.log(`🌍 NODE_ENV: ${process.env.NODE_ENV || 'development'}`);
 console.log(`📁 Media Root: ${mediaRoot}`);
 
-// Start Node Media Server (RTMP + HLS) - but handle port conflicts gracefully
-try {
-  nms.run();
-  console.log(`✅ RTMP SERVER STARTED ON PORT ${RTMP_PORT}`);
-  console.log(`✅ HLS SERVER STARTED ON PORT ${HLS_PORT}`);
-} catch (error) {
-  console.error(`❌ Media Server Error: ${error.message}`);
-  console.log('⚠️  Continuing with API server only...');
-}
-
-// Start Express server (API) on Railway's assigned port
+// Start Express server FIRST on Railway's assigned port
 const server = app.listen(RAILWAY_PORT, () => {
   console.log(`✅ API SERVER RUNNING ON PORT ${RAILWAY_PORT}`);
   console.log(`🔗 Health: https://nodejs-production-aa37f.up.railway.app/health`);
   console.log(`🎥 RTMP: rtmp://nodejs-production-aa37f.up.railway.app/live`);
   console.log(`📺 HLS Base: https://nodejs-production-aa37f.up.railway.app/live/`);
-  console.log(`⚡ Ready for OBS connections`);
+  
+  // Start Node Media Server AFTER API server is running
+  try {
+    nms.run();
+    console.log(`✅ RTMP SERVER STARTED ON PORT ${RTMP_PORT}`);
+    console.log(`✅ HLS SERVER STARTED ON PORT ${HLS_PORT}`);
+    console.log(`⚡ Ready for OBS connections`);
+  } catch (error) {
+    console.error(`❌ Media Server Error: ${error.message}`);
+    console.log('⚠️  API server running, media server failed');
+  }
 });
 
 server.on('error', (error) => {
   console.error('❌ API SERVER ERROR:', error);
+  if (error.code === 'EADDRINUSE') {
+    console.error(`Port ${RAILWAY_PORT} is already in use!`);
+  }
   process.exit(1);
 });
 
