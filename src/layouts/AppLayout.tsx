@@ -37,7 +37,7 @@ export default function AppLayout() {
   }
 
   return (
-    <div className="min-h-screen nightclub-bg floating-particles relative overflow-hidden">
+    <div className="min-h-screen nightclub-bg floating-particles flex">
       {/* Enhanced cosmic background for authenticated pages */}
       <div className="fixed inset-0 pointer-events-none z-0">
         {/* Multi-layer animated background */}
@@ -72,21 +72,22 @@ export default function AppLayout() {
         </div>
       </div>
       
-      {/* Desktop Sidebar */}
-      <div className="hidden sm:block relative z-20">
+      {/* Desktop Sidebar - Fixed positioning */}
+      <div className="hidden sm:flex sm:flex-shrink-0 relative z-20">
         <Sidebar />
       </div>
       
-      {/* Header with sign-out */}
-      <div className="sm:ml-64 relative z-30">
-        <Header />
-      </div>
-      
-      {/* Main Content with enhanced styling */}
-      <div className="sm:ml-64 relative z-10">
-        <div className="min-h-screen backdrop-blur-sm">
-          <Outlet />
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col relative z-10">
+        {/* Header */}
+        <div className="relative z-30">
+          <Header />
         </div>
+        
+        {/* Page Content */}
+        <main className="flex-1 backdrop-blur-sm">
+          <Outlet />
+        </main>
       </div>
       
       {/* Mobile Navigation */}
