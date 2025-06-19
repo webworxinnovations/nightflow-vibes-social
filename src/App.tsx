@@ -6,25 +6,25 @@ import { ThemeProvider } from "@/providers/ThemeProvider";
 import { SupabaseAuthProvider } from "@/contexts/SupabaseAuthContext";
 import { SubPromoterProvider } from "@/contexts/SubPromoterContext";
 
-// Pages
-import { Index } from "@/pages/Index";
-import { AuthPage } from "@/pages/AuthPage";
-import { SignUp } from "@/pages/SignUp";
-import { Home } from "@/pages/Home";
+// Pages - using default imports
+import Index from "@/pages/Index";
+import AuthPage from "@/pages/AuthPage";
+import SignUp from "@/pages/SignUp";
+import Home from "@/pages/Home";
 import { LiveStreams } from "@/pages/LiveStreams";
-import { Discover } from "@/pages/Discover";
-import { Events } from "@/pages/Events";
-import { CreateEvent } from "@/pages/CreateEvent";
-import { EventDetails } from "@/pages/EventDetails";
-import { DjDashboard } from "@/pages/DjDashboard";
-import { PromoterDashboard } from "@/pages/PromoterDashboard";
-import { SubPromoterDashboard } from "@/pages/SubPromoterDashboard";
-import { SubPromoterManagement } from "@/pages/SubPromoterManagement";
-import { Profile } from "@/pages/Profile";
-import { NotFound } from "@/pages/NotFound";
+import Discover from "@/pages/Discover";
+import Events from "@/pages/Events";
+import CreateEvent from "@/pages/CreateEvent";
+import EventDetails from "@/pages/EventDetails";
+import DjDashboard from "@/pages/DjDashboard";
+import PromoterDashboard from "@/pages/PromoterDashboard";
+import SubPromoterDashboard from "@/pages/SubPromoterDashboard";
+import SubPromoterManagement from "@/pages/SubPromoterManagement";
+import Profile from "@/pages/Profile";
+import NotFound from "@/pages/NotFound";
 
 // Layout
-import { AppLayout } from "@/layouts/AppLayout";
+import AppLayout from "@/layouts/AppLayout";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -38,7 +38,7 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="dark" storageKey="nightflow-theme">
+      <ThemeProvider defaultTheme="dark">
         <SupabaseAuthProvider>
           <SubPromoterProvider>
             <Router>

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -18,7 +17,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 
 const navigation = [
-  { name: "Home", href: "/", icon: Home },
+  { name: "Home", href: "/home", icon: Home },
   { name: "Live Streams", href: "/live", icon: Radio },
   { name: "Discover", href: "/discover", icon: Users },
   { name: "Events", href: "/events", icon: Calendar },
@@ -29,11 +28,11 @@ export const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout } = useSupabaseAuth();
+  const { user, signOut } = useSupabaseAuth();
 
   const handleLogout = async () => {
     try {
-      await logout();
+      await signOut();
       navigate("/auth");
     } catch (error) {
       console.error("Logout error:", error);

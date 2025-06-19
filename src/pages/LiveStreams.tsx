@@ -1,10 +1,9 @@
-
 import { useState } from "react";
 import { LiveStreamGrid } from "@/components/live/LiveStreamGrid";
 import { StreamViewer } from "@/components/live/StreamViewer";
 import { GlassmorphicCard } from "@/components/ui/glassmorphic-card";
 import { Badge } from "@/components/ui/badge";
-import { Radio, Users } from "lucide-react";
+import { Radio, Users, DollarSign } from "lucide-react";
 import type { LiveStream } from "@/hooks/useLiveStreams";
 
 export const LiveStreams = () => {
