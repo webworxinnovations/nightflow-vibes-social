@@ -1,4 +1,3 @@
-
 // Railway-optimized Node.js streaming server
 const express = require('express');
 const cors = require('cors');
@@ -25,7 +24,9 @@ app.get('/', (req, res) => {
     message: 'Nightflow Streaming Server',
     status: 'running',
     timestamp: new Date().toISOString(),
-    version: '1.0.5'
+    version: '1.0.6',
+    port: process.env.PORT || 3000,
+    env: process.env.NODE_ENV || 'development'
   });
 });
 
@@ -36,7 +37,9 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString(),
     activeStreams: activeStreams.size,
     uptime: Math.floor(process.uptime()),
-    version: '1.0.5'
+    version: '1.0.6',
+    port: process.env.PORT || 3000,
+    memory: process.memoryUsage()
   });
 });
 
@@ -143,29 +146,29 @@ app.use('*', (req, res) => {
   });
 });
 
-// RAILWAY SPECIFIC: Use Railway's PORT and bind to all interfaces
+// RAILWAY SPECIFIC: Use Railway's PORT
 const PORT = process.env.PORT || 3000;
 
-console.log('🚀 Starting Nightflow Streaming Server v1.0.5...');
-console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-console.log(`🔧 Railway PORT: ${process.env.PORT || 'not set'}`);
+console.log('🚀 Starting Nightflow Streaming Server v1.0.6...');
+console.log(`📍 PORT: ${PORT}`);
+console.log(`🌍 NODE_ENV: ${process.env.NODE_ENV || 'development'}`);
 
-// RAILWAY FIX: Start server without specifying host (Railway handles this)
+// Start server - Railway handles host binding automatically
 const server = app.listen(PORT, () => {
-  console.log(`✅ RAILWAY SERVER STARTED SUCCESSFULLY ON PORT ${PORT}!`);
-  console.log(`🌐 Server running and listening for connections`);
-  console.log(`🔗 Health check: https://nodejs-production-aa37f.up.railway.app/health`);
+  console.log(`✅ SERVER RUNNING ON PORT ${PORT}`);
+  console.log(`🔗 Health: https://nodejs-production-aa37f.up.railway.app/health`);
+  console.log(`⚡ Ready to accept connections`);
 });
 
 server.on('error', (error) => {
-  console.error('❌ SERVER ERROR:', error.message);
-  if (error.code === 'EADDRINUSE') {
-    console.error(`Port ${PORT} is already in use`);
-  } else if (error.code === 'EACCES') {
-    console.error(`Permission denied on port ${PORT}`);
-  }
+  console.error('❌ SERVER ERROR:', error);
   process.exit(1);
 });
+
+// Keep alive ping
+setInterval(() => {
+  console.log(`💓 Server alive - Port ${PORT} - Uptime: ${Math.floor(process.uptime())}s`);
+}, 30000);
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
