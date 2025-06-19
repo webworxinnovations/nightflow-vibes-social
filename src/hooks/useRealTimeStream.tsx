@@ -10,7 +10,8 @@ export const useRealTimeStream = () => {
     viewerCount: 0,
     duration: 0,
     bitrate: 0,
-    resolution: ''
+    resolution: '',
+    timestamp: new Date().toISOString()
   });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -42,7 +43,8 @@ export const useRealTimeStream = () => {
         viewerCount: 0,
         duration: 0,
         bitrate: 0,
-        resolution: ''
+        resolution: '',
+        timestamp: new Date().toISOString()
       });
       toast.info('Stream key revoked');
     } catch (error) {
@@ -131,4 +133,3 @@ export const useRealTimeStream = () => {
     resolution: streamStatus.resolution
   };
 };
-

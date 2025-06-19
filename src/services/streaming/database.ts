@@ -96,7 +96,8 @@ export class StreamingDatabase {
         viewerCount: stream.viewer_count || 0,
         duration: stream.duration || 0,
         bitrate: stream.bitrate || 0,
-        resolution: stream.resolution || ''
+        resolution: stream.resolution || '',
+        timestamp: stream.updated_at || new Date().toISOString()
       };
     }
 
@@ -105,7 +106,8 @@ export class StreamingDatabase {
       viewerCount: 0,
       duration: 0,
       bitrate: 0,
-      resolution: ''
+      resolution: '',
+      timestamp: new Date().toISOString()
     };
   }
 
