@@ -1,3 +1,4 @@
+
 // Minimal Node.js streaming server for Railway deployment
 const express = require('express');
 const cors = require('cors');
@@ -17,7 +18,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Add request logging
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.path} - Port: ${process.env.PORT}`);
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
   next();
 });
 
@@ -31,10 +32,9 @@ app.get('/', (req, res) => {
     message: 'Nightflow Streaming Server',
     status: 'running',
     timestamp: new Date().toISOString(),
-    version: '1.0.3',
+    version: '1.0.4',
     environment: process.env.NODE_ENV || 'production',
-    port: process.env.PORT || 'not set',
-    url: `https://nodejs-production-aa37f.up.railway.app`
+    port: process.env.PORT || 'not set'
   });
 });
 
@@ -49,7 +49,7 @@ app.get('/health', (req, res) => {
     memory: process.memoryUsage(),
     env: 'railway',
     port: process.env.PORT || 'not set',
-    version: '1.0.3'
+    version: '1.0.4'
   });
 });
 
@@ -147,21 +147,6 @@ app.post('/api/stream/:streamKey/stop', (req, res) => {
   }
 });
 
-// Test endpoint for debugging
-app.get('/test', (req, res) => {
-  console.log('Test endpoint hit - Environment check:');
-  console.log('PORT:', process.env.PORT);
-  console.log('NODE_ENV:', process.env.NODE_ENV);
-  
-  res.status(200).json({
-    message: 'Server is working!',
-    timestamp: new Date().toISOString(),
-    port: process.env.PORT || 'not set',
-    environment: process.env.NODE_ENV || 'not set',
-    allEnvVars: Object.keys(process.env).filter(key => key.includes('PORT') || key.includes('NODE'))
-  });
-});
-
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Server error:', err);
@@ -181,112 +166,43 @@ app.use('*', (req, res) => {
   });
 });
 
-// RAILWAY CRITICAL: Proper port and host configuration
+// RAILWAY CRITICAL: Use Railway's PORT and bind to 0.0.0.0
 const PORT = process.env.PORT || 3000;
-const HOST = '0.0.0.0';
+const HOST = '0.0.0.0'; // This is critical for Railway!
 
-// Enhanced startup logging
-console.log('🚀 === RAILWAY DEPLOYMENT DEBUG ===');
-console.log('📊 Environment Variables:');
-console.log('  NODE_ENV:', process.env.NODE_ENV);
-console.log('  PORT:', process.env.PORT);
-console.log('  RAILWAY_ENVIRONMENT:', process.env.RAILWAY_ENVIRONMENT);
-console.log('🔧 Server Configuration:');
-console.log('  Binding HOST:', HOST);
-console.log('  Binding PORT:', PORT);
-console.log('  PORT type:', typeof PORT);
-console.log('🖥️  System Info:');
-console.log('  Node.js version:', process.version);
-console.log('  Platform:', process.platform);
-console.log('  Working directory:', process.cwd());
-console.log('=====================================');
+console.log('🚀 Starting Nightflow Streaming Server...');
+console.log(`📍 Binding to: ${HOST}:${PORT}`);
+console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+console.log(`🔧 Railway PORT: ${process.env.PORT || 'not set'}`);
 
-// RAILWAY CRITICAL: Server startup with comprehensive error handling
 const server = app.listen(PORT, HOST, () => {
-  const addr = server.address();
-  console.log('🎉 === RAILWAY SERVER STARTED ===');
-  console.log(`✅ Server successfully bound to: ${addr.address}:${addr.port}`);
-  console.log(`🌐 Public URL: https://nodejs-production-aa37f.up.railway.app`);
-  console.log(`🔗 Health check: https://nodejs-production-aa37f.up.railway.app/health`);
-  console.log(`🚀 Railway load balancer can now reach this server`);
-  console.log('===================================');
+  console.log(`✅ RAILWAY SERVER STARTED SUCCESSFULLY!`);
+  console.log(`🌐 Server running on: http://${HOST}:${PORT}`);
+  console.log(`🔗 Public URL: https://nodejs-production-aa37f.up.railway.app`);
+  console.log(`❤️  Health check: https://nodejs-production-aa37f.up.railway.app/health`);
 });
 
-// Enhanced error handling with detailed Railway-specific debugging
 server.on('error', (error) => {
-  console.error('🚨 === RAILWAY SERVER ERROR ===');
-  console.error('Error occurred during server startup');
-  console.error('Error details:');
-  console.error('  Code:', error.code);
-  console.error('  Message:', error.message);
-  console.error('  Stack:', error.stack);
-  
-  // Specific Railway debugging
-  console.error('🔍 Railway Environment Check:');
-  console.error('  PORT env var:', process.env.PORT);
-  console.error('  PORT type:', typeof process.env.PORT);
-  console.error('  Attempted bind HOST:', HOST);
-  console.error('  Attempted bind PORT:', PORT);
-  
+  console.error('❌ SERVER ERROR:', error.message);
   if (error.code === 'EADDRINUSE') {
-    console.error(`❌ Port ${PORT} is already in use`);
-    console.error('Railway may be trying to bind to a port that is occupied');
-  } else if (error.code === 'EACCES') {
-    console.error(`❌ Permission denied for port ${PORT}`);
-    console.error('Railway may not have permission to bind to this port');
-  } else if (error.code === 'ENOTFOUND') {
-    console.error(`❌ Cannot bind to host ${HOST}`);
-    console.error('Railway may not be able to resolve the bind address');
+    console.error(`Port ${PORT} is already in use`);
   }
-  
-  console.error('🔧 Suggested fixes:');
-  console.error('  1. Check Railway PORT environment variable');
-  console.error('  2. Ensure 0.0.0.0 binding');
-  console.error('  3. Verify Railway deployment configuration');
-  console.error('===============================');
-  
   process.exit(1);
-});
-
-server.on('listening', () => {
-  const addr = server.address();
-  console.log(`✅ Railway server listening event fired`);
-  console.log(`📍 Confirmed binding: ${addr.address}:${addr.port}`);
-  console.log(`🔌 Railway load balancer connection: READY`);
-  
-  // Test internal health check
-  setTimeout(() => {
-    console.log('🔍 Testing internal server response...');
-  }, 1000);
 });
 
 // Graceful shutdown
-const shutdown = (signal) => {
-  console.log(`${signal} received - Railway shutdown initiated`);
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received - shutting down gracefully');
   server.close(() => {
-    console.log('✅ Railway server closed gracefully');
+    console.log('✅ Server closed');
     process.exit(0);
   });
-};
-
-process.on('SIGTERM', () => shutdown('SIGTERM'));
-process.on('SIGINT', () => shutdown('SIGINT'));
-
-// Error handlers
-process.on('uncaughtException', (err) => {
-  console.error('❌ Railway uncaught exception:', err);
-  console.error('Stack:', err.stack);
-  process.exit(1);
 });
 
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('❌ Railway unhandled rejection:', promise, 'reason:', reason);
-  process.exit(1);
+process.on('SIGINT', () => {
+  console.log('SIGINT received - shutting down gracefully');
+  server.close(() => {
+    console.log('✅ Server closed');
+    process.exit(0);
+  });
 });
-
-// Enhanced Railway heartbeat with more debugging
-setInterval(() => {
-  const addr = server.address();
-  const memUsage = process.memoryUsage();
-  console.log(`💓 Railway heartbeat - Uptime: ${Math.floor(process.uptime())}s - Streams: ${activeStreams.size} - Address: ${addr ? `${addr.address}:${addr.port}` : 'unknown'} - Memory: ${Math.round(memUsage.rss / 1024 / 1024)}MB`);
-}, 60000);
