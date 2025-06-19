@@ -27,17 +27,22 @@ if (!fs.existsSync(mediaRoot)) {
   fs.mkdirSync(mediaRoot, { recursive: true });
 }
 
-// RTMP and HLS configuration
+// RAILWAY CRITICAL: Use different ports to avoid conflicts
+const RAILWAY_PORT = process.env.PORT || 3000;
+const RTMP_PORT = process.env.RTMP_PORT || 1935;
+const HLS_PORT = process.env.HLS_PORT || 8080;
+
+// RTMP and HLS configuration with Railway-specific ports
 const config = {
   rtmp: {
-    port: process.env.RTMP_PORT || 1935,
+    port: RTMP_PORT,
     chunk_size: 60000,
     gop_cache: true,
     ping: 30,
     ping_timeout: 60
   },
   http: {
-    port: process.env.HTTP_PORT || 8000,
+    port: HLS_PORT,
     mediaroot: mediaRoot,
     allow_origin: '*'
   },
@@ -107,12 +112,16 @@ app.get('/', (req, res) => {
     message: 'Nightflow Streaming Server with RTMP',
     status: 'running',
     timestamp: new Date().toISOString(),
-    version: '2.0.0',
-    port: process.env.PORT || 3000,
-    rtmpPort: process.env.RTMP_PORT || 1935,
-    httpPort: process.env.HTTP_PORT || 8000,
+    version: '2.0.1',
+    ports: {
+      api: RAILWAY_PORT,
+      rtmp: RTMP_PORT,
+      hls: HLS_PORT
+    },
     env: process.env.NODE_ENV || 'development',
-    features: ['RTMP Ingestion', 'HLS Output', 'Stream Management']
+    features: ['RTMP Ingestion', 'HLS Output', 'Stream Management'],
+    rtmpUrl: `rtmp://${req.get('host')}/live`,
+    testUrl: `https://${req.get('host')}/health`
   });
 });
 
@@ -123,14 +132,21 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString(),
     activeStreams: activeStreams.size,
     uptime: Math.floor(process.uptime()),
-    version: '2.0.0',
+    version: '2.0.1',
+    ports: {
+      api: RAILWAY_PORT,
+      rtmp: RTMP_PORT,
+      hls: HLS_PORT
+    },
     rtmp: {
       port: config.rtmp.port,
-      active: true
+      active: true,
+      url: `rtmp://${req.get('host')}/live`
     },
     hls: {
       port: config.http.port,
-      mediaRoot: mediaRoot
+      mediaRoot: mediaRoot,
+      baseUrl: `https://${req.get('host')}/live/`
     },
     memory: process.memoryUsage()
   });
@@ -223,37 +239,40 @@ app.use('*', (req, res) => {
   });
 });
 
-// RAILWAY SPECIFIC: Use Railway's PORT for HTTP
-const PORT = process.env.PORT || 3000;
-
-console.log('🚀 Starting Nightflow Streaming Server v2.0.0...');
-console.log(`📍 HTTP PORT: ${PORT}`);
-console.log(`📍 RTMP PORT: ${config.rtmp.port}`);
-console.log(`📍 HLS PORT: ${config.http.port}`);
+console.log('🚀 Starting Nightflow Streaming Server v2.0.1...');
+console.log(`📍 API PORT: ${RAILWAY_PORT} (Railway)`);
+console.log(`📍 RTMP PORT: ${RTMP_PORT}`);
+console.log(`📍 HLS PORT: ${HLS_PORT}`);
 console.log(`🌍 NODE_ENV: ${process.env.NODE_ENV || 'development'}`);
 console.log(`📁 Media Root: ${mediaRoot}`);
 
-// Start Node Media Server (RTMP + HLS)
-nms.run();
-console.log(`✅ RTMP SERVER RUNNING ON PORT ${config.rtmp.port}`);
-console.log(`✅ HLS SERVER RUNNING ON PORT ${config.http.port}`);
+// Start Node Media Server (RTMP + HLS) - but handle port conflicts gracefully
+try {
+  nms.run();
+  console.log(`✅ RTMP SERVER STARTED ON PORT ${RTMP_PORT}`);
+  console.log(`✅ HLS SERVER STARTED ON PORT ${HLS_PORT}`);
+} catch (error) {
+  console.error(`❌ Media Server Error: ${error.message}`);
+  console.log('⚠️  Continuing with API server only...');
+}
 
-// Start Express server (API)
-const server = app.listen(PORT, () => {
-  console.log(`✅ API SERVER RUNNING ON PORT ${PORT}`);
+// Start Express server (API) on Railway's assigned port
+const server = app.listen(RAILWAY_PORT, () => {
+  console.log(`✅ API SERVER RUNNING ON PORT ${RAILWAY_PORT}`);
   console.log(`🔗 Health: https://nodejs-production-aa37f.up.railway.app/health`);
   console.log(`🎥 RTMP: rtmp://nodejs-production-aa37f.up.railway.app/live`);
-  console.log(`⚡ Ready to accept OBS connections`);
+  console.log(`📺 HLS Base: https://nodejs-production-aa37f.up.railway.app/live/`);
+  console.log(`⚡ Ready for OBS connections`);
 });
 
 server.on('error', (error) => {
-  console.error('❌ SERVER ERROR:', error);
+  console.error('❌ API SERVER ERROR:', error);
   process.exit(1);
 });
 
-// Keep alive ping
+// Keep alive ping with detailed port info
 setInterval(() => {
-  console.log(`💓 Server alive - HTTP:${PORT} RTMP:${config.rtmp.port} HLS:${config.http.port} - Uptime: ${Math.floor(process.uptime())}s`);
+  console.log(`💓 Server alive - API:${RAILWAY_PORT} RTMP:${RTMP_PORT} HLS:${HLS_PORT} - Uptime: ${Math.floor(process.uptime())}s - Streams: ${activeStreams.size}`);
 }, 30000);
 
 // Graceful shutdown
