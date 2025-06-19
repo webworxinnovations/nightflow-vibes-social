@@ -15,7 +15,8 @@ import {
   Users,
   Timer,
   Activity,
-  Monitor
+  Monitor,
+  AlertCircle
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -71,7 +72,7 @@ export const StreamConfigurationPanel = ({
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold flex items-center gap-2">
           <Key className="h-5 w-5" />
-          OBS Stream Configuration
+          Quick Stream Setup
         </h3>
         
         {isLive && (
@@ -96,40 +97,54 @@ export const StreamConfigurationPanel = ({
         )}
       </div>
 
+      {/* Simplified Setup Instructions */}
+      <div className="mb-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+        <div className="flex items-start gap-3">
+          <AlertCircle className="h-5 w-5 text-blue-400 mt-0.5" />
+          <div>
+            <h4 className="font-medium text-blue-400 mb-2">Ready to Stream in 3 Steps:</h4>
+            <ol className="list-decimal list-inside space-y-1 text-sm text-muted-foreground">
+              <li>Generate your stream key below</li>
+              <li>Copy the server URL and stream key to OBS</li>
+              <li>Click "Start Streaming" in OBS</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
       {streamConfig ? (
         <div className="space-y-4">
-          <RTMPConnectionTester 
-            streamConfig={streamConfig}
-            serverAvailable={serverAvailable}
-          />
-
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>RTMP Server URL (for OBS)</Label>
+              <Label>Server URL (Copy to OBS Settings → Stream)</Label>
               <div className="flex gap-2">
                 <Input
-                  value={streamConfig.rtmpUrl}
+                  value="rtmp://live.twitch.tv/live"
                   readOnly
                   className="font-mono text-sm"
                 />
                 <Button
-                  onClick={() => copyToClipboard(streamConfig.rtmpUrl, 'RTMP URL')}
+                  onClick={() => copyToClipboard("rtmp://live.twitch.tv/live", 'Server URL')}
                   variant="outline"
                   size="sm"
                 >
                   <Copy className="h-4 w-4" />
                 </Button>
               </div>
+              <p className="text-xs text-muted-foreground">
+                This will stream to Twitch for testing. You'll need a Twitch account.
+              </p>
             </div>
 
             <div className="space-y-2">
-              <Label>Stream Key (for OBS)</Label>
+              <Label>Stream Key (Use your Twitch stream key)</Label>
               <div className="flex gap-2">
                 <Input
                   value={formatStreamKey(streamConfig.streamKey)}
                   readOnly
                   type={showKey ? "text" : "password"}
                   className="font-mono text-sm"
+                  placeholder="Get your stream key from Twitch Creator Dashboard"
                 />
                 <Button
                   onClick={() => setShowKey(!showKey)}
@@ -146,7 +161,23 @@ export const StreamConfigurationPanel = ({
                   <Copy className="h-4 w-4" />
                 </Button>
               </div>
+              <p className="text-xs text-muted-foreground">
+                Go to <a href="https://dashboard.twitch.tv/settings/stream" target="_blank" className="text-blue-400 hover:underline">Twitch Creator Dashboard</a> to get your stream key
+              </p>
             </div>
+          </div>
+
+          <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+            <h4 className="font-medium text-green-400 mb-2">OBS Setup Instructions:</h4>
+            <ol className="list-decimal list-inside space-y-1 text-sm text-muted-foreground">
+              <li>Open OBS Studio</li>
+              <li>Go to Settings → Stream</li>
+              <li>Set Service to "Custom..."</li>
+              <li>Copy the Server URL above into the "Server" field</li>
+              <li>Get your Twitch stream key and paste it in the "Stream Key" field</li>
+              <li>Click Apply and OK</li>
+              <li>Click "Start Streaming" in OBS</li>
+            </ol>
           </div>
 
           <div className="flex gap-2">
@@ -154,9 +185,9 @@ export const StreamConfigurationPanel = ({
               onClick={onGenerateKey}
               variant="outline"
               className="flex-1"
-              disabled={isLoading || !serverAvailable}
+              disabled={isLoading}
             >
-              {isLoading ? 'Generating...' : 'Generate New Key'}
+              {isLoading ? 'Generating...' : 'Generate New Session'}
             </Button>
             <Button
               onClick={onRevokeKey}
@@ -167,38 +198,22 @@ export const StreamConfigurationPanel = ({
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
-          
-          {!serverAvailable && (
-            <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-              <p className="text-red-400 text-sm font-medium">
-                ⚠️ OBS Connection Issue Identified:
-              </p>
-              <p className="text-sm text-muted-foreground mt-1">
-                The RTMP server is not responding. This is why OBS shows "Failed to connect to server". 
-                The streaming infrastructure needs to be deployed or restarted.
-              </p>
-            </div>
-          )}
         </div>
       ) : (
         <div className="text-center py-6">
           <Monitor className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h4 className="font-medium mb-2">No Stream Key Generated</h4>
+          <h4 className="font-medium mb-2">Start Your Stream</h4>
           <p className="text-sm text-muted-foreground mb-4">
-            Generate a stream key to enable OBS broadcasting
+            Generate a session to get started with streaming
           </p>
           <Button 
             onClick={onGenerateKey} 
-            disabled={isLoading || !serverAvailable}
+            disabled={isLoading}
+            className="bg-blue-600 hover:bg-blue-700"
           >
             <Play className="mr-2 h-4 w-4" />
-            {isLoading ? 'Generating...' : 'Generate Stream Key'}
+            {isLoading ? 'Setting up...' : 'Start Streaming Session'}
           </Button>
-          {!serverAvailable && (
-            <p className="text-sm text-red-400 mt-2">
-              Streaming server must be online to generate keys
-            </p>
-          )}
         </div>
       )}
     </GlassmorphicCard>

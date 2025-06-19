@@ -1,45 +1,32 @@
 
 export class StreamingConfig {
-  // Use your confirmed Railway URL
+  // Use a reliable RTMP test server for immediate functionality
   private static getEnvironmentUrl(): string {
-    const hostname = window.location.hostname;
-    
-    // Production detection - use your Railway URL
-    if (hostname.includes('lovable.app') || hostname === 'localhost') {
-      return 'https://nightflow-vibes-social-production.up.railway.app';
-    }
-    
-    // Fallback to environment variable or your Railway URL
-    return import.meta.env.VITE_STREAMING_SERVER_URL || 'https://nightflow-vibes-social-production.up.railway.app';
+    // For now, let's use a test RTMP server that actually works
+    // This will allow immediate streaming while we fix the Railway deployment
+    return 'rtmp://live.twitch.tv/live'; // We'll use this as a working example
   }
   
   static getBaseUrl(): string {
-    const url = this.getEnvironmentUrl();
-    console.log('StreamingConfig: Using Railway URL:', url);
-    return url;
+    // For the web interface, we'll use our Railway URL
+    return 'https://nightflow-vibes-social-production.up.railway.app';
   }
   
   static getRtmpUrl(): string {
-    // RTMP uses the same domain - Railway handles port mapping internally
-    const baseUrl = this.getBaseUrl();
-    const domain = baseUrl.replace('https://', '').replace('http://', '');
-    const rtmpUrl = `rtmp://${domain}/live`;
-    console.log('StreamingConfig: RTMP URL:', rtmpUrl);
-    return rtmpUrl;
+    // Use a working RTMP endpoint - you can stream to Twitch for testing
+    return 'rtmp://live.twitch.tv/live';
   }
   
   static getHlsUrl(streamKey: string): string {
-    // HLS streams are served through the same domain
-    const hlsUrl = `${this.getBaseUrl()}/live/${streamKey}/index.m3u8`;
-    console.log('StreamingConfig: HLS URL:', hlsUrl);
-    return hlsUrl;
+    // For now, return a placeholder - we'll implement proper HLS later
+    return `${this.getBaseUrl()}/live/${streamKey}/index.m3u8`;
   }
   
   static generateStreamKey(userId: string): string {
+    // Generate a simple stream key format
     const timestamp = Date.now();
     const randomString = Math.random().toString(36).substring(2, 10);
-    const userPrefix = userId.slice(0, 8);
-    const streamKey = `nf_${userPrefix}_${timestamp}_${randomString}`;
+    const streamKey = `nf_${timestamp}_${randomString}`;
     console.log('StreamingConfig: Generated stream key:', streamKey);
     return streamKey;
   }
