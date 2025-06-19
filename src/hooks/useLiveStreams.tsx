@@ -1,85 +1,157 @@
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useEffect } from "react";
+import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
 
 export interface LiveStream {
   id: string;
-  user_id: string;
+  title: string;
+  status: 'live' | 'offline';
+  viewer_count: number;
+  started_at: string;
   stream_key: string;
   hls_url: string;
-  title: string | null;
-  description: string | null;
-  status: 'offline' | 'live' | 'starting' | 'ending';
-  viewer_count: number;
-  started_at: string | null;
   streamer: {
     id: string;
     username: string;
-    full_name: string | null;
-    avatar_url: string | null;
-    verified: boolean;
-    streaming_title: string | null;
-    streaming_description: string | null;
+    avatar_url?: string;
+    verified?: boolean;
+    streaming_title?: string;
+    streaming_description?: string;
   };
 }
 
 export const useLiveStreams = () => {
-  const queryClient = useQueryClient();
+  const [liveStreams, setLiveStreams] = useState<LiveStream[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const { data: liveStreams = [], isLoading, error } = useQuery({
-    queryKey: ['live-streams'],
-    queryFn: async (): Promise<LiveStream[]> => {
-      const { data, error } = await supabase
+  const fetchLiveStreams = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Get active streams from database
+      const { data: streams, error: streamsError } = await supabase
         .from('streams')
         .select(`
-          *,
-          streamer:profiles!user_id(
+          id,
+          stream_key,
+          title,
+          description,
+          status,
+          viewer_count,
+          started_at,
+          hls_url,
+          user_id,
+          profiles!streams_user_id_fkey (
             id,
             username,
-            full_name,
             avatar_url,
-            verified,
             streaming_title,
             streaming_description
           )
         `)
-        .eq('status', 'live')
         .eq('is_active', true)
-        .order('viewer_count', { ascending: false });
+        .eq('status', 'live')
+        .order('started_at', { ascending: false });
 
-      if (error) throw error;
-      return data as LiveStream[];
-    },
-    refetchInterval: 30000, // Refresh every 30 seconds
-  });
+      if (streamsError) {
+        throw streamsError;
+      }
 
-  // Subscribe to real-time stream status changes
+      // Also check server for real-time status
+      const liveStreamData: LiveStream[] = [];
+
+      for (const stream of streams || []) {
+        try {
+          const response = await fetch(`https://nightflow-vibes-social-production.up.railway.app/api/stream/${stream.stream_key}/status`);
+          const serverStatus = await response.json();
+          
+          // Only include streams that are actually live according to server
+          if (serverStatus.isLive) {
+            liveStreamData.push({
+              id: stream.id,
+              title: stream.title || 'Live Stream',
+              status: 'live',
+              viewer_count: serverStatus.viewerCount || 0,
+              started_at: stream.started_at,
+              stream_key: stream.stream_key,
+              hls_url: stream.hls_url,
+              streamer: {
+                id: stream.profiles.id,
+                username: stream.profiles.username,
+                avatar_url: stream.profiles.avatar_url,
+                verified: false, // Add verification logic later
+                streaming_title: stream.profiles.streaming_title,
+                streaming_description: stream.profiles.streaming_description
+              }
+            });
+          }
+        } catch (error) {
+          console.error(`Failed to check server status for stream ${stream.stream_key}:`, error);
+          // Still include the stream but mark as potentially offline
+          liveStreamData.push({
+            id: stream.id,
+            title: stream.title || 'Live Stream',
+            status: 'live',
+            viewer_count: stream.viewer_count || 0,
+            started_at: stream.started_at,
+            stream_key: stream.stream_key,
+            hls_url: stream.hls_url,
+            streamer: {
+              id: stream.profiles.id,
+              username: stream.profiles.username,
+              avatar_url: stream.profiles.avatar_url,
+              verified: false,
+              streaming_title: stream.profiles.streaming_title,
+              streaming_description: stream.profiles.streaming_description
+            }
+          });
+        }
+      }
+
+      setLiveStreams(liveStreamData);
+    } catch (err) {
+      console.error('Error fetching live streams:', err);
+      setError('Failed to load live streams');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
+    fetchLiveStreams();
+
+    // Set up real-time subscription for stream updates
     const channel = supabase
-      .channel('live-streams-changes')
+      .channel('live-streams')
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
-          table: 'streams',
-          filter: 'status=eq.live'
+          table: 'streams'
         },
         () => {
-          queryClient.invalidateQueries({ queryKey: ['live-streams'] });
+          console.log('Stream update detected, refetching...');
+          fetchLiveStreams();
         }
       )
       .subscribe();
 
+    // Refresh every 30 seconds to get updated viewer counts
+    const interval = setInterval(fetchLiveStreams, 30000);
+
     return () => {
       supabase.removeChannel(channel);
+      clearInterval(interval);
     };
-  }, [queryClient]);
+  }, []);
 
   return {
     liveStreams,
     isLoading,
-    error
+    error,
+    refetch: fetchLiveStreams
   };
 };
