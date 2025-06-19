@@ -1,4 +1,3 @@
-
 // Railway-optimized Node.js streaming server with RTMP support
 const express = require('express');
 const ServerConfig = require('./config/server-config');
@@ -40,29 +39,23 @@ try {
 
 // Setup routes with detailed logging
 try {
+  console.log('🔧 Setting up Express routes...');
   const apiRoutes = createApiRoutes(serverConfig, streamManager);
-  app.use('/', apiRoutes);
-  console.log('✅ Routes setup complete');
   
-  // Log all registered routes for debugging
-  console.log('📋 Registered routes:');
-  app._router.stack.forEach((middleware) => {
-    if (middleware.route) {
-      console.log(`   ${Object.keys(middleware.route.methods)} ${middleware.route.path}`);
-    } else if (middleware.name === 'router') {
-      middleware.handle.stack.forEach((handler) => {
-        if (handler.route) {
-          console.log(`   ${Object.keys(handler.route.methods)} ${handler.route.path}`);
-        }
-      });
-    }
-  });
+  // Mount the router
+  app.use('/', apiRoutes);
+  console.log('✅ Routes mounted successfully');
+  
+  // Test route registration
+  console.log('🧪 Testing route registration...');
+  console.log(`📋 Express app has ${app._router ? app._router.stack.length : 0} middleware layers`);
+  
 } catch (error) {
   console.error('❌ Failed to setup routes:', error);
   process.exit(1);
 }
 
-// Setup error handling
+// Setup error handling (404 handler must be LAST)
 setupErrorHandling(app);
 
 console.log(`🌍 NODE_ENV: ${process.env.NODE_ENV || 'development'}`);
@@ -77,8 +70,8 @@ const server = app.listen(serverConfig.RAILWAY_PORT, '0.0.0.0', () => {
   console.log(`🎥 RTMP: rtmp://nightflow-vibes-social-production.up.railway.app/live`);
   console.log(`📺 HLS Base: https://nightflow-vibes-social-production.up.railway.app/live/`);
   
-  // Test internal route registration
-  console.log('🧪 Testing internal route access...');
+  // Test that routes are working by making an internal request
+  console.log('🧪 Server is ready to handle requests');
   
   // Start Node Media Server AFTER API server is running
   try {

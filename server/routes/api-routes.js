@@ -5,8 +5,11 @@ const path = require('path');
 function createApiRoutes(serverConfig, streamManager) {
   const router = express.Router();
   
+  console.log('🔧 Setting up API routes...');
+  
   // RAILWAY CRITICAL: Root endpoint must respond quickly
   router.get('/', (req, res) => {
+    console.log('📍 Root endpoint accessed');
     res.status(200).json({ 
       message: 'Nightflow Streaming Server with RTMP',
       status: 'running',
@@ -131,24 +134,35 @@ function createApiRoutes(serverConfig, streamManager) {
   // Serve HLS files
   router.use('/live', express.static(path.join(serverConfig.mediaRoot, 'live')));
 
+  console.log('✅ API routes configured successfully');
+  console.log('📋 Available routes:');
+  console.log('   GET /');
+  console.log('   GET /health');
+  console.log('   GET /api/health');
+  console.log('   GET /api/stream/:streamKey/status');
+  console.log('   GET /api/stream/:streamKey/validate');
+  console.log('   GET /api/streams/active');
+  console.log('   GET /live/*');
+
   return router;
 }
 
 function setupErrorHandling(app) {
   // Error handling
   app.use((err, req, res, next) => {
-    console.error('Server error:', err);
+    console.error('❌ Server error:', err);
     res.status(500).json({ 
       error: 'Internal server error',
       timestamp: new Date().toISOString()
     });
   });
 
-  // 404 handler
+  // 404 handler - MUST BE LAST
   app.use('*', (req, res) => {
-    console.log(`❌ 404 - Route not found: ${req.originalUrl}`);
+    console.log(`❌ 404 - Route not found: ${req.method} ${req.originalUrl}`);
     res.status(404).json({ 
       error: 'Route not found',
+      method: req.method,
       path: req.originalUrl,
       available_routes: ['/', '/health', '/api/health', '/api/streams/active'],
       timestamp: new Date().toISOString()
