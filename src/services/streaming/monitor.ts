@@ -4,7 +4,7 @@ import type { StreamStatus } from '@/types/streaming';
 
 export class StreamingMonitor {
   private statusCallbacks: Set<(status: StreamStatus) => void> = new Set();
-  private pollingInterval: number | null = null;
+  private pollingInterval: ReturnType<typeof setInterval> | null = null;
 
   connectToStreamStatusWebSocket(streamKey: string) {
     // Skip WebSocket for now since server doesn't support it
