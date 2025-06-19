@@ -126,7 +126,6 @@ export const StreamViewer = ({ stream, open, onClose }: StreamViewerProps) => {
                 <RealVideoPlayer
                   hlsUrl={stream.hls_url}
                   isLive={stream.status === 'live'}
-                  onFullscreen={() => setIsFullscreen(!isFullscreen)}
                 />
 
                 {/* Video Controls Overlay */}
@@ -164,7 +163,7 @@ export const StreamViewer = ({ stream, open, onClose }: StreamViewerProps) => {
               <div className="w-80 border-l">
                 <StreamChat 
                   streamId={stream.id} 
-                  streamerId={stream.user_id}
+                  streamerId={stream.streamer.id}
                 />
               </div>
             )}
@@ -176,7 +175,7 @@ export const StreamViewer = ({ stream, open, onClose }: StreamViewerProps) => {
         open={showTipDialog}
         onOpenChange={setShowTipDialog}
         streamId={stream.id}
-        streamerId={stream.user_id}
+        streamerId={stream.streamer.id}
       />
     </>
   );
