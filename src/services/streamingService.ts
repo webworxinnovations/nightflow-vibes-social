@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase'
 import type { Stream } from '@/lib/supabase'
 
@@ -25,13 +24,20 @@ class StreamingService {
 
   constructor() {
     // Use production URLs for deployed app, localhost for development
-    const isProduction = window.location.hostname !== 'localhost';
+    const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+    
+    console.log('StreamingService: Environment detection:', {
+      hostname: window.location.hostname,
+      isProduction
+    });
     
     if (isProduction) {
       this.baseUrl = 'wss://nodejs-production-aa37f.up.railway.app';
     } else {
       this.baseUrl = 'ws://localhost:3001';
     }
+    
+    console.log('StreamingService: Using base URL:', this.baseUrl);
   }
 
   async generateStreamKey(): Promise<StreamConfig> {
@@ -313,16 +319,21 @@ class StreamingService {
   async getServerStatus(): Promise<{ available: boolean; url: string }> {
     try {
       const httpUrl = this.baseUrl.replace('ws://', 'http://').replace('wss://', 'https://');
+      console.log('StreamingService: Checking server status at:', httpUrl);
+      
       const response = await fetch(`${httpUrl}/health`, { 
         method: 'GET',
-        signal: AbortSignal.timeout(5000) // 5 second timeout
+        signal: AbortSignal.timeout(10000) // Increased to 10 second timeout
       });
+      
+      console.log('StreamingService: Server response:', response.status, response.ok);
       
       return {
         available: response.ok,
         url: httpUrl
       };
     } catch (error) {
+      console.error('StreamingService: Server check failed:', error);
       return {
         available: false,
         url: this.baseUrl.replace('ws://', 'http://').replace('wss://', 'https://')

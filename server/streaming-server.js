@@ -1,4 +1,3 @@
-
 // Node.js streaming server setup
 // Run this with: node server/streaming-server.js
 
@@ -14,6 +13,29 @@ app.use(express.json());
 // Store active streams
 const activeStreams = new Map();
 const streamClients = new Map();
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'healthy', 
+    timestamp: new Date().toISOString(),
+    activeStreams: activeStreams.size,
+    uptime: process.uptime()
+  });
+});
+
+// Root endpoint
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'Nightflow Streaming Server',
+    status: 'running',
+    endpoints: {
+      health: '/health',
+      streamStatus: '/api/stream/:streamKey/status',
+      streamValidation: '/api/stream/:streamKey/validate'
+    }
+  });
+});
 
 // Media server configuration
 const config = {
