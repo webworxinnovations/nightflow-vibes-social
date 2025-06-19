@@ -1,131 +1,129 @@
 
-import { useEffect, useRef, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Volume2, VolumeX, Maximize, Play, Pause, Monitor, AlertCircle } from 'lucide-react';
-import Hls from 'hls.js';
+import { useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Play, Pause, Volume2, VolumeX, Maximize2, Loader2 } from "lucide-react";
+import Hls from "hls.js";
 
 interface RealVideoPlayerProps {
   hlsUrl: string;
   isLive: boolean;
   onFullscreen?: () => void;
+  autoplay?: boolean;
+  muted?: boolean;
 }
 
-export const RealVideoPlayer = ({ hlsUrl, isLive, onFullscreen }: RealVideoPlayerProps) => {
+export const RealVideoPlayer = ({ 
+  hlsUrl, 
+  isLive, 
+  onFullscreen,
+  autoplay = true,
+  muted = false 
+}: RealVideoPlayerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const [volume, setVolume] = useState(0.7);
-  const [hasError, setHasError] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [isMuted, setIsMuted] = useState(muted);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !hlsUrl || !isLive) {
-      if (hlsRef.current) {
-        hlsRef.current.destroy();
-        hlsRef.current = null;
-      }
-      return;
-    }
+    if (!video || !hlsUrl) return;
 
-    setHasError(false);
     setIsLoading(true);
-    setErrorMessage('');
+    setError(null);
 
-    // Configure video
-    video.muted = isMuted;
-    video.volume = volume;
+    // Check if HLS is supported
+    if (Hls.isSupported()) {
+      const hls = new Hls({
+        enableWorker: true,
+        lowLatencyMode: isLive,
+        backBufferLength: isLive ? 4 : 30,
+        maxBufferLength: isLive ? 10 : 60,
+        liveSyncDurationCount: isLive ? 1 : 3,
+        liveMaxLatencyDurationCount: isLive ? 5 : 10,
+      });
 
-    // Clean up previous HLS instance
-    if (hlsRef.current) {
-      hlsRef.current.destroy();
-    }
+      hlsRef.current = hls;
 
-    const setupVideo = async () => {
-      try {
-        if (Hls.isSupported()) {
-          // Use HLS.js for browsers that support it
-          const hls = new Hls({
-            enableWorker: true,
-            lowLatencyMode: true,
-            backBufferLength: 90
-          });
-          
-          hlsRef.current = hls;
-          
-          hls.on(Hls.Events.MEDIA_ATTACHED, () => {
-            console.log('HLS: Media attached');
-            hls.loadSource(hlsUrl);
-          });
+      hls.loadSource(hlsUrl);
+      hls.attachMedia(video);
 
-          hls.on(Hls.Events.MANIFEST_PARSED, () => {
-            console.log('HLS: Manifest parsed, attempting autoplay');
-            setIsLoading(false);
-            video.play().then(() => {
-              setIsPlaying(true);
-            }).catch((error) => {
-              console.warn('HLS: Autoplay failed:', error);
-              setIsPlaying(false);
-            });
-          });
-
-          hls.on(Hls.Events.ERROR, (event, data) => {
-            console.error('HLS Error:', data);
-            if (data.fatal) {
-              setHasError(true);
-              setIsLoading(false);
-              setErrorMessage(data.details || 'HLS playback error');
-            }
-          });
-
-          hls.attachMedia(video);
-        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-          // Native HLS support (Safari)
-          console.log('Using native HLS support');
-          video.src = hlsUrl;
-          
-          const handleCanPlay = () => {
-            setIsLoading(false);
-            video.play().then(() => {
-              setIsPlaying(true);
-            }).catch((error) => {
-              console.warn('Native HLS: Autoplay failed:', error);
-              setIsPlaying(false);
-            });
-          };
-
-          video.addEventListener('canplay', handleCanPlay);
-          video.addEventListener('error', () => {
-            setHasError(true);
-            setIsLoading(false);
-            setErrorMessage('Native HLS playback error');
-          });
-
-          return () => {
-            video.removeEventListener('canplay', handleCanPlay);
-          };
-        } else {
-          throw new Error('HLS not supported in this browser');
-        }
-      } catch (error) {
-        console.error('Video setup error:', error);
-        setHasError(true);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        console.log('HLS manifest parsed, starting playback');
         setIsLoading(false);
-        setErrorMessage(error instanceof Error ? error.message : 'Video setup failed');
-      }
-    };
+        if (autoplay) {
+          video.play().catch(err => {
+            console.warn('Autoplay failed:', err);
+            setError('Click play to start the stream');
+          });
+        }
+      });
 
-    setupVideo();
+      hls.on(Hls.Events.ERROR, (event, data) => {
+        console.error('HLS error:', data);
+        setIsLoading(false);
+        
+        if (data.fatal) {
+          switch (data.type) {
+            case Hls.ErrorTypes.NETWORK_ERROR:
+              setError('Network error - stream may be offline');
+              break;
+            case Hls.ErrorTypes.MEDIA_ERROR:
+              setError('Media error - trying to recover...');
+              hls.recoverMediaError();
+              break;
+            default:
+              setError('Stream error - please refresh');
+              break;
+          }
+        }
+      });
+
+      return () => {
+        hls.destroy();
+      };
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      // Native HLS support (Safari)
+      video.src = hlsUrl;
+      video.addEventListener('loadedmetadata', () => {
+        setIsLoading(false);
+        if (autoplay) {
+          video.play().catch(err => {
+            console.warn('Autoplay failed:', err);
+            setError('Click play to start the stream');
+          });
+        }
+      });
+
+      video.addEventListener('error', () => {
+        setIsLoading(false);
+        setError('Stream error - please refresh');
+      });
+    } else {
+      setIsLoading(false);
+      setError('HLS not supported in this browser');
+    }
+  }, [hlsUrl, isLive, autoplay]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const handlePlay = () => setIsPlaying(true);
+    const handlePause = () => setIsPlaying(false);
+    const handleVolumeChange = () => setIsMuted(video.muted);
+
+    video.addEventListener('play', handlePlay);
+    video.addEventListener('pause', handlePause);
+    video.addEventListener('volumechange', handleVolumeChange);
 
     return () => {
-      if (hlsRef.current) {
-        hlsRef.current.destroy();
-        hlsRef.current = null;
-      }
+      video.removeEventListener('play', handlePlay);
+      video.removeEventListener('pause', handlePause);
+      video.removeEventListener('volumechange', handleVolumeChange);
     };
-  }, [hlsUrl, isLive, isMuted, volume]);
+  }, []);
 
   const togglePlay = () => {
     const video = videoRef.current;
@@ -133,172 +131,110 @@ export const RealVideoPlayer = ({ hlsUrl, isLive, onFullscreen }: RealVideoPlaye
 
     if (isPlaying) {
       video.pause();
-      setIsPlaying(false);
     } else {
-      video.play().then(() => setIsPlaying(true)).catch(console.error);
+      video.play().catch(err => {
+        console.error('Play failed:', err);
+        setError('Failed to start playback');
+      });
     }
   };
 
   const toggleMute = () => {
     const video = videoRef.current;
     if (!video) return;
-
-    video.muted = !isMuted;
-    setIsMuted(!isMuted);
+    video.muted = !video.muted;
   };
 
-  const handleVolumeChange = (newVolume: number) => {
+  const handleFullscreen = () => {
     const video = videoRef.current;
     if (!video) return;
 
-    video.volume = newVolume;
-    setVolume(newVolume);
-    setIsMuted(newVolume === 0);
-  };
-
-  const retryConnection = () => {
-    setHasError(false);
-    setErrorMessage('');
-    setIsLoading(true);
-    
-    // Trigger a re-render by updating the key
-    const video = videoRef.current;
-    if (video) {
-      video.load();
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      video.requestFullscreen().catch(err => {
+        console.error('Fullscreen failed:', err);
+      });
     }
+    
+    onFullscreen?.();
   };
 
-  if (!isLive) {
+  if (error) {
     return (
-      <div className="w-full h-full bg-gradient-to-br from-slate-900 to-slate-800 rounded-lg flex items-center justify-center text-white relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-blue-500/10 animate-pulse" />
-        
-        <div className="text-center relative z-10">
-          <div className="w-20 h-20 bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Monitor className="h-10 w-10 text-slate-400" />
-          </div>
-          <h4 className="text-xl font-medium mb-2">Stream Offline</h4>
-          <p className="text-sm text-gray-400 max-w-md">
-            This DJ is not currently streaming. Check back later or follow them for notifications when they go live!
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (hasError) {
-    return (
-      <div className="w-full h-full bg-gradient-to-br from-red-900/20 to-slate-900 rounded-lg flex items-center justify-center text-white relative overflow-hidden">
+      <div className="w-full aspect-video bg-black flex items-center justify-center relative">
         <div className="text-center">
-          <div className="w-20 h-20 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-            <AlertCircle className="h-10 w-10 text-red-400" />
-          </div>
-          <h4 className="text-xl font-medium mb-2 text-red-400">Stream Error</h4>
-          <p className="text-sm text-gray-400 max-w-md mb-2">
-            Unable to load the live stream.
-          </p>
-          {errorMessage && (
-            <p className="text-xs text-red-300 mb-4 font-mono">
-              {errorMessage}
-            </p>
-          )}
-          <div className="flex gap-2 justify-center">
-            <Button 
-              onClick={retryConnection} 
-              variant="outline" 
-              size="sm"
-            >
-              Retry Connection
-            </Button>
-            <Button 
-              onClick={() => window.location.reload()} 
-              variant="outline" 
-              size="sm"
-            >
-              Refresh Page
-            </Button>
-          </div>
+          <div className="text-red-400 mb-2">⚠️ {error}</div>
+          <Button 
+            onClick={() => window.location.reload()} 
+            variant="outline" 
+            size="sm"
+          >
+            Refresh
+          </Button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="relative w-full h-full bg-black rounded-lg overflow-hidden group">
-      {isLoading && (
-        <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-20">
-          <div className="flex items-center gap-3 text-white">
-            <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            <span>Loading stream...</span>
-          </div>
-        </div>
-      )}
-
+    <div className="w-full aspect-video bg-black relative group">
       <video
         ref={videoRef}
-        className="w-full h-full object-cover"
-        autoPlay
+        className="w-full h-full object-contain"
         muted={isMuted}
         playsInline
         controls={false}
       />
       
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-        <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
-          <div className="flex items-center gap-3 text-white">
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+          <div className="text-center text-white">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
+            <p>Loading stream...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Controls */}
+      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
             <Button
               onClick={togglePlay}
-              variant="secondary"
+              variant="ghost"
               size="sm"
-              className="bg-black/50 hover:bg-black/70 backdrop-blur-sm"
+              className="text-white hover:bg-white/20"
             >
               {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
             </Button>
             
             <Button
               onClick={toggleMute}
-              variant="secondary"
+              variant="ghost"
               size="sm"
-              className="bg-black/50 hover:bg-black/70 backdrop-blur-sm"
+              className="text-white hover:bg-white/20"
             >
               {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
             </Button>
-            
-            <div className="flex items-center gap-2">
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.1"
-                value={volume}
-                onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
-                className="w-20 h-1 bg-white/30 rounded appearance-none slider accent-white"
-              />
-            </div>
-          </div>
-          
-          <div className="flex gap-2">
-            {onFullscreen && (
-              <Button
-                onClick={onFullscreen}
-                variant="secondary"
-                size="sm"
-                className="bg-black/50 hover:bg-black/70 backdrop-blur-sm"
-              >
-                <Maximize className="h-4 w-4" />
-              </Button>
+
+            {isLive && (
+              <div className="flex items-center gap-2 ml-4">
+                <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                <span className="text-white text-sm font-medium">LIVE</span>
+              </div>
             )}
           </div>
+
+          <Button
+            onClick={handleFullscreen}
+            variant="ghost"
+            size="sm"
+            className="text-white hover:bg-white/20"
+          >
+            <Maximize2 className="h-4 w-4" />
+          </Button>
         </div>
-      </div>
-
-      <div className="absolute top-4 left-4 bg-red-500 px-3 py-1 rounded-full text-white text-sm font-bold flex items-center gap-2 shadow-lg">
-        <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-        LIVE
-      </div>
-
-      <div className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm px-2 py-1 rounded text-white text-xs">
-        HD
       </div>
     </div>
   );
