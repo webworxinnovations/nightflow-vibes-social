@@ -1,4 +1,3 @@
-
 import { StreamingConfig } from './config';
 import { StreamingDatabase } from './database';
 import type { StreamStatus } from '@/types/streaming';
@@ -45,14 +44,24 @@ export class StreamingAPI {
         const status = await response.json();
         console.log(`StreamingAPI: Status received:`, status);
         
+        // Ensure the status has a timestamp
+        const fullStatus: StreamStatus = {
+          isLive: status.isLive || false,
+          viewerCount: status.viewerCount || 0,
+          duration: status.duration || 0,
+          bitrate: status.bitrate || 0,
+          resolution: status.resolution || '',
+          timestamp: status.timestamp || new Date().toISOString()
+        };
+        
         // Update database with latest status
         try {
-          await StreamingDatabase.updateStreamStatus(streamKey, status);
+          await StreamingDatabase.updateStreamStatus(streamKey, fullStatus);
         } catch (dbError) {
           console.warn('Failed to update database status:', dbError);
         }
           
-        return status;
+        return fullStatus;
       } else {
         console.warn(`StreamingAPI: Status request failed:`, response.status, response.statusText);
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);

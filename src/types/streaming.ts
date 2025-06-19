@@ -13,4 +13,5 @@ export interface StreamStatus {
   duration: number;
   bitrate: number;
   resolution: string;
+  timestamp: string;
 }
