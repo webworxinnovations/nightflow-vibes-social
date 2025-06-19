@@ -1,22 +1,21 @@
 
 export class StreamingConfig {
-  // Dynamic URL detection based on environment
+  // Use the confirmed Railway URL from your deployment logs
   private static getEnvironmentUrl(): string {
     const hostname = window.location.hostname;
     
-    // Production detection
+    // Production detection - use your confirmed Railway URL
     if (hostname.includes('lovable.app') || hostname === 'localhost') {
-      // Use the Railway production URL for streaming server
       return 'https://nodejs-production-aa37f.up.railway.app';
     }
     
-    // Fallback to environment variable or Railway URL
+    // Fallback to environment variable or confirmed Railway URL
     return import.meta.env.VITE_STREAMING_SERVER_URL || 'https://nodejs-production-aa37f.up.railway.app';
   }
   
   static getBaseUrl(): string {
     const url = this.getEnvironmentUrl();
-    console.log('StreamingConfig: Using base URL:', url);
+    console.log('StreamingConfig: Using confirmed Railway URL:', url);
     return url;
   }
   
