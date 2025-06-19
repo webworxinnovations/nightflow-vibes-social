@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -116,22 +115,58 @@ export const StreamKeyManager = () => {
     }
 
     setTestingConnection(true);
-    console.log('🎥 Testing RTMP connection...');
+    console.log('🎥 Testing RTMP connection with stream key:', streamConfig.streamKey);
     
     try {
-      // Test the stream key validation endpoint
+      // Test 1: Check if server is responding
+      const serverCheck = await streamingService.getServerStatus();
+      console.log('📡 Server status:', serverCheck);
+      
+      if (!serverCheck.available) {
+        toast.error('❌ RTMP server is offline - this is why OBS can\'t connect!');
+        setTestingConnection(false);
+        return;
+      }
+      
+      // Test 2: Try to validate the stream key
+      toast.info('🔍 Validating stream key with server...');
       const isValid = await streamingService.validateStreamKey(streamConfig.streamKey);
       console.log('🔑 Stream key validation result:', isValid);
       
       if (isValid) {
         toast.success('✅ Stream key is valid! RTMP server should accept your connection.');
         
+        // Test 3: Try to make a test connection to the RTMP endpoint
+        toast.info('🧪 Testing direct RTMP endpoint...');
+        
+        try {
+          // Try to connect to the RTMP URL directly
+          const rtmpTestUrl = `${serverCheck.url}/api/rtmp/test`;
+          const rtmpResponse = await fetch(rtmpTestUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ streamKey: streamConfig.streamKey }),
+            signal: AbortSignal.timeout(15000)
+          });
+          
+          if (rtmpResponse.ok) {
+            const result = await rtmpResponse.json();
+            toast.success('🎯 RTMP endpoint is working! Try OBS again.');
+            console.log('✅ RTMP test successful:', result);
+          } else {
+            toast.warning(`⚠️ RTMP endpoint returned ${rtmpResponse.status}. Server may have issues.`);
+          }
+        } catch (rtmpError) {
+          console.log('RTMP endpoint test failed:', rtmpError);
+          toast.warning('⚠️ Could not test RTMP endpoint directly, but stream key is valid.');
+        }
+        
         // Show detailed connection info
         toast.info(
-          `📡 RTMP Details:\n` +
-          `Server: rtmp://nightflow-vibes-social-production.up.railway.app/live\n` +
+          `📡 OBS Settings Confirmed:\n` +
+          `Server: ${streamConfig.rtmpUrl}\n` +
           `Key: ${streamConfig.streamKey.substring(0, 8)}...\n` +
-          `Status: Ready for OBS connection`,
+          `Status: Ready for streaming`,
           { duration: 10000 }
         );
       } else {
@@ -139,7 +174,7 @@ export const StreamKeyManager = () => {
       }
     } catch (error) {
       console.error('❌ RTMP test failed:', error);
-      toast.error('Failed to test RTMP connection. Check server status.');
+      toast.error(`Failed to test RTMP connection: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setTestingConnection(false);
     }
@@ -315,6 +350,7 @@ export const StreamKeyManager = () => {
                   disabled={testingConnection || !serverStatus?.available}
                   variant="outline"
                   size="sm"
+                  className="min-w-[120px]"
                 >
                   {testingConnection ? 'Testing...' : 'Test Connection'}
                 </Button>
