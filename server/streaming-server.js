@@ -1,3 +1,4 @@
+
 // Minimal Node.js streaming server for Railway deployment
 const express = require('express');
 const cors = require('cors');
@@ -181,32 +182,51 @@ app.use('*', (req, res) => {
   });
 });
 
-// CRITICAL FIX: Use Railway's PORT environment variable
-const PORT = process.env.PORT || 3000;
-const HOST = '0.0.0.0'; // Important for Railway
+// CRITICAL FIX for Railway: Proper port and host binding
+const PORT = parseInt(process.env.PORT) || 3000;
+const HOST = '0.0.0.0'; // Railway requires binding to 0.0.0.0
 
-console.log('=== STARTING SERVER ===');
-console.log('Environment PORT:', process.env.PORT);
-console.log('Using PORT:', PORT);
-console.log('Using HOST:', HOST);
+console.log('=== RAILWAY DEPLOYMENT DEBUG ===');
+console.log('Railway PORT environment variable:', process.env.PORT);
+console.log('Parsed PORT (as integer):', PORT);
+console.log('HOST binding:', HOST);
+console.log('Node.js version:', process.version);
+console.log('Platform:', process.platform);
+console.log('Architecture:', process.arch);
+console.log('Working directory:', process.cwd());
 
-// Start server
+// Start server with enhanced error handling
 const server = app.listen(PORT, HOST, () => {
-  console.log(`🚀 Nightflow Streaming Server SUCCESSFULLY started!`);
+  console.log('🎉 ===== SERVER STARTED SUCCESSFULLY ===== 🎉');
   console.log(`📍 Server running on ${HOST}:${PORT}`);
-  console.log(`🌐 External URL: https://nodejs-production-aa37f.up.railway.app`);
-  console.log(`📊 Health check: https://nodejs-production-aa37f.up.railway.app/health`);
+  console.log(`🌐 Public URL: https://nodejs-production-aa37f.up.railway.app`);
+  console.log(`🏥 Health check: https://nodejs-production-aa37f.up.railway.app/health`);
   console.log(`🔧 Test endpoint: https://nodejs-production-aa37f.up.railway.app/test`);
-  console.log(`🌐 Environment: ${process.env.NODE_ENV || 'production'}`);
+  console.log(`📊 Memory usage:`, process.memoryUsage());
+  console.log('============================================');
 });
 
 // Enhanced error handling for server startup
 server.on('error', (error) => {
-  console.error('❌ SERVER STARTUP ERROR:', error);
+  console.error('💥 SERVER STARTUP ERROR:', error);
+  console.error('Error code:', error.code);
+  console.error('Error message:', error.message);
+  
   if (error.code === 'EADDRINUSE') {
-    console.error(`Port ${PORT} is already in use`);
+    console.error(`❌ Port ${PORT} is already in use`);
+  } else if (error.code === 'EACCES') {
+    console.error(`❌ Permission denied to bind to port ${PORT}`);
+  } else if (error.code === 'ENOTFOUND') {
+    console.error(`❌ Host ${HOST} not found`);
   }
+  
   process.exit(1);
+});
+
+server.on('listening', () => {
+  const addr = server.address();
+  console.log('✅ Server is listening on:', addr);
+  console.log('✅ Server bound successfully to Railway infrastructure');
 });
 
 // Graceful shutdown
@@ -224,6 +244,7 @@ process.on('SIGINT', () => shutdown('SIGINT'));
 // Handle uncaught exceptions
 process.on('uncaughtException', (err) => {
   console.error('❌ Uncaught Exception:', err);
+  console.error('Stack trace:', err.stack);
   process.exit(1);
 });
 
@@ -234,5 +255,6 @@ process.on('unhandledRejection', (reason, promise) => {
 
 // Keep alive ping
 setInterval(() => {
-  console.log(`✅ Server alive - Uptime: ${Math.floor(process.uptime())}s - Active streams: ${activeStreams.size} - Port: ${PORT}`);
+  const addr = server.address();
+  console.log(`💓 Server heartbeat - Uptime: ${Math.floor(process.uptime())}s - Active streams: ${activeStreams.size} - Listening on: ${addr ? `${addr.address}:${addr.port}` : 'unknown'}`);
 }, 60000); // Every minute
