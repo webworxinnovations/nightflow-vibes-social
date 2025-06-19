@@ -50,6 +50,7 @@
     "input-otp": "^1.2.4",
     "lucide-react": "^0.462.0",
     "next-themes": "^0.3.0",
+    "node-media-server": "^4.0.18",
     "obs-websocket-js": "^5.0.6",
     "qrcode.react": "^4.2.0",
     "react": "^18.3.1",

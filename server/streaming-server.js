@@ -1,6 +1,9 @@
-// Railway-optimized Node.js streaming server
+// Railway-optimized Node.js streaming server with RTMP support
 const express = require('express');
 const cors = require('cors');
+const NodeMediaServer = require('node-media-server');
+const path = require('path');
+const fs = require('fs');
 
 const app = express();
 
@@ -18,15 +21,98 @@ app.use(express.urlencoded({ extended: true }));
 // Store active streams in memory
 const activeStreams = new Map();
 
+// Ensure media directory exists
+const mediaRoot = path.join(__dirname, 'media');
+if (!fs.existsSync(mediaRoot)) {
+  fs.mkdirSync(mediaRoot, { recursive: true });
+}
+
+// RTMP and HLS configuration
+const config = {
+  rtmp: {
+    port: process.env.RTMP_PORT || 1935,
+    chunk_size: 60000,
+    gop_cache: true,
+    ping: 30,
+    ping_timeout: 60
+  },
+  http: {
+    port: process.env.HTTP_PORT || 8000,
+    mediaroot: mediaRoot,
+    allow_origin: '*'
+  },
+  relay: {
+    ffmpeg: '/usr/bin/ffmpeg',
+    tasks: [
+      {
+        app: 'live',
+        mode: 'push',
+        edge: 'rtmp://127.0.0.1:1935/hls'
+      }
+    ]
+  }
+};
+
+// Create and configure Node Media Server
+const nms = new NodeMediaServer(config);
+
+// RTMP Events
+nms.on('preConnect', (id, args) => {
+  console.log('[NodeEvent on preConnect]', `id=${id} args=${JSON.stringify(args)}`);
+});
+
+nms.on('postConnect', (id, args) => {
+  console.log('[NodeEvent on postConnect]', `id=${id} args=${JSON.stringify(args)}`);
+});
+
+nms.on('doneConnect', (id, args) => {
+  console.log('[NodeEvent on doneConnect]', `id=${id} args=${JSON.stringify(args)}`);
+});
+
+nms.on('prePublish', (id, StreamPath, args) => {
+  console.log('[NodeEvent on prePublish]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
+  
+  // Extract stream key from path (format: /live/STREAM_KEY)
+  const streamKey = StreamPath.split('/').pop();
+  
+  if (streamKey && streamKey.startsWith('nf_')) {
+    console.log(`Stream started: ${streamKey}`);
+    activeStreams.set(streamKey, {
+      streamKey,
+      startTime: Date.now(),
+      viewerCount: 0
+    });
+  }
+});
+
+nms.on('postPublish', (id, StreamPath, args) => {
+  console.log('[NodeEvent on postPublish]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
+});
+
+nms.on('donePublish', (id, StreamPath, args) => {
+  console.log('[NodeEvent on donePublish]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
+  
+  // Extract stream key from path
+  const streamKey = StreamPath.split('/').pop();
+  
+  if (streamKey && activeStreams.has(streamKey)) {
+    console.log(`Stream ended: ${streamKey}`);
+    activeStreams.delete(streamKey);
+  }
+});
+
 // RAILWAY CRITICAL: Root endpoint must respond quickly
 app.get('/', (req, res) => {
   res.status(200).json({ 
-    message: 'Nightflow Streaming Server',
+    message: 'Nightflow Streaming Server with RTMP',
     status: 'running',
     timestamp: new Date().toISOString(),
-    version: '1.0.6',
+    version: '2.0.0',
     port: process.env.PORT || 3000,
-    env: process.env.NODE_ENV || 'development'
+    rtmpPort: process.env.RTMP_PORT || 1935,
+    httpPort: process.env.HTTP_PORT || 8000,
+    env: process.env.NODE_ENV || 'development',
+    features: ['RTMP Ingestion', 'HLS Output', 'Stream Management']
   });
 });
 
@@ -37,8 +123,15 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString(),
     activeStreams: activeStreams.size,
     uptime: Math.floor(process.uptime()),
-    version: '1.0.6',
-    port: process.env.PORT || 3000,
+    version: '2.0.0',
+    rtmp: {
+      port: config.rtmp.port,
+      active: true
+    },
+    hls: {
+      port: config.http.port,
+      mediaRoot: mediaRoot
+    },
     memory: process.memoryUsage()
   });
 });
@@ -81,6 +174,8 @@ app.get('/api/stream/:streamKey/validate', (req, res) => {
     res.status(200).json({ 
       valid: true, 
       message: 'Stream key is valid',
+      rtmpUrl: `rtmp://${req.get('host')}/live`,
+      hlsUrl: `http://${req.get('host')}:${config.http.port}/live/${streamKey}/index.m3u8`,
       timestamp: new Date().toISOString()
     });
   } else {
@@ -92,40 +187,22 @@ app.get('/api/stream/:streamKey/validate', (req, res) => {
   }
 });
 
-// Start stream endpoint
-app.post('/api/stream/:streamKey/start', (req, res) => {
-  const { streamKey } = req.params;
-  
-  activeStreams.set(streamKey, {
-    streamKey,
-    startTime: Date.now(),
-    viewerCount: Math.floor(Math.random() * 10) + 1
-  });
-  
-  res.status(200).json({ 
-    success: true, 
-    message: 'Stream started',
-    timestamp: new Date().toISOString()
-  });
-});
+// Serve HLS files
+app.use('/live', express.static(path.join(mediaRoot, 'live')));
 
-// Stop stream endpoint
-app.post('/api/stream/:streamKey/stop', (req, res) => {
-  const { streamKey } = req.params;
+// List active streams
+app.get('/api/streams/active', (req, res) => {
+  const streams = Array.from(activeStreams.values()).map(stream => ({
+    streamKey: stream.streamKey,
+    duration: Math.floor((Date.now() - stream.startTime) / 1000),
+    viewerCount: stream.viewerCount,
+    hlsUrl: `http://${req.get('host')}:${config.http.port}/live/${stream.streamKey}/index.m3u8`
+  }));
   
-  if (activeStreams.delete(streamKey)) {
-    res.status(200).json({ 
-      success: true, 
-      message: 'Stream stopped',
-      timestamp: new Date().toISOString()
-    });
-  } else {
-    res.status(404).json({ 
-      success: false, 
-      error: 'Stream not found',
-      timestamp: new Date().toISOString()
-    });
-  }
+  res.status(200).json({
+    count: streams.length,
+    streams
+  });
 });
 
 // Error handling
@@ -146,18 +223,27 @@ app.use('*', (req, res) => {
   });
 });
 
-// RAILWAY SPECIFIC: Use Railway's PORT
+// RAILWAY SPECIFIC: Use Railway's PORT for HTTP
 const PORT = process.env.PORT || 3000;
 
-console.log('🚀 Starting Nightflow Streaming Server v1.0.6...');
-console.log(`📍 PORT: ${PORT}`);
+console.log('🚀 Starting Nightflow Streaming Server v2.0.0...');
+console.log(`📍 HTTP PORT: ${PORT}`);
+console.log(`📍 RTMP PORT: ${config.rtmp.port}`);
+console.log(`📍 HLS PORT: ${config.http.port}`);
 console.log(`🌍 NODE_ENV: ${process.env.NODE_ENV || 'development'}`);
+console.log(`📁 Media Root: ${mediaRoot}`);
 
-// Start server - Railway handles host binding automatically
+// Start Node Media Server (RTMP + HLS)
+nms.run();
+console.log(`✅ RTMP SERVER RUNNING ON PORT ${config.rtmp.port}`);
+console.log(`✅ HLS SERVER RUNNING ON PORT ${config.http.port}`);
+
+// Start Express server (API)
 const server = app.listen(PORT, () => {
-  console.log(`✅ SERVER RUNNING ON PORT ${PORT}`);
+  console.log(`✅ API SERVER RUNNING ON PORT ${PORT}`);
   console.log(`🔗 Health: https://nodejs-production-aa37f.up.railway.app/health`);
-  console.log(`⚡ Ready to accept connections`);
+  console.log(`🎥 RTMP: rtmp://nodejs-production-aa37f.up.railway.app/live`);
+  console.log(`⚡ Ready to accept OBS connections`);
 });
 
 server.on('error', (error) => {
@@ -167,12 +253,13 @@ server.on('error', (error) => {
 
 // Keep alive ping
 setInterval(() => {
-  console.log(`💓 Server alive - Port ${PORT} - Uptime: ${Math.floor(process.uptime())}s`);
+  console.log(`💓 Server alive - HTTP:${PORT} RTMP:${config.rtmp.port} HLS:${config.http.port} - Uptime: ${Math.floor(process.uptime())}s`);
 }, 30000);
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
   console.log('SIGTERM received - shutting down gracefully');
+  nms.stop();
   server.close(() => {
     console.log('✅ Server closed gracefully');
     process.exit(0);
@@ -181,6 +268,7 @@ process.on('SIGTERM', () => {
 
 process.on('SIGINT', () => {
   console.log('SIGINT received - shutting down gracefully');
+  nms.stop();
   server.close(() => {
     console.log('✅ Server closed gracefully');
     process.exit(0);

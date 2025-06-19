@@ -9,7 +9,7 @@ export class StreamingConfig {
   }
   
   static getRtmpUrl(): string {
-    // For Railway RTMP streaming, use the domain without https
+    // RTMP uses port 1935 but Railway handles port mapping
     const domain = this.RAILWAY_URL.replace('https://', '');
     const rtmpUrl = `rtmp://${domain}/live`;
     console.log('StreamingService: RTMP URL:', rtmpUrl);
@@ -17,6 +17,7 @@ export class StreamingConfig {
   }
   
   static getHlsUrl(streamKey: string): string {
+    // HLS runs on port 8000 but accessed through Railway proxy
     const hlsUrl = `${this.RAILWAY_URL}/live/${streamKey}/index.m3u8`;
     console.log('StreamingService: HLS URL:', hlsUrl);
     return hlsUrl;
