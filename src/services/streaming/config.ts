@@ -1,21 +1,21 @@
 
 export class StreamingConfig {
-  // Use the confirmed Railway URL from your deployment logs
+  // Use your confirmed Railway URL
   private static getEnvironmentUrl(): string {
     const hostname = window.location.hostname;
     
-    // Production detection - use your confirmed Railway URL
+    // Production detection - use your Railway URL
     if (hostname.includes('lovable.app') || hostname === 'localhost') {
-      return 'https://nodejs-production-aa37f.up.railway.app';
+      return 'https://nightflow-vibes-social-production.up.railway.app';
     }
     
-    // Fallback to environment variable or confirmed Railway URL
-    return import.meta.env.VITE_STREAMING_SERVER_URL || 'https://nodejs-production-aa37f.up.railway.app';
+    // Fallback to environment variable or your Railway URL
+    return import.meta.env.VITE_STREAMING_SERVER_URL || 'https://nightflow-vibes-social-production.up.railway.app';
   }
   
   static getBaseUrl(): string {
     const url = this.getEnvironmentUrl();
-    console.log('StreamingConfig: Using confirmed Railway URL:', url);
+    console.log('StreamingConfig: Using Railway URL:', url);
     return url;
   }
   

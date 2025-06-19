@@ -15,8 +15,8 @@ export class StreamingMonitor {
     this.isConnecting = true;
     
     try {
-      // Use the same domain as the streaming server
-      const wsUrl = `wss://nodejs-production-aa37f.up.railway.app/ws/stream/${streamKey}`;
+      // Use your Railway domain for WebSocket
+      const wsUrl = `wss://nightflow-vibes-social-production.up.railway.app/ws/stream/${streamKey}`;
       console.log('Connecting to stream status WebSocket:', wsUrl);
       
       this.ws = new WebSocket(wsUrl);
