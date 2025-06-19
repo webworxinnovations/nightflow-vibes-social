@@ -38,7 +38,8 @@ export class StreamingAPI {
     try {
       console.log('StreamingService: Checking server status at:', this.baseUrl);
       
-      const response = await fetch(`${this.baseUrl}/health`, { 
+      // Try the root endpoint first since /health might not exist
+      const response = await fetch(`${this.baseUrl}/`, { 
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -68,6 +69,30 @@ export class StreamingAPI {
       }
     } catch (error) {
       console.error('StreamingService: Server check failed:', error);
+      
+      // Try health endpoint as fallback
+      try {
+        console.log('StreamingService: Trying health endpoint...');
+        const healthResponse = await fetch(`${this.baseUrl}/health`, { 
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          signal: AbortSignal.timeout(10000)
+        });
+        
+        if (healthResponse.ok) {
+          const healthData = await healthResponse.json();
+          console.log('StreamingService: Health endpoint works:', healthData);
+          return {
+            available: true,
+            url: this.baseUrl
+          };
+        }
+      } catch (healthError) {
+        console.error('StreamingService: Health endpoint also failed:', healthError);
+      }
+      
       return {
         available: false,
         url: this.baseUrl

@@ -1,5 +1,6 @@
 
 export class StreamingConfig {
+  // Update to use the correct Railway domain format
   private static readonly RAILWAY_URL = 'https://nodejs-production-aa37f.up.railway.app';
   
   static getBaseUrl(): string {
@@ -8,7 +9,9 @@ export class StreamingConfig {
   }
   
   static getRtmpUrl(): string {
-    return `rtmp://${this.RAILWAY_URL.replace('https://', '')}/live`;
+    // Railway might need a different RTMP URL format
+    const domain = this.RAILWAY_URL.replace('https://', '');
+    return `rtmp://${domain}/live`;
   }
   
   static getHlsUrl(streamKey: string): string {
