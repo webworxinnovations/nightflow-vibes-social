@@ -1,4 +1,3 @@
-
 // Minimal Node.js streaming server for Railway deployment
 const express = require('express');
 const cors = require('cors');
@@ -182,58 +181,59 @@ app.use('*', (req, res) => {
   });
 });
 
-// CRITICAL FIX for Railway: Proper port and host binding
+// RAILWAY CRITICAL FIX: Ensure proper port binding
 const PORT = parseInt(process.env.PORT) || 3000;
-const HOST = '0.0.0.0'; // Railway requires binding to 0.0.0.0
 
-console.log('=== RAILWAY DEPLOYMENT DEBUG ===');
-console.log('Railway PORT environment variable:', process.env.PORT);
-console.log('Parsed PORT (as integer):', PORT);
+// RAILWAY CRITICAL: Must bind to 0.0.0.0 for Railway's load balancer to reach it
+const HOST = '0.0.0.0';
+
+console.log('=== RAILWAY DEPLOYMENT START ===');
+console.log('Railway PORT environment:', process.env.PORT);
+console.log('Parsed PORT (integer):', PORT);
 console.log('HOST binding:', HOST);
 console.log('Node.js version:', process.version);
-console.log('Platform:', process.platform);
-console.log('Architecture:', process.arch);
 console.log('Working directory:', process.cwd());
+console.log('================================');
 
-// Start server with enhanced error handling
+// RAILWAY CRITICAL: Use callback to ensure proper startup
 const server = app.listen(PORT, HOST, () => {
-  console.log('🎉 ===== SERVER STARTED SUCCESSFULLY ===== 🎉');
-  console.log(`📍 Server running on ${HOST}:${PORT}`);
+  const addr = server.address();
+  console.log('🚀 === RAILWAY SERVER STARTED SUCCESSFULLY ===');
+  console.log(`📍 Server bound to: ${addr.address}:${addr.port}`);
   console.log(`🌐 Public URL: https://nodejs-production-aa37f.up.railway.app`);
-  console.log(`🏥 Health check: https://nodejs-production-aa37f.up.railway.app/health`);
-  console.log(`🔧 Test endpoint: https://nodejs-production-aa37f.up.railway.app/test`);
-  console.log(`📊 Memory usage:`, process.memoryUsage());
-  console.log('============================================');
+  console.log(`✅ Railway load balancer can now reach this server`);
+  console.log('==============================================');
 });
 
-// Enhanced error handling for server startup
+// Enhanced error handling
 server.on('error', (error) => {
-  console.error('💥 SERVER STARTUP ERROR:', error);
+  console.error('🚨 RAILWAY SERVER ERROR:', error);
   console.error('Error code:', error.code);
   console.error('Error message:', error.message);
   
   if (error.code === 'EADDRINUSE') {
-    console.error(`❌ Port ${PORT} is already in use`);
+    console.error(`❌ Port ${PORT} already in use`);
   } else if (error.code === 'EACCES') {
-    console.error(`❌ Permission denied to bind to port ${PORT}`);
+    console.error(`❌ Permission denied for port ${PORT}`);
   } else if (error.code === 'ENOTFOUND') {
-    console.error(`❌ Host ${HOST} not found`);
+    console.error(`❌ Cannot bind to host ${HOST}`);
   }
   
+  console.error('🔧 Railway deployment failed - check configuration');
   process.exit(1);
 });
 
 server.on('listening', () => {
   const addr = server.address();
-  console.log('✅ Server is listening on:', addr);
-  console.log('✅ Server bound successfully to Railway infrastructure');
+  console.log(`✅ Railway server listening successfully on: ${addr.address}:${addr.port}`);
+  console.log(`✅ Railway load balancer connection: READY`);
 });
 
 // Graceful shutdown
 const shutdown = (signal) => {
-  console.log(`${signal} received, shutting down gracefully`);
+  console.log(`${signal} received - Railway shutdown initiated`);
   server.close(() => {
-    console.log('✅ Server closed');
+    console.log('✅ Railway server closed gracefully');
     process.exit(0);
   });
 };
@@ -241,20 +241,20 @@ const shutdown = (signal) => {
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT', () => shutdown('SIGINT'));
 
-// Handle uncaught exceptions
+// Error handlers
 process.on('uncaughtException', (err) => {
-  console.error('❌ Uncaught Exception:', err);
-  console.error('Stack trace:', err.stack);
+  console.error('❌ Railway uncaught exception:', err);
+  console.error('Stack:', err.stack);
   process.exit(1);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+  console.error('❌ Railway unhandled rejection:', promise, 'reason:', reason);
   process.exit(1);
 });
 
-// Keep alive ping
+// Keep-alive for Railway
 setInterval(() => {
   const addr = server.address();
-  console.log(`💓 Server heartbeat - Uptime: ${Math.floor(process.uptime())}s - Active streams: ${activeStreams.size} - Listening on: ${addr ? `${addr.address}:${addr.port}` : 'unknown'}`);
-}, 60000); // Every minute
+  console.log(`💓 Railway heartbeat - Uptime: ${Math.floor(process.uptime())}s - Streams: ${activeStreams.size} - Address: ${addr ? `${addr.address}:${addr.port}` : 'unknown'}`);
+}, 60000);
