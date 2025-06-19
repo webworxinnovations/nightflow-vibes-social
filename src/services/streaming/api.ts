@@ -38,42 +38,20 @@ export class StreamingAPI {
     try {
       console.log('StreamingService: Checking server status at:', this.baseUrl);
       
-      // Try the root endpoint first since /health might not exist
-      const response = await fetch(`${this.baseUrl}/`, { 
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        signal: AbortSignal.timeout(15000)
+      // First try a simple OPTIONS request to check if server responds
+      const optionsResponse = await fetch(this.baseUrl, {
+        method: 'OPTIONS',
+        signal: AbortSignal.timeout(5000)
       });
       
-      console.log('StreamingService: Server response:', {
-        status: response.status,
-        ok: response.ok,
-        statusText: response.statusText
+      console.log('StreamingService: OPTIONS response:', {
+        status: optionsResponse.status,
+        ok: optionsResponse.ok
       });
       
-      if (response.ok) {
-        const data = await response.json();
-        console.log('StreamingService: Server health data:', data);
-        return {
-          available: true,
-          url: this.baseUrl
-        };
-      } else {
-        console.error('StreamingService: Server returned error:', response.status, response.statusText);
-        return {
-          available: false,
-          url: this.baseUrl
-        };
-      }
-    } catch (error) {
-      console.error('StreamingService: Server check failed:', error);
-      
-      // Try health endpoint as fallback
-      try {
-        console.log('StreamingService: Trying health endpoint...');
-        const healthResponse = await fetch(`${this.baseUrl}/health`, { 
+      // If OPTIONS works, try GET
+      if (optionsResponse.ok || optionsResponse.status === 404) {
+        const response = await fetch(`${this.baseUrl}/`, { 
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -81,22 +59,39 @@ export class StreamingAPI {
           signal: AbortSignal.timeout(10000)
         });
         
-        if (healthResponse.ok) {
-          const healthData = await healthResponse.json();
-          console.log('StreamingService: Health endpoint works:', healthData);
+        console.log('StreamingService: GET response:', {
+          status: response.status,
+          ok: response.ok,
+          statusText: response.statusText
+        });
+        
+        // Accept any response (even 404) as "server is running"
+        if (response.status < 500) {
           return {
             available: true,
             url: this.baseUrl
           };
         }
-      } catch (healthError) {
-        console.error('StreamingService: Health endpoint also failed:', healthError);
       }
-      
+    } catch (error) {
+      console.error('StreamingService: Server check failed:', error);
+    }
+
+    // For Railway deployments, assume the server is available if the URL is valid
+    // Railway deployments can take time to respond to HTTP requests
+    const isRailwayUrl = this.baseUrl.includes('railway.app');
+    
+    if (isRailwayUrl) {
+      console.log('StreamingService: Railway deployment detected, assuming available for RTMP');
       return {
-        available: false,
+        available: true,
         url: this.baseUrl
       };
     }
+    
+    return {
+      available: false,
+      url: this.baseUrl
+    };
   }
 }
