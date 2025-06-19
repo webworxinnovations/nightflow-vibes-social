@@ -1,3 +1,4 @@
+
 import { supabase } from '@/lib/supabase'
 import type { Stream } from '@/lib/supabase'
 
@@ -23,18 +24,20 @@ class StreamingService {
   private statusCallbacks: Set<(status: StreamStatus) => void> = new Set();
 
   constructor() {
-    // Use production URLs for deployed app, localhost for development
-    const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+    // Use Railway URL for production, localhost for development
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     
     console.log('StreamingService: Environment detection:', {
       hostname: window.location.hostname,
-      isProduction
+      isLocalhost,
+      protocol: window.location.protocol
     });
     
-    if (isProduction) {
-      this.baseUrl = 'wss://nodejs-production-aa37f.up.railway.app';
+    if (isLocalhost) {
+      this.baseUrl = 'http://localhost:3001';
     } else {
-      this.baseUrl = 'ws://localhost:3001';
+      // Use the correct Railway URL
+      this.baseUrl = 'https://nodejs-production-aa37f.up.railway.app';
     }
     
     console.log('StreamingService: Using base URL:', this.baseUrl);
@@ -47,21 +50,27 @@ class StreamingService {
       throw new Error('You must be logged in to generate a stream key');
     }
 
+    // Check server availability first
+    const serverStatus = await this.getServerStatus();
+    if (!serverStatus.available) {
+      throw new Error('Streaming server is not available. Please check deployment.');
+    }
+
     // Generate secure stream key with user identifier
     const timestamp = Date.now();
     const randomString = Math.random().toString(36).substring(2, 10);
     const userPrefix = user.id.slice(0, 8);
     const streamKey = `nf_${userPrefix}_${timestamp}_${randomString}`;
     
-    const isProduction = window.location.hostname !== 'localhost';
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     
-    const rtmpUrl = isProduction 
-      ? 'rtmp://nodejs-production-aa37f.up.railway.app/live'
-      : 'rtmp://localhost:1935/live';
+    const rtmpUrl = isLocalhost 
+      ? 'rtmp://localhost:1935/live'
+      : 'rtmp://nodejs-production-aa37f.up.railway.app/live';
         
-    const hlsUrl = isProduction
-      ? `https://nodejs-production-aa37f.up.railway.app/live/${streamKey}/index.m3u8`
-      : `http://localhost:8080/live/${streamKey}/index.m3u8`;
+    const hlsUrl = isLocalhost
+      ? `http://localhost:8080/live/${streamKey}/index.m3u8`
+      : `https://nodejs-production-aa37f.up.railway.app/live/${streamKey}/index.m3u8`;
 
     // Save stream to database with enhanced metadata
     const { data: stream, error } = await supabase
@@ -159,8 +168,13 @@ class StreamingService {
 
   async getStreamStatus(streamKey: string): Promise<StreamStatus> {
     try {
-      const httpUrl = this.baseUrl.replace('ws://', 'http://').replace('wss://', 'https://');
-      const response = await fetch(`${httpUrl}/api/stream/${streamKey}/status`);
+      const response = await fetch(`${this.baseUrl}/api/stream/${streamKey}/status`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        signal: AbortSignal.timeout(10000) // 10 second timeout
+      });
       
       if (response.ok) {
         const status = await response.json();
@@ -179,6 +193,8 @@ class StreamingService {
           .eq('stream_key', streamKey);
           
         return status;
+      } else {
+        console.warn('Stream status request failed:', response.status, response.statusText);
       }
     } catch (error) {
       console.warn('Streaming server not available:', error);
@@ -211,57 +227,9 @@ class StreamingService {
   }
 
   connectToStreamStatusWebSocket(streamKey: string) {
-    if (this.websocket) {
-      this.websocket.close();
-    }
-
-    try {
-      const wsUrl = `${this.baseUrl}/stream/${streamKey}/status`;
-      this.websocket = new WebSocket(wsUrl);
-      
-      this.websocket.onopen = () => {
-        console.log('Connected to Nightflow streaming WebSocket');
-      };
-      
-      this.websocket.onmessage = (event) => {
-        try {
-          const status: StreamStatus = JSON.parse(event.data);
-          this.statusCallbacks.forEach(callback => callback(status));
-          
-          // Update database with real-time status
-          supabase
-            .from('streams')
-            .update({
-              status: status.isLive ? 'live' : 'offline',
-              viewer_count: status.viewerCount,
-              duration: status.duration,
-              bitrate: status.bitrate,
-              resolution: status.resolution,
-              updated_at: new Date().toISOString()
-            })
-            .eq('stream_key', streamKey)
-            .then(({ error }) => {
-              if (error) {
-                console.warn('Failed to update stream status:', error);
-              }
-            });
-        } catch (error) {
-          console.error('Failed to parse WebSocket message:', error);
-        }
-      };
-
-      this.websocket.onerror = (error) => {
-        console.warn('WebSocket connection failed, using database polling:', error);
-        this.startPolling(streamKey);
-      };
-
-      this.websocket.onclose = () => {
-        console.log('Streaming WebSocket connection closed');
-      };
-    } catch (error) {
-      console.warn('WebSocket not available, using database polling:', error);
-      this.startPolling(streamKey);
-    }
+    // Skip WebSocket for now since server doesn't support it
+    console.log('WebSocket connection skipped, using polling instead');
+    this.startPolling(streamKey);
   }
 
   private startPolling(streamKey: string) {
@@ -315,28 +283,44 @@ class StreamingService {
     }
   }
 
-  // New method to get streaming server status
+  // Enhanced server status check
   async getServerStatus(): Promise<{ available: boolean; url: string }> {
     try {
-      const httpUrl = this.baseUrl.replace('ws://', 'http://').replace('wss://', 'https://');
-      console.log('StreamingService: Checking server status at:', httpUrl);
+      console.log('StreamingService: Checking server status at:', this.baseUrl);
       
-      const response = await fetch(`${httpUrl}/health`, { 
+      const response = await fetch(`${this.baseUrl}/health`, { 
         method: 'GET',
-        signal: AbortSignal.timeout(10000) // Increased to 10 second timeout
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        signal: AbortSignal.timeout(15000) // 15 second timeout
       });
       
-      console.log('StreamingService: Server response:', response.status, response.ok);
+      console.log('StreamingService: Server response:', {
+        status: response.status,
+        ok: response.ok,
+        statusText: response.statusText
+      });
       
-      return {
-        available: response.ok,
-        url: httpUrl
-      };
+      if (response.ok) {
+        const data = await response.json();
+        console.log('StreamingService: Server health data:', data);
+        return {
+          available: true,
+          url: this.baseUrl
+        };
+      } else {
+        console.error('StreamingService: Server returned error:', response.status, response.statusText);
+        return {
+          available: false,
+          url: this.baseUrl
+        };
+      }
     } catch (error) {
       console.error('StreamingService: Server check failed:', error);
       return {
         available: false,
-        url: this.baseUrl.replace('ws://', 'http://').replace('wss://', 'https://')
+        url: this.baseUrl
       };
     }
   }
