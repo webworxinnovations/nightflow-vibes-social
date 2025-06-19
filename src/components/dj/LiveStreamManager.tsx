@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { LiveStreamTabs } from "./LiveStreamTabs";
 import { useStreamKey } from "@/hooks/useStreamKey";
 import { useOBSWebSocket } from "@/hooks/useOBSWebSocket";
+import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { toast } from "sonner";
 
 export const LiveStreamManager = () => {
@@ -17,8 +18,10 @@ export const LiveStreamManager = () => {
   }, [isLive, obsConnected]);
 
   return (
-    <div className="space-y-6">
-      <LiveStreamTabs isLive={isLive} viewerCount={viewerCount} />
-    </div>
+    <ErrorBoundary>
+      <div className="space-y-6">
+        <LiveStreamTabs isLive={isLive} viewerCount={viewerCount} />
+      </div>
+    </ErrorBoundary>
   );
 };

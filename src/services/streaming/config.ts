@@ -1,25 +1,38 @@
 
 export class StreamingConfig {
-  // Railway production URL - confirmed from deployment logs
-  private static readonly RAILWAY_URL = 'https://nodejs-production-aa37f.up.railway.app';
+  // Dynamic URL detection based on environment
+  private static getEnvironmentUrl(): string {
+    const hostname = window.location.hostname;
+    
+    // Production detection
+    if (hostname.includes('lovable.app') || hostname === 'localhost') {
+      // Use the Railway production URL for streaming server
+      return 'https://nodejs-production-aa37f.up.railway.app';
+    }
+    
+    // Fallback to environment variable or Railway URL
+    return import.meta.env.VITE_STREAMING_SERVER_URL || 'https://nodejs-production-aa37f.up.railway.app';
+  }
   
   static getBaseUrl(): string {
-    console.log('StreamingService: Using Railway URL:', this.RAILWAY_URL);
-    return this.RAILWAY_URL;
+    const url = this.getEnvironmentUrl();
+    console.log('StreamingConfig: Using base URL:', url);
+    return url;
   }
   
   static getRtmpUrl(): string {
-    // RTMP uses port 1935 but Railway handles port mapping
-    const domain = this.RAILWAY_URL.replace('https://', '');
+    // RTMP uses the same domain but port 1935 (Railway handles port mapping)
+    const baseUrl = this.getBaseUrl();
+    const domain = baseUrl.replace('https://', '').replace('http://', '');
     const rtmpUrl = `rtmp://${domain}/live`;
-    console.log('StreamingService: RTMP URL:', rtmpUrl);
+    console.log('StreamingConfig: RTMP URL:', rtmpUrl);
     return rtmpUrl;
   }
   
   static getHlsUrl(streamKey: string): string {
-    // HLS runs on port 8000 but accessed through Railway proxy
-    const hlsUrl = `${this.RAILWAY_URL}/live/${streamKey}/index.m3u8`;
-    console.log('StreamingService: HLS URL:', hlsUrl);
+    // HLS streams are served through the same domain
+    const hlsUrl = `${this.getBaseUrl()}/live/${streamKey}/index.m3u8`;
+    console.log('StreamingConfig: HLS URL:', hlsUrl);
     return hlsUrl;
   }
   
@@ -28,7 +41,15 @@ export class StreamingConfig {
     const randomString = Math.random().toString(36).substring(2, 10);
     const userPrefix = userId.slice(0, 8);
     const streamKey = `nf_${userPrefix}_${timestamp}_${randomString}`;
-    console.log('StreamingService: Generated stream key:', streamKey);
+    console.log('StreamingConfig: Generated stream key:', streamKey);
     return streamKey;
+  }
+  
+  static isDevelopment(): boolean {
+    return window.location.hostname === 'localhost' || import.meta.env.DEV;
+  }
+  
+  static isProduction(): boolean {
+    return !this.isDevelopment();
   }
 }
