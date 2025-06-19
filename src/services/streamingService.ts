@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase'
 import type { Stream } from '@/lib/supabase'
 
@@ -24,23 +23,10 @@ class StreamingService {
   private statusCallbacks: Set<(status: StreamStatus) => void> = new Set();
 
   constructor() {
-    // Use Railway URL for production, localhost for development
-    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    // Always use Railway URL for production deployment
+    this.baseUrl = 'https://nodejs-production-aa37f.up.railway.app';
     
-    console.log('StreamingService: Environment detection:', {
-      hostname: window.location.hostname,
-      isLocalhost,
-      protocol: window.location.protocol
-    });
-    
-    if (isLocalhost) {
-      this.baseUrl = 'http://localhost:3001';
-    } else {
-      // Use the correct Railway URL
-      this.baseUrl = 'https://nodejs-production-aa37f.up.railway.app';
-    }
-    
-    console.log('StreamingService: Using base URL:', this.baseUrl);
+    console.log('StreamingService: Using Railway URL:', this.baseUrl);
   }
 
   async generateStreamKey(): Promise<StreamConfig> {
@@ -62,15 +48,8 @@ class StreamingService {
     const userPrefix = user.id.slice(0, 8);
     const streamKey = `nf_${userPrefix}_${timestamp}_${randomString}`;
     
-    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    
-    const rtmpUrl = isLocalhost 
-      ? 'rtmp://localhost:1935/live'
-      : 'rtmp://nodejs-production-aa37f.up.railway.app/live';
-        
-    const hlsUrl = isLocalhost
-      ? `http://localhost:8080/live/${streamKey}/index.m3u8`
-      : `https://nodejs-production-aa37f.up.railway.app/live/${streamKey}/index.m3u8`;
+    const rtmpUrl = 'rtmp://nodejs-production-aa37f.up.railway.app/live';
+    const hlsUrl = `https://nodejs-production-aa37f.up.railway.app/live/${streamKey}/index.m3u8`;
 
     // Save stream to database with enhanced metadata
     const { data: stream, error } = await supabase
