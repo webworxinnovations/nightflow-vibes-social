@@ -1,28 +1,23 @@
 
 const path = require('path');
-const fs = require('fs');
 
 class ServerConfig {
   constructor() {
-    // RAILWAY CRITICAL: Use Railway's assigned port for API, different ports for media services
-    this.RAILWAY_PORT = process.env.PORT || 3000;
-    this.RTMP_PORT = 1935; // Standard RTMP port
-    this.HLS_PORT = 8888; // Different port to avoid conflicts
+    // Railway assigns the PORT dynamically
+    this.RAILWAY_PORT = process.env.PORT || 3001;
     
-    // Ensure media directory exists
-    this.mediaRoot = path.join(__dirname, '..', 'media');
-    if (!fs.existsSync(this.mediaRoot)) {
-      fs.mkdirSync(this.mediaRoot, { recursive: true });
-    }
+    // Fixed ports for RTMP and HLS (Railway will handle routing)
+    this.RTMP_PORT = 1935;
+    this.HLS_PORT = 8888;
     
-    this.logConfiguration();
-  }
-  
-  logConfiguration() {
-    console.log(`🔧 Port Configuration:`);
-    console.log(`   - Railway API Port: ${this.RAILWAY_PORT}`);
-    console.log(`   - RTMP Port: ${this.RTMP_PORT}`);
-    console.log(`   - HLS Port: ${this.HLS_PORT}`);
+    // Media storage
+    this.mediaRoot = process.env.MEDIA_ROOT || path.join(process.cwd(), 'media');
+    
+    console.log(`📍 Server Config:`);
+    console.log(`   Railway Port: ${this.RAILWAY_PORT}`);
+    console.log(`   RTMP Port: ${this.RTMP_PORT}`);
+    console.log(`   HLS Port: ${this.HLS_PORT}`);
+    console.log(`   Media Root: ${this.mediaRoot}`);
   }
   
   getMediaServerConfig() {
@@ -39,16 +34,7 @@ class ServerConfig {
         mediaroot: this.mediaRoot,
         allow_origin: '*'
       },
-      relay: {
-        ffmpeg: '/usr/bin/ffmpeg',
-        tasks: [
-          {
-            app: 'live',
-            mode: 'push',
-            edge: `rtmp://127.0.0.1:${this.RTMP_PORT}/hls`
-          }
-        ]
-      }
+      mediaRoot: this.mediaRoot
     };
   }
 }
