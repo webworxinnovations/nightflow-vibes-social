@@ -134,41 +134,54 @@ export const StreamKeyManager = () => {
       console.log('🔑 Stream key validation result:', isValid);
       
       if (isValid) {
-        toast.success('✅ Stream key is valid! RTMP server should accept your connection.');
+        toast.success('✅ Stream key is valid!');
         
-        // Test 3: Try to make a test connection to the RTMP endpoint
-        toast.info('🧪 Testing direct RTMP endpoint...');
+        // Test 3: Check if RTMP server is ready by examining the health check details
+        toast.info('🧪 Testing RTMP readiness...');
         
         try {
-          // Try to connect to the RTMP URL directly
-          const rtmpTestUrl = `${serverCheck.url}/api/rtmp/test`;
-          const rtmpResponse = await fetch(rtmpTestUrl, {
-            method: 'POST',
+          // Call the API health endpoint to get detailed server status
+          const healthResponse = await fetch(`${serverCheck.url}/api/health`, {
+            method: 'GET',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ streamKey: streamConfig.streamKey }),
-            signal: AbortSignal.timeout(15000)
+            signal: AbortSignal.timeout(10000)
           });
           
-          if (rtmpResponse.ok) {
-            const result = await rtmpResponse.json();
-            toast.success('🎯 RTMP endpoint is working! Try OBS again.');
-            console.log('✅ RTMP test successful:', result);
+          if (healthResponse.ok) {
+            const healthData = await healthResponse.json();
+            console.log('🏥 Health check details:', healthData);
+            
+            if (healthData.rtmp_ready === true) {
+              toast.success('🎯 RTMP server is ready! OBS should be able to connect now.');
+              
+              // Show detailed connection info
+              toast.info(
+                `📡 OBS Connection Verified:\n` +
+                `✅ Server: ${streamConfig.rtmpUrl}\n` +
+                `✅ Key: ${streamConfig.streamKey.substring(0, 8)}...\n` +
+                `✅ RTMP Status: Ready\n` +
+                `🎥 Try connecting with OBS now!`,
+                { duration: 15000 }
+              );
+            } else {
+              toast.warning('⚠️ RTMP server reports not ready. Check server deployment.');
+            }
           } else {
-            toast.warning(`⚠️ RTMP endpoint returned ${rtmpResponse.status}. Server may have issues.`);
+            toast.warning(`⚠️ Health check returned ${healthResponse.status}. Server may have issues.`);
           }
-        } catch (rtmpError) {
-          console.log('RTMP endpoint test failed:', rtmpError);
-          toast.warning('⚠️ Could not test RTMP endpoint directly, but stream key is valid.');
+        } catch (healthError) {
+          console.log('Health check failed:', healthError);
+          toast.warning('⚠️ Could not verify RTMP server status, but stream key is valid.');
+          
+          // Still show connection info since key is valid
+          toast.info(
+            `📡 Connection Details:\n` +
+            `Server: ${streamConfig.rtmpUrl}\n` +
+            `Key: ${streamConfig.streamKey.substring(0, 8)}...\n` +
+            `Status: Stream key validated - try OBS connection`,
+            { duration: 10000 }
+          );
         }
-        
-        // Show detailed connection info
-        toast.info(
-          `📡 OBS Settings Confirmed:\n` +
-          `Server: ${streamConfig.rtmpUrl}\n` +
-          `Key: ${streamConfig.streamKey.substring(0, 8)}...\n` +
-          `Status: Ready for streaming`,
-          { duration: 10000 }
-        );
       } else {
         toast.error('❌ Stream key validation failed. Try generating a new key.');
       }
