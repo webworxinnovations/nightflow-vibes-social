@@ -26,6 +26,7 @@ class MediaServerService {
     }
     
     console.log(`📁 Media directories ready: ${mediaRoot}`);
+    console.log(`📁 Live streams directory: ${liveDir}`);
   }
   
   createNodeMediaServer() {
@@ -44,7 +45,13 @@ class MediaServerService {
       },
       relay: {
         ffmpeg: '/usr/bin/ffmpeg',
-        tasks: []
+        tasks: [
+          {
+            app: 'live',
+            mode: 'push',
+            edge: `rtmp://127.0.0.1:${this.config.rtmp.port}/live`
+          }
+        ]
       }
     };
     
@@ -94,6 +101,13 @@ class MediaServerService {
     this.nms.on('postPublish', (id, StreamPath, args) => {
       const streamKey = StreamPath.split('/').pop();
       console.log(`🔴 Stream LIVE: ${streamKey}`);
+      
+      // Ensure the stream directory exists for HLS files
+      const streamDir = path.join(this.config.mediaRoot, 'live', streamKey);
+      if (!fs.existsSync(streamDir)) {
+        fs.mkdirSync(streamDir, { recursive: true });
+        console.log(`📁 Created HLS directory: ${streamDir}`);
+      }
     });
 
     this.nms.on('donePublish', (id, StreamPath, args) => {

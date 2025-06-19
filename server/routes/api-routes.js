@@ -1,5 +1,6 @@
 
 const express = require('express');
+const path = require('path');
 
 function createApiRoutes(serverConfig, streamManager) {
   const router = express.Router();
@@ -38,6 +39,23 @@ function createApiRoutes(serverConfig, streamManager) {
       }
     });
   });
+
+  // HLS static file serving - CRITICAL for video playback
+  router.use('/live', express.static(path.join(serverConfig.mediaRoot, 'live'), {
+    setHeaders: (res, path) => {
+      // Set CORS headers for video files
+      res.header('Access-Control-Allow-Origin', '*');
+      res.header('Access-Control-Allow-Methods', 'GET');
+      res.header('Access-Control-Allow-Headers', 'Range');
+      
+      // Set correct MIME types for HLS files
+      if (path.endsWith('.m3u8')) {
+        res.set('Content-Type', 'application/vnd.apple.mpegurl');
+      } else if (path.endsWith('.ts')) {
+        res.set('Content-Type', 'video/mp2t');
+      }
+    }
+  }));
 
   // API routes
   router.get('/api/health', (req, res) => {
