@@ -1,21 +1,25 @@
 
 export class StreamingConfig {
-  // Use our actual Railway deployment for RTMP
-  private static getEnvironmentUrl(): string {
-    return 'https://nightflow-vibes-social-production.up.railway.app';
-  }
+  // Replace with your actual DigitalOcean droplet IP
+  private static DROPLET_IP = 'YOUR_DROPLET_IP_HERE'; // Update this after creating droplet
   
   static getBaseUrl(): string {
-    return 'https://nightflow-vibes-social-production.up.railway.app';
+    if (this.isDevelopment()) {
+      return 'http://localhost:3001';
+    }
+    return `http://${this.DROPLET_IP}:3001`;
   }
   
   static getRtmpUrl(): string {
-    // Railway TCP proxy should expose port 1935 on the same domain
-    return 'rtmp://nightflow-vibes-social-production.up.railway.app:1935/live';
+    if (this.isDevelopment()) {
+      return 'rtmp://localhost:1935/live';
+    }
+    return `rtmp://${this.DROPLET_IP}:1935/live`;
   }
   
   static getHlsUrl(streamKey: string): string {
-    return `${this.getBaseUrl()}/live/${streamKey}/index.m3u8`;
+    const baseUrl = this.getBaseUrl();
+    return `${baseUrl}/live/${streamKey}/index.m3u8`;
   }
   
   static generateStreamKey(userId: string): string {
