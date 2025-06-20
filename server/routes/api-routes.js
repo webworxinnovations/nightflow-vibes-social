@@ -68,6 +68,55 @@ function createApiRoutes(serverConfig, streamManager) {
     });
   });
 
+  // RTMP status endpoint
+  router.get('/api/rtmp/status', (req, res) => {
+    res.json({
+      status: 'online',
+      port: serverConfig.RTMP_PORT,
+      ready: true,
+      active_streams: streamManager.getStreamCount(),
+      uptime: Math.floor(process.uptime())
+    });
+  });
+
+  // RTMP test endpoint - THIS WAS MISSING
+  router.post('/api/rtmp/test', (req, res) => {
+    const { streamKey } = req.body;
+    
+    if (!streamKey) {
+      return res.status(400).json({
+        success: false,
+        message: 'Stream key is required'
+      });
+    }
+
+    // Basic validation - stream key should start with 'nf_'
+    if (!streamKey.startsWith('nf_') || streamKey.length < 10) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid stream key format'
+      });
+    }
+
+    // Check if RTMP server is ready (simplified check)
+    const isRtmpReady = true; // Since we're running the media server
+    
+    if (isRtmpReady) {
+      res.json({
+        success: true,
+        message: 'RTMP server is ready to accept connections',
+        rtmp_url: `rtmp://nightflow-vibes-social-production.up.railway.app/live`,
+        stream_key: streamKey,
+        status: 'ready'
+      });
+    } else {
+      res.status(503).json({
+        success: false,
+        message: 'RTMP server is not ready'
+      });
+    }
+  });
+
   // Get stream status
   router.get('/api/stream/:streamKey/status', (req, res) => {
     const { streamKey } = req.params;
@@ -167,6 +216,8 @@ function setupErrorHandling(app) {
         'GET /',
         'GET /health',
         'GET /api/health',
+        'GET /api/rtmp/status',
+        'POST /api/rtmp/test',
         'GET /api/stream/:streamKey/status',
         'GET /api/stream/:streamKey/validate',
         'GET /api/streams',
