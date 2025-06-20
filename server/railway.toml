@@ -1,0 +1,23 @@
+
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+startCommand = "node streaming-server.js"
+
+# Expose multiple ports
+[[services]]
+name = "web"
+port = 3001
+protocol = "http"
+
+[[services]]
+name = "rtmp"
+port = 1935
+protocol = "tcp"
+
+[env]
+NODE_ENV = "production"
+PORT = "3001"
+RTMP_PORT = "1935"
+HLS_PORT = "8888"

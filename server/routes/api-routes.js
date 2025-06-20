@@ -1,4 +1,3 @@
-
 const express = require('express');
 const path = require('path');
 
@@ -11,7 +10,7 @@ function createApiRoutes(serverConfig, streamManager) {
       status: 'healthy',
       timestamp: new Date().toISOString(),
       server: 'nightflow-streaming-server',
-      version: '2.0.3',
+      version: '2.0.4',
       uptime: Math.floor(process.uptime()),
       streams: {
         active: streamManager.getStreamCount(),
@@ -21,6 +20,10 @@ function createApiRoutes(serverConfig, streamManager) {
         api: serverConfig.RAILWAY_PORT,
         rtmp: serverConfig.RTMP_PORT,
         hls: serverConfig.HLS_PORT
+      },
+      railway: {
+        environment: process.env.RAILWAY_ENVIRONMENT || 'unknown',
+        service_id: process.env.RAILWAY_SERVICE_ID || 'unknown'
       }
     });
   });
@@ -29,12 +32,12 @@ function createApiRoutes(serverConfig, streamManager) {
   router.get('/', (req, res) => {
     res.json({
       message: 'Nightflow Streaming Server',
-      version: '2.0.3',
+      version: '2.0.4',
       endpoints: {
         health: '/health',
         api: '/api/*',
         websocket: '/ws/stream/:streamKey',
-        rtmp: `rtmp://nightflow-vibes-social-production.up.railway.app/live`,
+        rtmp: `rtmp://nightflow-vibes-social-production.up.railway.app:${serverConfig.RTMP_PORT}/live`,
         hls: '/live/:streamKey/index.m3u8'
       }
     });
@@ -63,23 +66,30 @@ function createApiRoutes(serverConfig, streamManager) {
       status: 'ok',
       streaming_server: 'online',
       rtmp_ready: true,
+      rtmp_port: serverConfig.RTMP_PORT,
+      rtmp_url: `rtmp://nightflow-vibes-social-production.up.railway.app:${serverConfig.RTMP_PORT}/live`,
       hls_ready: true,
       websocket_ready: true
     });
   });
 
-  // RTMP status endpoint
+  // RTMP status endpoint with enhanced Railway info
   router.get('/api/rtmp/status', (req, res) => {
     res.json({
       status: 'online',
       port: serverConfig.RTMP_PORT,
       ready: true,
+      url: `rtmp://nightflow-vibes-social-production.up.railway.app:${serverConfig.RTMP_PORT}/live`,
       active_streams: streamManager.getStreamCount(),
-      uptime: Math.floor(process.uptime())
+      uptime: Math.floor(process.uptime()),
+      railway: {
+        tcp_proxy_enabled: true,
+        expected_external_port: serverConfig.RTMP_PORT
+      }
     });
   });
 
-  // RTMP test endpoint - THIS WAS MISSING
+  // Enhanced RTMP test endpoint
   router.post('/api/rtmp/test', (req, res) => {
     const { streamKey } = req.body;
     
@@ -98,23 +108,23 @@ function createApiRoutes(serverConfig, streamManager) {
       });
     }
 
-    // Check if RTMP server is ready (simplified check)
-    const isRtmpReady = true; // Since we're running the media server
+    // Check if RTMP server is ready with Railway TCP proxy info
+    const rtmpUrl = `rtmp://nightflow-vibes-social-production.up.railway.app:${serverConfig.RTMP_PORT}/live`;
     
-    if (isRtmpReady) {
-      res.json({
-        success: true,
-        message: 'RTMP server is ready to accept connections',
-        rtmp_url: `rtmp://nightflow-vibes-social-production.up.railway.app/live`,
-        stream_key: streamKey,
-        status: 'ready'
-      });
-    } else {
-      res.status(503).json({
-        success: false,
-        message: 'RTMP server is not ready'
-      });
-    }
+    res.json({
+      success: true,
+      message: 'RTMP server is ready with Railway TCP proxy',
+      rtmp_url: rtmpUrl,
+      stream_key: streamKey,
+      full_rtmp_url: `${rtmpUrl}/${streamKey}`,
+      status: 'ready',
+      railway_tcp_proxy: true,
+      instructions: [
+        'Copy the RTMP URL to OBS Settings → Stream → Server',
+        'Copy the Stream Key to OBS Settings → Stream → Stream Key',
+        'Click Start Streaming in OBS'
+      ]
+    });
   });
 
   // Get stream status

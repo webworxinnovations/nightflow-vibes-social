@@ -10,8 +10,8 @@ export class StreamingConfig {
   }
   
   static getRtmpUrl(): string {
-    // Use the actual Railway URL for RTMP - Railway should route this correctly
-    return 'rtmp://nightflow-vibes-social-production.up.railway.app/live';
+    // Railway TCP proxy should expose port 1935 on the same domain
+    return 'rtmp://nightflow-vibes-social-production.up.railway.app:1935/live';
   }
   
   static getHlsUrl(streamKey: string): string {
