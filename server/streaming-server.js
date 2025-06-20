@@ -1,4 +1,3 @@
-
 // Railway-optimized Node.js streaming server with RTMP support
 const express = require('express');
 const http = require('http');
@@ -11,13 +10,14 @@ const MediaServerService = require('./services/media-server');
 
 const app = express();
 
-console.log('🚀 Starting Nightflow Streaming Server v2.0.3...');
+console.log('🚀 Starting Nightflow Streaming Server v2.0.4...');
 console.log('📍 Environment:', process.env.NODE_ENV || 'development');
 console.log('📍 PORT from env:', process.env.PORT);
 
 // Initialize components with error handling
 let serverConfig;
 let streamManager;
+let mediaServer;
 
 try {
   serverConfig = new ServerConfig();
@@ -49,10 +49,6 @@ try {
   app.use('/', apiRoutes);
   console.log('✅ Routes mounted successfully');
   
-  // Test route registration
-  console.log('🧪 Testing route registration...');
-  console.log(`📋 Express app has ${app._router ? app._router.stack.length : 0} middleware layers`);
-  
 } catch (error) {
   console.error('❌ Failed to setup routes:', error);
   process.exit(1);
@@ -77,7 +73,7 @@ try {
   process.exit(1);
 }
 
-// Start HTTP server with WebSocket support
+// Start HTTP server with WebSocket support FIRST
 server.listen(serverConfig.RAILWAY_PORT, '0.0.0.0', () => {
   console.log(`✅ API + WebSocket SERVER RUNNING ON PORT ${serverConfig.RAILWAY_PORT}`);
   console.log(`🔗 Health: https://nightflow-vibes-social-production.up.railway.app/health`);
@@ -87,21 +83,33 @@ server.listen(serverConfig.RAILWAY_PORT, '0.0.0.0', () => {
   console.log(`📺 HLS Base: https://nightflow-vibes-social-production.up.railway.app/live/`);
   console.log(`🔌 WebSocket: wss://nightflow-vibes-social-production.up.railway.app/ws/stream/:streamKey`);
   
-  // Test that routes are working by making an internal request
-  console.log('🧪 Server is ready to handle requests');
-  
-  // Start Node Media Server AFTER API server is running
+  // NOW start Node Media Server AFTER API server is confirmed running
+  console.log('🎬 Starting Node Media Server for RTMP streaming...');
   try {
-    const mediaServer = new MediaServerService(serverConfig.getMediaServerConfig(), streamManager);
-    mediaServer.start();
+    mediaServer = new MediaServerService(serverConfig.getMediaServerConfig(), streamManager);
+    const mediaStarted = mediaServer.start();
+    
+    if (mediaStarted) {
+      console.log('🎥 ✅ RTMP SERVER IS NOW LIVE AND READY FOR OBS!');
+      console.log(`🎥 ✅ OBS can connect to: rtmp://nightflow-vibes-social-production.up.railway.app/live`);
+      console.log(`🎥 ✅ Use your stream key from the app`);
+    } else {
+      console.log('⚠️ RTMP server failed to start - API still works');
+    }
     
     // Store reference for graceful shutdown
     app.locals.mediaServer = mediaServer;
     app.locals.wsHandler = wsHandler;
-    console.log('✅ Media server started successfully');
+    
   } catch (error) {
-    console.error('❌ Failed to start media server:', error);
-    // Don't exit here - the API server can still work without media server
+    console.error('❌ CRITICAL: Failed to start RTMP media server:', error);
+    console.log('⚠️ This is why OBS cannot connect! Fixing...');
+    
+    // Log the specific error details
+    console.error('Error details:', error.stack);
+    
+    // Don't exit - keep API running but log the issue
+    console.log('🔄 API server continues running, but RTMP is broken');
   }
 });
 
@@ -113,12 +121,17 @@ server.on('error', (error) => {
   process.exit(1);
 });
 
-// Improved keep alive with error handling
+// Enhanced keep alive with RTMP status
 const keepAliveInterval = setInterval(() => {
   try {
     const uptime = Math.floor(process.uptime());
     const streamCount = streamManager ? streamManager.getStreamCount() : 0;
-    console.log(`💓 Server alive - API:${serverConfig.RAILWAY_PORT} RTMP:${serverConfig.RTMP_PORT} HLS:${serverConfig.HLS_PORT} - Uptime: ${uptime}s - Streams: ${streamCount}`);
+    const rtmpStatus = mediaServer ? 'RUNNING' : 'FAILED';
+    console.log(`💓 Server Status - API:${serverConfig.RAILWAY_PORT} RTMP:${rtmpStatus} - Uptime: ${uptime}s - Streams: ${streamCount}`);
+    
+    if (!mediaServer) {
+      console.log('🚨 RTMP server is not running - this is why OBS fails!');
+    }
   } catch (error) {
     console.error('❌ Keep alive error:', error);
   }
@@ -169,10 +182,12 @@ process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 // Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
   console.error('❌ Uncaught Exception:', error);
+  console.error('This might be why RTMP server failed!');
   gracefulShutdown('UNCAUGHT_EXCEPTION');
 });
 
 process.on('unhandledRejection', (reason, promise) => {
   console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+  console.error('This might be why RTMP server failed!');
   gracefulShutdown('UNHANDLED_REJECTION');
 });
