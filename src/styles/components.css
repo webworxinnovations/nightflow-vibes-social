@@ -1,54 +1,17 @@
+
 @layer components {
   .glassmorphism {
-    @apply backdrop-blur-3xl border border-white/50 shadow-xl;
-    background: linear-gradient(145deg, 
-      rgba(255, 255, 255, 0.8), 
-      rgba(248, 250, 252, 0.7),
-      rgba(241, 245, 249, 0.6)
-    ) !important;
-    box-shadow: 
-      0 8px 32px rgba(0, 0, 0, 0.1),
-      0 4px 16px rgba(13, 148, 136, 0.1),
-      0 2px 8px rgba(6, 182, 212, 0.08),
-      inset 0 2px 0 rgba(255, 255, 255, 0.8),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.05),
-      inset 1px 0 0 rgba(255, 255, 255, 0.3),
-      inset -1px 0 0 rgba(0, 0, 0, 0.02);
-    position: relative;
-    overflow: hidden;
-    color: #1f2937;
-  }
-
-  .glassmorphism::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, 
-      rgba(255, 255, 255, 0.3) 0%, 
-      transparent 30%, 
-      transparent 70%, 
-      rgba(13, 148, 136, 0.05) 100%
-    );
-    pointer-events: none;
+    @apply backdrop-blur-md bg-white/10 border border-white/20 shadow-xl;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
   }
 
   .glassmorphism-dark {
-    @apply backdrop-blur-3xl border border-white/30 shadow-xl;
-    background: linear-gradient(145deg, 
-      rgba(255, 255, 255, 0.9), 
-      rgba(248, 250, 252, 0.8),
-      rgba(241, 245, 249, 0.7)
-    ) !important;
-    box-shadow: 
-      0 8px 32px rgba(0, 0, 0, 0.15),
-      0 4px 16px rgba(13, 148, 136, 0.15),
-      0 2px 8px rgba(6, 182, 212, 0.1),
-      inset 0 1px 0 rgba(255, 255, 255, 0.9),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.05);
-    color: #1f2937;
+    @apply backdrop-blur-md bg-black/20 border border-white/10 shadow-xl;
+    background: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
   }
 
   .neon-text {
@@ -57,159 +20,57 @@
       0 0 10px currentColor,
       0 0 15px currentColor,
       0 0 20px currentColor,
-      0 0 35px theme('colors.teal.400'),
-      0 0 50px theme('colors.cyan.400');
-    animation: ocean-pulse 3s ease-in-out infinite alternate;
-    background: linear-gradient(45deg, 
-      theme('colors.teal.600'), 
-      theme('colors.cyan.600'), 
-      theme('colors.blue.600'),
-      theme('colors.sky.600')
-    );
-    background-size: 300% 300%;
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    animation: ocean-pulse 3s ease-in-out infinite alternate, ocean-gradient 4s ease infinite;
-    color: #1f2937;
+      0 0 35px theme('colors.purple.400'),
+      0 0 50px theme('colors.pink.400');
+    animation: pulse 2s ease-in-out infinite alternate;
   }
 
   .neon-border {
     box-shadow: 
-      0 0 8px theme('colors.teal.400'), 
-      0 0 16px theme('colors.teal.400'),
-      0 0 24px theme('colors.cyan.400'),
-      0 0 32px theme('colors.blue.400'),
-      0 0 48px theme('colors.sky.400'),
-      inset 0 0 8px theme('colors.teal.400/20'),
-      inset 0 1px 0 rgba(255, 255, 255, 0.5);
-    animation: ocean-border-pulse 4s ease-in-out infinite;
+      0 0 5px theme('colors.purple.400'), 
+      0 0 10px theme('colors.purple.400'),
+      0 0 15px theme('colors.pink.400'),
+      0 0 20px theme('colors.pink.400'),
+      0 0 35px theme('colors.blue.400'),
+      inset 0 0 5px theme('colors.purple.400/20');
+    animation: pulse 2s ease-in-out infinite;
   }
 
   .gradient-text {
     @apply bg-clip-text text-transparent;
-    background: linear-gradient(45deg, 
-      #0d9488, 
-      #06b6d4, 
-      #3b82f6,
-      #22d3ee,
-      #0891b2
-    );
-    background-size: 400% 400%;
-    animation: ocean-gradient 4s ease infinite;
-    filter: drop-shadow(0 0 8px rgba(13, 148, 136, 0.3));
+    background: linear-gradient(45deg, #9d4edd, #ff6ad5, #23b5d3);
+    background-size: 200% 200%;
+    animation: gradient-shift 3s ease infinite;
   }
   
   .ultra-glow {
     box-shadow: 
-      0 0 30px rgba(13, 148, 136, 0.4),
-      0 0 60px rgba(6, 182, 212, 0.3),
-      0 0 90px rgba(59, 130, 246, 0.2),
-      0 0 120px rgba(34, 211, 238, 0.15),
-      0 0 150px rgba(16, 185, 129, 0.1),
-      inset 0 2px 0 rgba(255, 255, 255, 0.8),
-      inset 0 -2px 0 rgba(0, 0, 0, 0.05);
-    animation: ocean-ultra-glow 5s ease-in-out infinite;
+      0 0 20px rgba(157, 78, 221, 0.4),
+      0 0 40px rgba(255, 106, 213, 0.3),
+      0 0 60px rgba(35, 181, 211, 0.2);
+    animation: ultra-glow 3s ease-in-out infinite;
   }
   
   .premium-card {
     background: linear-gradient(145deg, 
-      rgba(255, 255, 255, 0.9), 
-      rgba(248, 250, 252, 0.8),
-      rgba(241, 245, 249, 0.7),
-      rgba(226, 232, 240, 0.6)
-    ) !important;
-    backdrop-filter: blur(30px);
-    border: 2px solid;
-    border-image: linear-gradient(45deg, 
-      rgba(255, 255, 255, 0.8),
-      rgba(13, 148, 136, 0.3),
-      rgba(6, 182, 212, 0.2),
-      rgba(255, 255, 255, 0.6)
-    ) 1;
+      rgba(255, 255, 255, 0.1), 
+      rgba(255, 255, 255, 0.05)
+    );
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     box-shadow: 
-      0 12px 48px rgba(0, 0, 0, 0.1),
-      0 6px 24px rgba(13, 148, 136, 0.1),
-      0 3px 12px rgba(6, 182, 212, 0.08),
-      inset 0 2px 0 rgba(255, 255, 255, 0.9),
-      inset 0 -2px 0 rgba(0, 0, 0, 0.05),
-      inset 2px 0 0 rgba(255, 255, 255, 0.3),
-      inset -2px 0 0 rgba(0, 0, 0, 0.02);
-    position: relative;
-    overflow: hidden;
-    color: #1f2937;
-  }
-
-  .premium-card::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: conic-gradient(from 0deg, 
-      transparent 0deg,
-      rgba(13, 148, 136, 0.1) 60deg,
-      rgba(6, 182, 212, 0.1) 120deg,
-      rgba(59, 130, 246, 0.1) 180deg,
-      rgba(34, 211, 238, 0.1) 240deg,
-      rgba(16, 185, 129, 0.1) 300deg,
-      transparent 360deg
-    );
-    animation: ocean-rotate 8s linear infinite;
-    pointer-events: none;
-  }
-
-  .premium-card::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, 
-      transparent, 
-      rgba(255, 255, 255, 0.15), 
-      rgba(13, 148, 136, 0.1),
-      transparent
-    );
-    transition: left 1s ease;
-    pointer-events: none;
-  }
-
-  .premium-card:hover::after {
-    left: 100%;
+      0 8px 32px rgba(0, 0, 0, 0.1),
+      0 4px 16px rgba(157, 78, 221, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
   }
 
   .nightclub-bg {
     background: 
-      radial-gradient(circle at 15% 85%, rgba(13, 148, 136, 0.08) 0%, transparent 50%),
-      radial-gradient(circle at 85% 15%, rgba(6, 182, 212, 0.06) 0%, transparent 50%),
-      radial-gradient(circle at 30% 30%, rgba(59, 130, 246, 0.05) 0%, transparent 60%),
-      radial-gradient(circle at 70% 70%, rgba(34, 211, 238, 0.04) 0%, transparent 50%),
-      radial-gradient(circle at 50% 90%, rgba(16, 185, 129, 0.05) 0%, transparent 45%),
-      linear-gradient(135deg, rgba(248, 250, 252, 0.98) 0%, rgba(255, 255, 255, 0.95) 50%, rgba(241, 245, 249, 0.98) 100%);
-    animation: ocean-nightclub 12s ease infinite;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .nightclub-bg::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-image: 
-      radial-gradient(circle at 20% 20%, rgba(13, 148, 136, 0.3) 2px, transparent 2px),
-      radial-gradient(circle at 80% 80%, rgba(6, 182, 212, 0.2) 1px, transparent 1px),
-      radial-gradient(circle at 40% 60%, rgba(59, 130, 246, 0.25) 1.5px, transparent 1.5px),
-      radial-gradient(circle at 60% 40%, rgba(34, 211, 238, 0.2) 1px, transparent 1px);
-    background-size: 120px 120px, 80px 80px, 150px 150px, 100px 100px;
-    opacity: 0.3;
-    animation: ocean-particles 30s linear infinite;
-    pointer-events: none;
+      radial-gradient(circle at 20% 80%, rgba(157, 78, 221, 0.3) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(255, 106, 213, 0.3) 0%, transparent 50%),
+      radial-gradient(circle at 40% 40%, rgba(35, 181, 211, 0.2) 0%, transparent 50%),
+      linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+    animation: nightclub-pulse 6s ease infinite;
   }
 
   .floating-particles {
@@ -225,72 +86,33 @@
     right: 0;
     bottom: 0;
     background-image: 
-      radial-gradient(circle at 25% 25%, #0d9488 3px, transparent 3px),
-      radial-gradient(circle at 75% 75%, #06b6d4 2px, transparent 2px),
-      radial-gradient(circle at 50% 50%, #3b82f6 2.5px, transparent 2.5px),
-      radial-gradient(circle at 15% 85%, #22d3ee 1.5px, transparent 1.5px),
-      radial-gradient(circle at 85% 15%, #0284c7 2px, transparent 2px),
-      radial-gradient(circle at 35% 65%, #0891b2 1px, transparent 1px),
-      radial-gradient(circle at 65% 35%, #0369a1 1.5px, transparent 1.5px);
-    background-size: 100px 100px, 140px 140px, 180px 180px, 120px 120px, 160px 160px, 90px 90px, 110px 110px;
-    opacity: 0.2;
-    animation: ocean-float-particles 35s linear infinite;
+      radial-gradient(circle at 25% 25%, #9d4edd 2px, transparent 2px),
+      radial-gradient(circle at 75% 75%, #ff6ad5 1px, transparent 1px),
+      radial-gradient(circle at 50% 50%, #23b5d3 1.5px, transparent 1.5px);
+    background-size: 100px 100px, 150px 150px, 200px 200px;
+    opacity: 0.4;
+    animation: float-particles 20s linear infinite;
     pointer-events: none;
   }
 
   .interactive-hover {
-    @apply transition-all duration-700 ease-out;
+    @apply transition-all duration-300 ease-out;
     transform-style: preserve-3d;
-    position: relative;
-  }
-
-  .interactive-hover::before {
-    content: '';
-    position: absolute;
-    top: -2px;
-    left: -2px;
-    right: -2px;
-    bottom: -2px;
-    background: linear-gradient(45deg, 
-      rgba(13, 148, 136, 0.5),
-      rgba(6, 182, 212, 0.5),
-      rgba(59, 130, 246, 0.5),
-      rgba(34, 211, 238, 0.5)
-    );
-    border-radius: inherit;
-    z-index: -1;
-    opacity: 0;
-    filter: blur(8px);
-    transition: opacity 0.5s ease;
   }
 
   .interactive-hover:hover {
-    transform: scale(1.08) translateY(-12px) rotateX(3deg) rotateY(1deg);
+    transform: scale(1.05) translateY(-5px) rotateX(5deg);
     box-shadow: 
-      0 25px 80px rgba(0, 0, 0, 0.7),
-      0 15px 40px rgba(13, 148, 136, 0.4),
-      0 8px 20px rgba(6, 182, 212, 0.3),
-      0 4px 10px rgba(59, 130, 246, 0.2);
-  }
-
-  .interactive-hover:hover::before {
-    opacity: 1;
+      0 20px 40px rgba(0, 0, 0, 0.3),
+      0 10px 20px rgba(157, 78, 221, 0.2),
+      0 5px 10px rgba(255, 106, 213, 0.1);
   }
 
   .premium-button {
-    @apply relative overflow-hidden font-bold;
-    background: linear-gradient(45deg, 
-      #0d9488, #06b6d4, #3b82f6, #22d3ee, #0891b2
-    );
-    background-size: 300% 300%;
-    box-shadow: 
-      0 8px 32px rgba(13, 148, 136, 0.4),
-      0 4px 16px rgba(6, 182, 212, 0.3),
-      0 2px 8px rgba(59, 130, 246, 0.2),
-      inset 0 1px 0 rgba(255, 255, 255, 0.2);
-    animation: ocean-gradient 4s ease infinite;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    position: relative;
+    @apply relative overflow-hidden;
+    background: linear-gradient(45deg, #9d4edd, #ff6ad5, #23b5d3);
+    background-size: 200% 200%;
+    animation: gradient-shift 3s ease infinite;
   }
 
   .premium-button::before {
@@ -300,22 +122,8 @@
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, 
-      transparent, 
-      rgba(255, 255, 255, 0.4), 
-      rgba(255, 255, 255, 0.2),
-      transparent
-    );
-    transition: left 0.8s ease;
-  }
-
-  .premium-button:hover {
-    transform: scale(1.1) translateY(-3px);
-    box-shadow: 
-      0 20px 60px rgba(13, 148, 136, 0.5),
-      0 12px 30px rgba(6, 182, 212, 0.4),
-      0 6px 15px rgba(59, 130, 246, 0.3),
-      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
   }
 
   .premium-button:hover::before {
@@ -323,94 +131,61 @@
   }
 
   .viral-animation {
-    animation: ocean-viral-bounce 2.5s ease-in-out infinite;
+    animation: viral-bounce 1s ease-in-out infinite;
   }
 
   .magnetic-hover {
-    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    position: relative;
-  }
-
-  .magnetic-hover::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    background: radial-gradient(circle, rgba(13, 148, 136, 0.3), transparent);
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    transition: all 0.4s ease;
-    z-index: -1;
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   }
 
   .magnetic-hover:hover {
-    transform: scale(1.15) rotate(2deg);
-    filter: brightness(1.3) saturate(1.4) drop-shadow(0 0 20px rgba(13, 148, 136, 0.5));
+    transform: scale(1.1) rotate(1deg);
+    filter: brightness(1.2) saturate(1.3);
   }
 
-  .magnetic-hover:hover::before {
-    width: 120%;
-    height: 120%;
-  }
-
-  /* Enhanced ocean-themed logo styling */
   .nightflow-logo {
-    background: linear-gradient(45deg, 
-      #0d9488 0%, 
-      #06b6d4 25%, 
-      #3b82f6 50%, 
-      #22d3ee 75%, 
-      #0891b2 100%
-    );
-    background-size: 400% 400%;
+    background: linear-gradient(45deg, #9d4edd, #ff6ad5, #23b5d3);
+    background-size: 200% 200%;
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
-    position: relative;
-    animation: ocean-gradient 3s ease infinite, ocean-logo-glow 4s ease-in-out infinite;
+    animation: gradient-shift 3s ease infinite;
     font-weight: 900;
-    text-shadow: none;
-    filter: drop-shadow(0 0 15px rgba(13, 148, 136, 0.8));
+    filter: drop-shadow(0 0 10px rgba(157, 78, 221, 0.5));
   }
+}
 
-  .nightflow-logo::before {
-    content: 'NightFlow';
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: -1;
-    background: linear-gradient(45deg, 
-      rgba(13, 148, 136, 0.8), 
-      rgba(6, 182, 212, 0.8), 
-      rgba(59, 130, 246, 0.8)
-    );
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    filter: blur(3px);
-    animation: ocean-gradient 3s ease infinite reverse;
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes nightclub-pulse {
+  0%, 100% { filter: brightness(1) hue-rotate(0deg); }
+  50% { filter: brightness(1.1) hue-rotate(10deg); }
+}
+
+@keyframes float-particles {
+  0% { transform: translateY(0px); }
+  100% { transform: translateY(-100px); }
+}
+
+@keyframes viral-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes ultra-glow {
+  0%, 100% { 
+    box-shadow: 
+      0 0 20px rgba(157, 78, 221, 0.4),
+      0 0 40px rgba(255, 106, 213, 0.3),
+      0 0 60px rgba(35, 181, 211, 0.2);
   }
-
-  .nightflow-logo::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 120%;
-    height: 120%;
-    background: conic-gradient(from 0deg, 
-      rgba(13, 148, 136, 0.3) 0deg,
-      rgba(6, 182, 212, 0.3) 120deg,
-      rgba(59, 130, 246, 0.3) 240deg,
-      rgba(13, 148, 136, 0.3) 360deg
-    );
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    z-index: -2;
-    animation: ocean-logo-spin 8s linear infinite;
-    filter: blur(8px);
-    opacity: 0.6;
+  50% { 
+    box-shadow: 
+      0 0 30px rgba(157, 78, 221, 0.6),
+      0 0 60px rgba(255, 106, 213, 0.5),
+      0 0 90px rgba(35, 181, 211, 0.4);
   }
 }
