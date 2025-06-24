@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { GlassmorphicCard } from "@/components/ui/glassmorphic-card";
@@ -92,7 +93,7 @@ export default function Home() {
         <section>
           <div className="mb-4 flex items-center">
             <div className="mr-2 h-3 w-3 rounded-full bg-red-500 animate-pulse" style={{
-              boxShadow: '0 0 8px rgba(239, 68, 68, 0.8)'
+              boxShadow: '0 0 8px rgba(239, 68, 68, 0.8), 0 0 16px rgba(239, 68, 68, 0.6), 0 0 24px rgba(239, 68, 68, 0.4)'
             }}></div>
             <h2 className="text-xl font-semibold text-white drop-shadow-[0_0_8px_rgba(20,184,166,0.6)]">Live Now</h2>
           </div>
@@ -148,7 +149,10 @@ export default function Home() {
                       <div className="absolute bottom-0 left-0 p-4 text-center w-full">
                         <div className="flex flex-col items-center">
                           <div className="relative">
-                            <div className="absolute inset-0 animate-pulse rounded-full border-2 border-red-500"></div>
+                            <div className="absolute inset-0 rounded-full border-2 border-red-500" style={{
+                              animation: 'pulse 2s infinite',
+                              boxShadow: '0 0 8px rgba(239, 68, 68, 0.8), 0 0 16px rgba(239, 68, 68, 0.6)'
+                            }}></div>
                             <div className="relative z-10">
                               <img
                                 src={dj.avatar}
@@ -158,7 +162,9 @@ export default function Home() {
                             </div>
                           </div>
                           <h3 className="mt-1 text-lg font-bold text-white">{dj.name}</h3>
-                          <span className="rounded-full bg-red-500 px-2 py-0.5 text-xs text-white">
+                          <span className="rounded-full bg-red-500 px-2 py-0.5 text-xs text-white" style={{
+                            boxShadow: '0 0 6px rgba(239, 68, 68, 0.6)'
+                          }}>
                             LIVE
                           </span>
                         </div>
