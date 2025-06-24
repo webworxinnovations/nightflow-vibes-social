@@ -1,30 +1,24 @@
 
+import { useState, useEffect } from 'react';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { useRealTimeStream } from './useRealTimeStream';
 
-// Backward compatibility wrapper
 export const useStreamKey = () => {
-  const {
-    streamConfig,
-    streamStatus,
-    isLoading,
-    generateStreamKey,
-    revokeStreamKey,
-    isLive,
-    viewerCount
-  } = useRealTimeStream();
+  const { user } = useSupabaseAuth();
+  const { streamConfig, isLive: streamIsLive, viewerCount: streamViewerCount } = useRealTimeStream();
+  const [isLive, setIsLive] = useState(false);
+  const [viewerCount, setViewerCount] = useState(0);
+
+  useEffect(() => {
+    setIsLive(streamIsLive || false);
+    setViewerCount(streamViewerCount || 0);
+  }, [streamIsLive, streamViewerCount]);
 
   return {
-    streamData: {
-      streamKey: streamConfig?.streamKey || '',
-      rtmpUrl: streamConfig?.rtmpUrl || 'rtmp://ingest.nightflow.app/live',
-      streamUrl: streamConfig?.hlsUrl || '',
-      isActive: isLive,
-      viewerCount: viewerCount
-    },
-    generateStreamKey,
-    revokeStreamKey,
+    streamKey: streamConfig?.streamKey || '',
     isLive,
     viewerCount,
-    isLoading
+    hlsUrl: streamConfig?.hlsUrl || '',
+    rtmpUrl: streamConfig?.rtmpUrl || ''
   };
 };

@@ -1,43 +1,53 @@
 
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
-import type { ChatMessage } from "./useStreamChat";
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
+
+interface ChatMessage {
+  id: string;
+  message: string;
+  username: string;
+  user_id?: string;
+  is_tip?: boolean;
+  tip_amount?: number;
+  created_at: string;
+}
 
 export const useRealTimeChat = (streamId: string) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { user } = useSupabaseAuth();
+  const { user, profile } = useSupabaseAuth();
 
-  // Load initial messages
+  // Fetch existing messages
   useEffect(() => {
-    const loadMessages = async () => {
-      const { data, error } = await supabase
-        .from('chat_messages')
-        .select('*')
-        .eq('stream_id', streamId)
-        .order('created_at', { ascending: true })
-        .limit(100);
+    const fetchMessages = async () => {
+      if (!streamId) return;
 
-      if (error) {
-        console.error('Error loading messages:', error);
-      } else {
+      try {
+        const { data, error } = await supabase
+          .from('chat_messages')
+          .select('*')
+          .eq('stream_id', streamId)
+          .order('created_at', { ascending: true });
+
+        if (error) throw error;
         setMessages(data || []);
+      } catch (error) {
+        console.error('Error fetching chat messages:', error);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
-    if (streamId) {
-      loadMessages();
-    }
+    fetchMessages();
   }, [streamId]);
 
-  // Subscribe to real-time messages
+  // Set up real-time subscription
   useEffect(() => {
     if (!streamId) return;
 
     const channel = supabase
-      .channel(`stream-chat-${streamId}`)
+      .channel(`chat:${streamId}`)
       .on(
         'postgres_changes',
         {
@@ -58,65 +68,31 @@ export const useRealTimeChat = (streamId: string) => {
     };
   }, [streamId]);
 
-  // Subscribe to real-time tips
-  useEffect(() => {
-    if (!streamId) return;
-
-    const tipsChannel = supabase
-      .channel(`stream-tips-${streamId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'tips',
-          filter: `stream_id=eq.${streamId}`
-        },
-        (payload) => {
-          const tip = payload.new;
-          // Add tip as a special chat message
-          const tipMessage: ChatMessage = {
-            id: `tip-${tip.id}`,
-            stream_id: streamId,
-            user_id: tip.tipper_id,
-            username: 'Anonymous Tipper',
-            message: `💰 Tipped $${tip.amount}${tip.song_request ? ` • ${tip.song_request}` : ''}${tip.message ? `: ${tip.message}` : ''}`,
-            is_tip: true,
-            tip_amount: tip.amount,
-            created_at: tip.created_at
-          };
-          setMessages(prev => [...prev, tipMessage]);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(tipsChannel);
-    };
-  }, [streamId]);
-
   const sendMessage = async (message: string) => {
-    if (!user || !streamId || !message.trim()) return;
+    if (!user || !profile || !message.trim()) return false;
 
-    const { error } = await supabase
-      .from('chat_messages')
-      .insert({
-        stream_id: streamId,
-        user_id: user.id,
-        username: user.user_metadata?.username || 'Anonymous',
-        message: message.trim(),
-        is_tip: false
-      });
+    try {
+      const { error } = await supabase
+        .from('chat_messages')
+        .insert({
+          stream_id: streamId,
+          user_id: user.id,
+          username: profile.username,
+          message: message.trim(),
+          is_tip: false
+        });
 
-    if (error) {
+      if (error) throw error;
+      return true;
+    } catch (error) {
       console.error('Error sending message:', error);
-      throw error;
+      return false;
     }
   };
 
   return {
     messages,
-    isLoading,
-    sendMessage
+    sendMessage,
+    isLoading
   };
 };
