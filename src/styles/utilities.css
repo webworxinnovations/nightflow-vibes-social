@@ -18,11 +18,7 @@
   }
   
   .backdrop-nightclub {
-    background: 
-      radial-gradient(circle at 15% 85%, rgba(13, 148, 136, 0.1) 0%, transparent 70%),
-      radial-gradient(circle at 85% 15%, rgba(6, 182, 212, 0.1) 0%, transparent 70%),
-      radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.08) 0%, transparent 80%);
-    animation: ocean-nightclub 8s ease-in-out infinite;
+    background: transparent;
   }
 
   .pulse-ring {

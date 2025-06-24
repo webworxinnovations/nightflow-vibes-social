@@ -17,7 +17,7 @@ export const LiveNowSection = ({ liveEvents, liveDjs, transformedLiveEvents }: L
   }
 
   return (
-    <section>
+    <section className="relative">
       <div className="mb-4 flex items-center">
         <div className="mr-2 h-3 w-3 rounded-full bg-red-500 animate-pulse" style={{
           boxShadow: '0 0 8px rgba(239, 68, 68, 0.8), 0 0 16px rgba(239, 68, 68, 0.6), 0 0 24px rgba(239, 68, 68, 0.4)'
