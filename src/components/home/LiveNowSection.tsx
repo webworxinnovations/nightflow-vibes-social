@@ -1,5 +1,6 @@
 
 import { Link } from "react-router-dom";
+import { GlassmorphicCard } from "@/components/ui/glassmorphic-card";
 import { Button } from "@/components/ui/button";
 import { Flame } from "lucide-react";
 import { Event } from "@/hooks/useEvents";
@@ -28,7 +29,7 @@ export const LiveNowSection = ({ liveEvents, liveDjs, transformedLiveEvents }: L
         <div className="flex gap-4 pb-4">
           {liveEvents.map((event) => (
             <div key={event.id} className="w-80 flex-none">
-              <div className="relative h-40 overflow-hidden rounded-xl">
+              <GlassmorphicCard className="relative h-40 overflow-hidden" glowEffect>
                 <img
                   src={event.image}
                   alt={event.title}
@@ -58,13 +59,13 @@ export const LiveNowSection = ({ liveEvents, liveDjs, transformedLiveEvents }: L
                 >
                   <Button>View Event</Button>
                 </Link>
-              </div>
+              </GlassmorphicCard>
             </div>
           ))}
           
           {liveDjs.map((dj) => (
             <div key={dj.id} className="w-60 flex-none">
-              <div className="h-40 overflow-hidden rounded-xl">
+              <GlassmorphicCard className="h-40 p-0 overflow-hidden" glowEffect>
                 <div className="relative h-full">
                   <img
                     src={dj.coverImage}
@@ -103,7 +104,7 @@ export const LiveNowSection = ({ liveEvents, liveDjs, transformedLiveEvents }: L
                     <Button>View Profile</Button>
                   </Link>
                 </div>
-              </div>
+              </GlassmorphicCard>
             </div>
           ))}
         </div>
