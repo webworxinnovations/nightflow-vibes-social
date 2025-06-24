@@ -46,10 +46,10 @@ class ServerConfig {
     };
   }
   
-  // Get the actual RTMP URL that OBS should use
+  // Get the actual RTMP URL that OBS should use - FIXED FOR RAILWAY
   getRTMPUrl() {
     if (process.env.RAILWAY_ENVIRONMENT) {
-      // Railway TCP proxy should make port 1935 available on the same domain
+      // Railway TCP proxy makes port 1935 available on the same domain
       return `rtmp://nightflow-vibes-social-production.up.railway.app:${this.RTMP_PORT}/live`;
     } else {
       // Local development

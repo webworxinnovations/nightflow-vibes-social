@@ -1,21 +1,21 @@
 
-
 export class StreamingConfig {
-  // Replace with your actual DigitalOcean droplet IP
-  private static DROPLET_IP = '67.205.179.77'; // Updated with your droplet IP
+  // Railway production URL - your server is actually running here
+  private static RAILWAY_URL = 'nightflow-vibes-social-production.up.railway.app';
   
   static getBaseUrl(): string {
     if (this.isDevelopment()) {
       return 'http://localhost:3001';
     }
-    return `http://${this.DROPLET_IP}:3001`;
+    return `https://${this.RAILWAY_URL}`;
   }
   
   static getRtmpUrl(): string {
     if (this.isDevelopment()) {
       return 'rtmp://localhost:1935/live';
     }
-    return `rtmp://${this.DROPLET_IP}:1935/live`;
+    // Use the Railway URL for RTMP - this is where your server is actually running
+    return `rtmp://${this.RAILWAY_URL}:1935/live`;
   }
   
   static getHlsUrl(streamKey: string): string {
@@ -40,4 +40,3 @@ export class StreamingConfig {
     return !this.isDevelopment();
   }
 }
-
