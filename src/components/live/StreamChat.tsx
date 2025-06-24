@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Send, DollarSign } from "lucide-react";
-import { useStreamChat } from "@/hooks/useStreamChat";
+import { useRealTimeChat } from "@/hooks/useRealTimeChat";
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { TipDialog } from "./TipDialog";
 
@@ -17,7 +17,7 @@ interface StreamChatProps {
 export const StreamChat = ({ streamId, streamerId }: StreamChatProps) => {
   const [message, setMessage] = useState("");
   const [showTipDialog, setShowTipDialog] = useState(false);
-  const { messages, isLoading, sendMessage } = useStreamChat(streamId);
+  const { messages, isLoading, sendMessage } = useRealTimeChat(streamId);
   const { user } = useSupabaseAuth();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
@@ -98,7 +98,9 @@ export const StreamChat = ({ streamId, streamerId }: StreamChatProps) => {
                       </span>
                     )}
                   </div>
-                  <p className="text-sm break-words">{msg.message}</p>
+                  <p className={`text-sm break-words ${msg.is_tip ? 'font-semibold text-yellow-600 dark:text-yellow-400' : ''}`}>
+                    {msg.message}
+                  </p>
                 </div>
               </div>
             ))}

@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { DollarSign, Music } from "lucide-react";
+import { DollarSign, Music, CreditCard, Search } from "lucide-react";
 import { useTipping } from "@/hooks/useTipping";
+import { useSongSearch } from "@/hooks/useSongSearch";
 
 interface TipDialogProps {
   open: boolean;
@@ -21,10 +22,24 @@ export const TipDialog = ({ open, onOpenChange, streamId, streamerId }: TipDialo
   const [amount, setAmount] = useState<number | string>("");
   const [message, setMessage] = useState("");
   const [songRequest, setSongRequest] = useState("");
+  const [showSongSearch, setShowSongSearch] = useState(false);
   const { sendTip, isLoading } = useTipping();
+  const { searchSongs, searchResults, isSearching } = useSongSearch();
 
   const handlePresetAmount = (presetAmount: number) => {
     setAmount(presetAmount);
+  };
+
+  const handleSongSearch = async (query: string) => {
+    if (query.length > 2) {
+      await searchSongs(query);
+    }
+  };
+
+  const selectSong = (track: any) => {
+    const songText = `${track.artists[0]?.name} - ${track.name}`;
+    setSongRequest(songText);
+    setShowSongSearch(false);
   };
 
   const handleSendTip = async () => {
@@ -52,7 +67,7 @@ export const TipDialog = ({ open, onOpenChange, streamId, streamerId }: TipDialo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <DollarSign className="h-5 w-5" />
@@ -94,13 +109,62 @@ export const TipDialog = ({ open, onOpenChange, streamId, streamerId }: TipDialo
               <Music className="h-4 w-4" />
               Song Request (optional)
             </Label>
-            <Input
-              id="song-request"
-              placeholder="Artist - Song Name"
-              value={songRequest}
-              onChange={(e) => setSongRequest(e.target.value)}
-              className="mt-1"
-            />
+            <div className="mt-1 space-y-2">
+              <div className="flex gap-2">
+                <Input
+                  id="song-request"
+                  placeholder="Search for a song or type manually"
+                  value={songRequest}
+                  onChange={(e) => {
+                    setSongRequest(e.target.value);
+                    handleSongSearch(e.target.value);
+                  }}
+                  onFocus={() => setShowSongSearch(true)}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowSongSearch(!showSongSearch)}
+                >
+                  <Search className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {showSongSearch && searchResults.length > 0 && (
+                <div className="border rounded-lg max-h-48 overflow-y-auto">
+                  {searchResults.map((track) => (
+                    <div
+                      key={track.id}
+                      className="p-3 hover:bg-muted cursor-pointer border-b last:border-b-0"
+                      onClick={() => selectSong(track)}
+                    >
+                      <div className="flex items-center gap-3">
+                        {track.album.images[2] && (
+                          <img
+                            src={track.album.images[2].url}
+                            alt={track.album.name}
+                            className="w-10 h-10 rounded"
+                          />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{track.name}</p>
+                          <p className="text-sm text-muted-foreground truncate">
+                            {track.artists.map(a => a.name).join(', ')}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isSearching && (
+                <div className="text-center text-sm text-muted-foreground py-2">
+                  Searching songs...
+                </div>
+              )}
+            </div>
           </div>
 
           <div>
@@ -113,6 +177,13 @@ export const TipDialog = ({ open, onOpenChange, streamId, streamerId }: TipDialo
               className="mt-1"
               rows={3}
             />
+          </div>
+
+          <div className="p-3 bg-muted rounded-lg">
+            <div className="flex items-center gap-2 text-sm">
+              <CreditCard className="h-4 w-4" />
+              <span>Payments processed securely</span>
+            </div>
           </div>
 
           <div className="flex gap-2 pt-4">
