@@ -42,8 +42,13 @@ export default function DjDashboard() {
   const djEvents = events.slice(0, 2);
   
   return (
-    <div className="p-6">
-      <h1 className="mb-6 text-3xl font-bold text-gray-900">DJ Dashboard</h1>
+    <div className="p-6 min-h-screen text-white">
+      <h1 className="mb-6 text-3xl font-bold text-white drop-shadow-[0_0_12px_rgba(20,184,166,0.8)]" style={{
+        background: 'linear-gradient(45deg, #14b8a6, #06b6d4, #3b82f6)',
+        WebkitBackgroundClip: 'text',
+        WebkitTextFillColor: 'transparent',
+        filter: 'drop-shadow(0 0 8px rgba(20, 184, 166, 0.6))'
+      }}>DJ Dashboard</h1>
       
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
         <div className="lg:col-span-3">
