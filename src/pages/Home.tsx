@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Separator } from "@/components/ui/separator";
 import { users, posts, getLiveEvents, getLiveDjs } from "@/lib/mock-data";
@@ -80,7 +79,7 @@ export default function Home() {
   
   return (
     <div className="flex flex-col gap-6 p-6">
-      <h1 className="text-3xl font-bold text-white drop-shadow-[0_0_12px_rgba(20,184,166,0.8)]" style={{
+      <h1 className="text-3xl font-bold text-white text-glow animate-float" style={{
         background: 'linear-gradient(45deg, #14b8a6, #06b6d4, #3b82f6)',
         WebkitBackgroundClip: 'text',
         WebkitTextFillColor: 'transparent',

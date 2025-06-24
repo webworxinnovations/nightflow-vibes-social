@@ -22,14 +22,14 @@ export const LiveNowSection = ({ liveEvents, liveDjs, transformedLiveEvents }: L
         <div className="mr-2 h-3 w-3 rounded-full bg-red-500 animate-pulse" style={{
           boxShadow: '0 0 8px rgba(239, 68, 68, 0.8), 0 0 16px rgba(239, 68, 68, 0.6), 0 0 24px rgba(239, 68, 68, 0.4)'
         }}></div>
-        <h2 className="text-xl font-semibold text-white drop-shadow-[0_0_8px_rgba(20,184,166,0.6)]">Live Now</h2>
+        <h2 className="text-xl font-semibold text-white text-glow">Live Now</h2>
       </div>
       
       <div className="overflow-x-auto">
         <div className="flex gap-4 pb-4">
           {liveEvents.map((event) => (
             <div key={event.id} className="w-80 flex-none">
-              <GlassmorphicCard className="relative h-40 overflow-hidden" glowEffect>
+              <GlassmorphicCard className="relative h-40 overflow-hidden animate-glow glow-on-hover">
                 <img
                   src={event.image}
                   alt={event.title}
@@ -57,7 +57,7 @@ export const LiveNowSection = ({ liveEvents, liveDjs, transformedLiveEvents }: L
                   to={`/events/${event.id}`}
                   className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-all hover:bg-black/40 hover:opacity-100"
                 >
-                  <Button>View Event</Button>
+                  <Button className="animate-viral-bounce">View Event</Button>
                 </Link>
               </GlassmorphicCard>
             </div>
@@ -65,7 +65,7 @@ export const LiveNowSection = ({ liveEvents, liveDjs, transformedLiveEvents }: L
           
           {liveDjs.map((dj) => (
             <div key={dj.id} className="w-60 flex-none">
-              <GlassmorphicCard className="h-40 p-0 overflow-hidden" glowEffect>
+              <GlassmorphicCard className="h-40 p-0 overflow-hidden animate-glow glow-on-hover">
                 <div className="relative h-full">
                   <img
                     src={dj.coverImage}
@@ -75,7 +75,7 @@ export const LiveNowSection = ({ liveEvents, liveDjs, transformedLiveEvents }: L
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
                   <div className="absolute bottom-0 left-0 p-4 text-center w-full">
                     <div className="flex flex-col items-center">
-                      <div className="relative">
+                      <div className="relative pulse-ring">
                         <div className="absolute inset-0 rounded-full border-2 border-red-500" style={{
                           animation: 'pulse 2s infinite',
                           boxShadow: '0 0 8px rgba(239, 68, 68, 0.8), 0 0 16px rgba(239, 68, 68, 0.6)'
@@ -101,7 +101,7 @@ export const LiveNowSection = ({ liveEvents, liveDjs, transformedLiveEvents }: L
                     to={`/profile/${dj.id}`}
                     className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-all hover:bg-black/40 hover:opacity-100"
                   >
-                    <Button>View Profile</Button>
+                    <Button className="animate-viral-bounce">View Profile</Button>
                   </Link>
                 </div>
               </GlassmorphicCard>
