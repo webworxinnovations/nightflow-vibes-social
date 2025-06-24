@@ -1,3 +1,4 @@
+
 import { StreamingConfig } from './streaming/config';
 import { StreamingDatabase } from './streaming/database';
 import { StreamingAPI } from './streaming/api';
@@ -17,6 +18,7 @@ class StreamingService {
   private statusCallbacks: StatusUpdateCallback[] = [];
   private websocket: WebSocket | null = null;
   private currentStreamKey: string | null = null;
+  private simulationInterval: NodeJS.Timeout | null = null;
 
   async generateStreamKey(): Promise<StreamConfig> {
     try {
@@ -111,24 +113,15 @@ class StreamingService {
   connectToStreamStatusWebSocket(streamKey: string) {
     this.currentStreamKey = streamKey;
     
-    // Start with mock status since the streaming server isn't connected yet
-    this.simulateStreamStatus();
+    // Only start simulation when explicitly connected to a stream
+    // and don't auto-trigger status changes
+    console.log('Connected to stream monitoring for key:', streamKey);
   }
 
+  // Remove the automatic simulation that was causing random toasts
   private simulateStreamStatus() {
-    // Simulate periodic status updates every 5 seconds
-    setInterval(() => {
-      const mockStatus: StreamStatus = {
-        isLive: Math.random() > 0.7, // 30% chance of being live for demo
-        viewerCount: Math.floor(Math.random() * 50),
-        duration: Math.floor(Math.random() * 3600),
-        bitrate: 2500 + Math.floor(Math.random() * 1000),
-        resolution: '1920x1080',
-        timestamp: new Date().toISOString()
-      };
-
-      this.notifyStatusUpdate(mockStatus);
-    }, 5000);
+    // This method is now empty to prevent random status updates
+    console.log('Stream status monitoring active (simulation disabled)');
   }
 
   onStatusUpdate(callback: StatusUpdateCallback): () => void {
@@ -154,6 +147,12 @@ class StreamingService {
       this.websocket.close();
       this.websocket = null;
     }
+    
+    if (this.simulationInterval) {
+      clearInterval(this.simulationInterval);
+      this.simulationInterval = null;
+    }
+    
     this.currentStreamKey = null;
   }
 }

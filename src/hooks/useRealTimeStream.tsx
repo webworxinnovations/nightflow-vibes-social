@@ -92,16 +92,20 @@ export const useRealTimeStream = () => {
     loadCurrentStream();
   }, [validateAndConnect]);
 
-  // Set up status monitoring when stream config changes
+  // Set up status monitoring when stream config changes - but don't show random toasts
   useEffect(() => {
     if (!streamConfig?.streamKey) return;
 
     const unsubscribe = streamingService.onStatusUpdate((status) => {
       setStreamStatus(prevStatus => {
-        // Show live status changes
-        if (status.isLive && !prevStatus.isLive) {
+        // Only show meaningful status changes, not random updates
+        const wasLive = prevStatus.isLive;
+        const isNowLive = status.isLive;
+        
+        // Only show toast if there's an actual meaningful change
+        if (!wasLive && isNowLive) {
           toast.success('🔴 Stream is now LIVE!');
-        } else if (!status.isLive && prevStatus.isLive) {
+        } else if (wasLive && !isNowLive) {
           toast.info('Stream ended');
         }
         
