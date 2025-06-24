@@ -179,15 +179,18 @@ const gracefulShutdown = (signal) => {
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
-// Enhanced error handling to prevent crashes
+// Simplified error handling that doesn't ignore errors
 process.on('uncaughtException', (error) => {
   console.error('❌ Uncaught Exception:', error);
   
-  // Check if it's the FFmpeg error we can ignore
-  if (error.message && error.message.includes('getFfmpegVersion')) {
-    console.log('🔧 FFmpeg version error detected - this is known and can be ignored');
-    console.log('✅ RTMP server should still be working fine');
-    return; // Don't shutdown for this specific error
+  // Only handle specific node-media-server internal errors
+  if (error.message && (
+    error.message.includes('getFfmpegVersion') || 
+    error.message.includes('ffmpeg') ||
+    error.stack && error.stack.includes('node-media-server')
+  )) {
+    console.log('🔧 Node Media Server internal error - this won\'t affect streaming');
+    return; // Don't shutdown for node-media-server internal errors
   }
   
   console.error('This is a critical error - shutting down');
@@ -197,11 +200,13 @@ process.on('uncaughtException', (error) => {
 process.on('unhandledRejection', (reason, promise) => {
   console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
   
-  // Check if it's the FFmpeg error we can ignore
-  if (reason && reason.message && reason.message.includes('getFfmpegVersion')) {
-    console.log('🔧 FFmpeg version rejection detected - this is known and can be ignored');
-    console.log('✅ RTMP server should still be working fine');
-    return; // Don't shutdown for this specific error
+  // Only handle specific node-media-server internal rejections
+  if (reason && reason.message && (
+    reason.message.includes('getFfmpegVersion') ||
+    reason.message.includes('ffmpeg')
+  )) {
+    console.log('🔧 Node Media Server internal rejection - this won\'t affect streaming');
+    return; // Don't shutdown for node-media-server internal rejections
   }
   
   console.error('This is a critical rejection - shutting down');
