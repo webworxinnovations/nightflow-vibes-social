@@ -1,7 +1,8 @@
 
+
 export class StreamingConfig {
   // Replace with your actual DigitalOcean droplet IP
-  private static DROPLET_IP = 'YOUR_DROPLET_IP_HERE'; // Update this after creating droplet
+  private static DROPLET_IP = '67.205.179.77'; // Updated with your droplet IP
   
   static getBaseUrl(): string {
     if (this.isDevelopment()) {
@@ -39,3 +40,4 @@ export class StreamingConfig {
     return !this.isDevelopment();
   }
 }
+
