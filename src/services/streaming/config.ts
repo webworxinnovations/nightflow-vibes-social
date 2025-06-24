@@ -33,7 +33,11 @@ export class StreamingConfig {
   }
   
   static isDevelopment(): boolean {
-    return window.location.hostname === 'localhost' || import.meta.env.DEV;
+    // More reliable production detection
+    return window.location.hostname === 'localhost' || 
+           window.location.hostname === '127.0.0.1' ||
+           window.location.port === '5173' ||
+           import.meta.env.DEV;
   }
   
   static isProduction(): boolean {
