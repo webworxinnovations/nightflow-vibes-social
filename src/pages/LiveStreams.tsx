@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { LiveStreamGrid } from "@/components/live/LiveStreamGrid";
 import { StreamViewer } from "@/components/live/StreamViewer";
@@ -6,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Radio, Users, DollarSign } from "lucide-react";
 import type { LiveStream } from "@/hooks/useLiveStreams";
 
-export const LiveStreams = () => {
+const LiveStreams = () => {
   const [selectedStream, setSelectedStream] = useState<LiveStream | null>(null);
   const [viewerOpen, setViewerOpen] = useState(false);
 
@@ -96,3 +97,6 @@ export const LiveStreams = () => {
     </div>
   );
 };
+
+export { LiveStreams };
+export default LiveStreams;

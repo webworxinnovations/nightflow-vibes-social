@@ -12,7 +12,7 @@ import SubPromoterDashboard from "./pages/SubPromoterDashboard";
 import SubPromoterManagement from "./pages/SubPromoterManagement";
 import Profile from "./pages/Profile";
 import Discover from "./pages/Discover";
-import LiveStreams from "./pages/LiveStreams";
+import { LiveStreams } from "./pages/LiveStreams";
 import Events from "./pages/Events";
 import EventDetails from "./pages/EventDetails";
 import CreateEvent from "./pages/CreateEvent";

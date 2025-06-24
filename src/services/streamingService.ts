@@ -21,6 +21,13 @@ export interface StreamStatus {
   timestamp: string;
 }
 
+export interface ServerStatus {
+  available: boolean;
+  url: string;
+  version?: string;
+  uptime?: number;
+}
+
 type StatusUpdateCallback = (status: StreamStatus) => void;
 
 class StreamingService {
@@ -48,7 +55,11 @@ class StreamingService {
       };
 
       // Save to database
-      await StreamingDatabase.saveStream(config, user.id);
+      await StreamingDatabase.saveStream({
+        rtmpUrl: config.rtmpUrl,
+        streamKey: config.streamKey,
+        hlsUrl: config.hlsUrl
+      }, user.id);
       
       console.log('✅ Stream configuration generated:', { streamKey, rtmpUrl, hlsUrl });
       return config;
@@ -95,6 +106,27 @@ class StreamingService {
     } catch (error) {
       console.error('Stream key validation failed:', error);
       return false;
+    }
+  }
+
+  async getServerStatus(): Promise<ServerStatus> {
+    try {
+      // For demo purposes, simulate server status check
+      const mockStatus: ServerStatus = {
+        available: Math.random() > 0.3, // 70% chance of being available
+        url: 'https://nightflow-vibes-social-production.up.railway.app',
+        version: '1.0.0',
+        uptime: Math.floor(Math.random() * 86400) // Random uptime in seconds
+      };
+      
+      console.log('Server status checked:', mockStatus);
+      return mockStatus;
+    } catch (error) {
+      console.error('Failed to get server status:', error);
+      return {
+        available: false,
+        url: 'https://nightflow-vibes-social-production.up.railway.app'
+      };
     }
   }
 
