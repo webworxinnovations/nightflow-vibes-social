@@ -1,6 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { streamingService, StreamConfig, StreamStatus } from '@/services/streamingService';
+import { streamingService } from '@/services/streamingService';
+import { StreamConfig, StreamStatus } from '@/types/streaming';
 import { toast } from 'sonner';
 
 export const useRealTimeStream = () => {
