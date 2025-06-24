@@ -1,15 +1,14 @@
 
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { GlassmorphicCard } from "@/components/ui/glassmorphic-card";
-import { PostCard } from "@/components/cards/post-card";
-import { UserCard } from "@/components/cards/user-card";
-import { EventCard } from "@/components/cards/event-card";
-import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { users, posts, getLiveEvents, getLiveDjs } from "@/lib/mock-data";
-import { Flame } from "lucide-react";
 import { Event } from "@/hooks/useEvents";
+import { LiveNowSection } from "@/components/home/LiveNowSection";
+import { PopularDjsSidebar } from "@/components/home/PopularDjsSidebar";
+import { TrendingGenresSidebar } from "@/components/home/TrendingGenresSidebar";
+import { FeedSection } from "@/components/home/FeedSection";
+import { UpcomingEventsSidebar } from "@/components/home/UpcomingEventsSidebar";
+import { TipDropCard } from "@/components/home/TipDropCard";
 
 // Transform mock events to match the Event interface
 const transformMockEventToEvent = (mockEvent: any): Event => {
@@ -89,171 +88,35 @@ export default function Home() {
       }}>NightFlow</h1>
       
       {/* Live Now Section */}
-      {(liveDjs.length > 0 || liveEvents.length > 0) && (
-        <section>
-          <div className="mb-4 flex items-center">
-            <div className="mr-2 h-3 w-3 rounded-full bg-red-500 animate-pulse" style={{
-              boxShadow: '0 0 8px rgba(239, 68, 68, 0.8), 0 0 16px rgba(239, 68, 68, 0.6), 0 0 24px rgba(239, 68, 68, 0.4)'
-            }}></div>
-            <h2 className="text-xl font-semibold text-white drop-shadow-[0_0_8px_rgba(20,184,166,0.6)]">Live Now</h2>
-          </div>
-          
-          <div className="overflow-x-auto">
-            <div className="flex gap-4 pb-4">
-              {liveEvents.map((event) => (
-                <div key={event.id} className="w-80 flex-none">
-                  <GlassmorphicCard className="relative h-40 overflow-hidden" glowEffect>
-                    <img
-                      src={event.image}
-                      alt={event.title}
-                      className="absolute inset-0 h-full w-full object-cover opacity-60"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-                    <div className="absolute bottom-0 left-0 p-4">
-                      <h3 className="text-lg font-bold text-white">{event.title}</h3>
-                      <p className="text-sm text-white/80">{event.venue}</p>
-                      
-                      <div className="mt-2 flex items-center gap-1">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <Flame
-                            key={i}
-                            className={`h-5 w-5 ${i < event.vibe! ? "text-orange-500" : "text-gray-400"}`}
-                          />
-                        ))}
-                        <span className="ml-2 text-sm text-white/80">
-                          {event.ticketsSold}/{event.maxCapacity} attendees
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <Link 
-                      to={`/events/${event.id}`}
-                      className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-all hover:bg-black/40 hover:opacity-100"
-                    >
-                      <Button>View Event</Button>
-                    </Link>
-                  </GlassmorphicCard>
-                </div>
-              ))}
-              
-              {liveDjs.map((dj) => (
-                <div key={dj.id} className="w-60 flex-none">
-                  <GlassmorphicCard className="h-40 p-0 overflow-hidden" glowEffect>
-                    <div className="relative h-full">
-                      <img
-                        src={dj.coverImage}
-                        alt={dj.name}
-                        className="h-full w-full object-cover opacity-60"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-                      <div className="absolute bottom-0 left-0 p-4 text-center w-full">
-                        <div className="flex flex-col items-center">
-                          <div className="relative">
-                            <div className="absolute inset-0 rounded-full border-2 border-red-500" style={{
-                              animation: 'pulse 2s infinite',
-                              boxShadow: '0 0 8px rgba(239, 68, 68, 0.8), 0 0 16px rgba(239, 68, 68, 0.6)'
-                            }}></div>
-                            <div className="relative z-10">
-                              <img
-                                src={dj.avatar}
-                                alt={dj.name}
-                                className="h-16 w-16 rounded-full border-2 border-white object-cover"
-                              />
-                            </div>
-                          </div>
-                          <h3 className="mt-1 text-lg font-bold text-white">{dj.name}</h3>
-                          <span className="rounded-full bg-red-500 px-2 py-0.5 text-xs text-white" style={{
-                            boxShadow: '0 0 6px rgba(239, 68, 68, 0.6)'
-                          }}>
-                            LIVE
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <Link 
-                        to={`/profile/${dj.id}`}
-                        className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-all hover:bg-black/40 hover:opacity-100"
-                      >
-                        <Button>View Profile</Button>
-                      </Link>
-                    </div>
-                  </GlassmorphicCard>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
+      <LiveNowSection 
+        liveEvents={liveEvents}
+        liveDjs={liveDjs}
+        transformedLiveEvents={transformedLiveEvents}
+      />
       
       {/* Main Content */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
         {/* Left Sidebar */}
         <div className="hidden lg:block">
-          <h2 className="mb-4 text-xl font-semibold text-white drop-shadow-[0_0_8px_rgba(20,184,166,0.6)]">Popular DJs</h2>
-          <div className="space-y-4">
-            {users
-              .filter((user) => user.role === 'dj')
-              .slice(0, 3)
-              .map((dj) => (
-                <UserCard key={dj.id} user={dj} />
-              ))}
-          </div>
+          <PopularDjsSidebar />
           
           <Separator className="my-6 bg-teal-400/30" />
           
-          <h2 className="mb-4 text-xl font-semibold text-white drop-shadow-[0_0_8px_rgba(20,184,166,0.6)]">Trending Genres</h2>
-          <div className="space-y-2">
-            {['House', 'Techno', 'Hip-Hop', 'Drum & Bass', 'Trance'].map((genre) => (
-              <Button 
-                key={genre} 
-                variant="outline" 
-                className="w-full justify-start border-teal-400/30 bg-slate-800/60 text-slate-200 text-left hover:bg-teal-500/20 hover:border-teal-400/50 hover:text-white transition-all duration-300"
-              >
-                #{genre}
-              </Button>
-            ))}
-          </div>
+          <TrendingGenresSidebar />
         </div>
         
         {/* Feed */}
         <div className="lg:col-span-2">
-          <h2 className="mb-4 text-xl font-semibold text-white drop-shadow-[0_0_8px_rgba(20,184,166,0.6)]">Your Feed</h2>
-          <div className="space-y-4">
-            {posts.map((post) => (
-              <PostCard key={post.id} post={post} />
-            ))}
-          </div>
+          <FeedSection />
         </div>
         
         {/* Right Sidebar */}
         <div className="hidden lg:block">
-          <h2 className="mb-4 text-xl font-semibold text-white drop-shadow-[0_0_8px_rgba(20,184,166,0.6)]">Upcoming Events</h2>
-          <div className="space-y-4">
-            {transformedLiveEvents.concat(transformedLiveEvents).slice(0, 2).map((event) => (
-              <EventCard key={event.id} event={event} compact />
-            ))}
-            
-            <Button className="w-full bg-teal-500/80 hover:bg-teal-500 text-white border-teal-400/50" variant="outline">
-              View All Events
-            </Button>
-          </div>
+          <UpcomingEventsSidebar transformedLiveEvents={transformedLiveEvents} />
           
           <Separator className="my-6 bg-teal-400/30" />
           
-          <GlassmorphicCard className="bg-slate-800/90 border-teal-400/40 backdrop-blur-xl">
-            <h3 className="mb-2 text-lg font-semibold text-white drop-shadow-[0_0_8px_rgba(20,184,166,0.8)]" style={{
-              background: 'linear-gradient(45deg, #14b8a6, #06b6d4, #3b82f6)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              filter: 'drop-shadow(0 0 6px rgba(20, 184, 166, 0.6))'
-            }}>TipDrop</h3>
-            <p className="text-sm text-slate-300 mb-4 leading-relaxed">
-              Request songs from your favorite DJs and support them with tips.
-            </p>
-            <Button className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white font-semibold shadow-lg shadow-teal-400/30 transition-all duration-300">
-              Learn More
-            </Button>
-          </GlassmorphicCard>
+          <TipDropCard />
         </div>
       </div>
     </div>
