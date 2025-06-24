@@ -33,11 +33,15 @@ export class StreamingConfig {
   }
   
   static isDevelopment(): boolean {
-    // More reliable production detection
-    return window.location.hostname === 'localhost' || 
-           window.location.hostname === '127.0.0.1' ||
-           window.location.port === '5173' ||
-           import.meta.env.DEV;
+    // Force production mode for now - the Lovable environment should always use Railway
+    const hostname = window.location.hostname;
+    console.log('StreamingConfig: Current hostname:', hostname);
+    
+    // Only consider it development if explicitly running on localhost
+    const isDev = hostname === 'localhost' || hostname === '127.0.0.1';
+    console.log('StreamingConfig: Is development?', isDev);
+    
+    return isDev;
   }
   
   static isProduction(): boolean {
