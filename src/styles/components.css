@@ -1,22 +1,22 @@
 @layer components {
   .glassmorphism {
-    @apply backdrop-blur-3xl border border-white/30 shadow-2xl;
+    @apply backdrop-blur-3xl border border-white/50 shadow-xl;
     background: linear-gradient(145deg, 
-      rgba(15, 23, 42, 0.9), 
-      rgba(30, 41, 59, 0.8),
-      rgba(51, 65, 85, 0.7)
+      rgba(255, 255, 255, 0.8), 
+      rgba(248, 250, 252, 0.7),
+      rgba(241, 245, 249, 0.6)
     ) !important;
     box-shadow: 
-      0 12px 48px rgba(0, 0, 0, 0.6),
-      0 6px 24px rgba(13, 148, 136, 0.3),
-      0 3px 12px rgba(6, 182, 212, 0.2),
-      inset 0 2px 0 rgba(255, 255, 255, 0.1),
-      inset 0 -2px 0 rgba(0, 0, 0, 0.2),
-      inset 1px 0 0 rgba(255, 255, 255, 0.05),
-      inset -1px 0 0 rgba(0, 0, 0, 0.05);
+      0 8px 32px rgba(0, 0, 0, 0.1),
+      0 4px 16px rgba(13, 148, 136, 0.1),
+      0 2px 8px rgba(6, 182, 212, 0.08),
+      inset 0 2px 0 rgba(255, 255, 255, 0.8),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.05),
+      inset 1px 0 0 rgba(255, 255, 255, 0.3),
+      inset -1px 0 0 rgba(0, 0, 0, 0.02);
     position: relative;
     overflow: hidden;
-    color: #ffffff;
+    color: #1f2937;
   }
 
   .glassmorphism::before {
@@ -27,28 +27,28 @@
     right: 0;
     bottom: 0;
     background: linear-gradient(135deg, 
-      rgba(255, 255, 255, 0.05) 0%, 
+      rgba(255, 255, 255, 0.3) 0%, 
       transparent 30%, 
       transparent 70%, 
-      rgba(13, 148, 136, 0.03) 100%
+      rgba(13, 148, 136, 0.05) 100%
     );
     pointer-events: none;
   }
 
   .glassmorphism-dark {
-    @apply backdrop-blur-3xl border border-white/20 shadow-2xl;
+    @apply backdrop-blur-3xl border border-white/30 shadow-xl;
     background: linear-gradient(145deg, 
-      rgba(15, 23, 42, 0.95), 
-      rgba(30, 41, 59, 0.9),
-      rgba(51, 65, 85, 0.8)
+      rgba(255, 255, 255, 0.9), 
+      rgba(248, 250, 252, 0.8),
+      rgba(241, 245, 249, 0.7)
     ) !important;
     box-shadow: 
-      0 12px 48px rgba(0, 0, 0, 0.8),
-      0 6px 24px rgba(13, 148, 136, 0.4),
-      0 3px 12px rgba(6, 182, 212, 0.3),
-      inset 0 1px 0 rgba(255, 255, 255, 0.1),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.3);
-    color: #ffffff;
+      0 8px 32px rgba(0, 0, 0, 0.15),
+      0 4px 16px rgba(13, 148, 136, 0.15),
+      0 2px 8px rgba(6, 182, 212, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.05);
+    color: #1f2937;
   }
 
   .neon-text {
@@ -58,21 +58,20 @@
       0 0 15px currentColor,
       0 0 20px currentColor,
       0 0 35px theme('colors.teal.400'),
-      0 0 50px theme('colors.cyan.400'),
-      0 1px 0 rgba(0, 0, 0, 0.8);
+      0 0 50px theme('colors.cyan.400');
     animation: ocean-pulse 3s ease-in-out infinite alternate;
     background: linear-gradient(45deg, 
-      theme('colors.teal.400'), 
-      theme('colors.cyan.400'), 
-      theme('colors.blue.400'),
-      theme('colors.sky.400')
+      theme('colors.teal.600'), 
+      theme('colors.cyan.600'), 
+      theme('colors.blue.600'),
+      theme('colors.sky.600')
     );
     background-size: 300% 300%;
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
     animation: ocean-pulse 3s ease-in-out infinite alternate, ocean-gradient 4s ease infinite;
-    color: #ffffff;
+    color: #1f2937;
   }
 
   .neon-border {
@@ -82,8 +81,8 @@
       0 0 24px theme('colors.cyan.400'),
       0 0 32px theme('colors.blue.400'),
       0 0 48px theme('colors.sky.400'),
-      inset 0 0 8px theme('colors.teal.400/30'),
-      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      inset 0 0 8px theme('colors.teal.400/20'),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5);
     animation: ocean-border-pulse 4s ease-in-out infinite;
   }
 
@@ -98,48 +97,47 @@
     );
     background-size: 400% 400%;
     animation: ocean-gradient 4s ease infinite;
-    filter: drop-shadow(0 0 8px rgba(13, 148, 136, 0.6));
-    text-shadow: 0 0 20px rgba(13, 148, 136, 0.8);
+    filter: drop-shadow(0 0 8px rgba(13, 148, 136, 0.3));
   }
   
   .ultra-glow {
     box-shadow: 
-      0 0 40px rgba(13, 148, 136, 0.8),
-      0 0 80px rgba(6, 182, 212, 0.6),
-      0 0 120px rgba(59, 130, 246, 0.4),
-      0 0 160px rgba(34, 211, 238, 0.3),
-      0 0 200px rgba(16, 185, 129, 0.2),
-      inset 0 2px 0 rgba(255, 255, 255, 0.25),
-      inset 0 -2px 0 rgba(0, 0, 0, 0.15);
+      0 0 30px rgba(13, 148, 136, 0.4),
+      0 0 60px rgba(6, 182, 212, 0.3),
+      0 0 90px rgba(59, 130, 246, 0.2),
+      0 0 120px rgba(34, 211, 238, 0.15),
+      0 0 150px rgba(16, 185, 129, 0.1),
+      inset 0 2px 0 rgba(255, 255, 255, 0.8),
+      inset 0 -2px 0 rgba(0, 0, 0, 0.05);
     animation: ocean-ultra-glow 5s ease-in-out infinite;
   }
   
   .premium-card {
     background: linear-gradient(145deg, 
-      rgba(15, 23, 42, 0.95), 
-      rgba(30, 41, 59, 0.9),
-      rgba(51, 65, 85, 0.85),
-      rgba(71, 85, 105, 0.8)
+      rgba(255, 255, 255, 0.9), 
+      rgba(248, 250, 252, 0.8),
+      rgba(241, 245, 249, 0.7),
+      rgba(226, 232, 240, 0.6)
     ) !important;
     backdrop-filter: blur(30px);
     border: 2px solid;
     border-image: linear-gradient(45deg, 
-      rgba(255, 255, 255, 0.3),
-      rgba(13, 148, 136, 0.4),
-      rgba(6, 182, 212, 0.3),
-      rgba(255, 255, 255, 0.2)
+      rgba(255, 255, 255, 0.8),
+      rgba(13, 148, 136, 0.3),
+      rgba(6, 182, 212, 0.2),
+      rgba(255, 255, 255, 0.6)
     ) 1;
     box-shadow: 
-      0 16px 60px rgba(0, 0, 0, 0.7),
-      0 8px 30px rgba(13, 148, 136, 0.2),
-      0 4px 15px rgba(6, 182, 212, 0.15),
-      inset 0 2px 0 rgba(255, 255, 255, 0.2),
-      inset 0 -2px 0 rgba(0, 0, 0, 0.15),
-      inset 2px 0 0 rgba(255, 255, 255, 0.1),
-      inset -2px 0 0 rgba(0, 0, 0, 0.1);
+      0 12px 48px rgba(0, 0, 0, 0.1),
+      0 6px 24px rgba(13, 148, 136, 0.1),
+      0 3px 12px rgba(6, 182, 212, 0.08),
+      inset 0 2px 0 rgba(255, 255, 255, 0.9),
+      inset 0 -2px 0 rgba(0, 0, 0, 0.05),
+      inset 2px 0 0 rgba(255, 255, 255, 0.3),
+      inset -2px 0 0 rgba(0, 0, 0, 0.02);
     position: relative;
     overflow: hidden;
-    color: #ffffff;
+    color: #1f2937;
   }
 
   .premium-card::before {
@@ -185,12 +183,12 @@
 
   .nightclub-bg {
     background: 
-      radial-gradient(circle at 15% 85%, rgba(13, 148, 136, 0.15) 0%, transparent 50%),
-      radial-gradient(circle at 85% 15%, rgba(6, 182, 212, 0.12) 0%, transparent 50%),
-      radial-gradient(circle at 30% 30%, rgba(59, 130, 246, 0.1) 0%, transparent 60%),
-      radial-gradient(circle at 70% 70%, rgba(34, 211, 238, 0.08) 0%, transparent 50%),
-      radial-gradient(circle at 50% 90%, rgba(16, 185, 129, 0.1) 0%, transparent 45%),
-      linear-gradient(135deg, rgba(15, 23, 42, 0.98) 0%, rgba(30, 41, 59, 0.95) 50%, rgba(51, 65, 85, 0.98) 100%);
+      radial-gradient(circle at 15% 85%, rgba(13, 148, 136, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 85% 15%, rgba(6, 182, 212, 0.06) 0%, transparent 50%),
+      radial-gradient(circle at 30% 30%, rgba(59, 130, 246, 0.05) 0%, transparent 60%),
+      radial-gradient(circle at 70% 70%, rgba(34, 211, 238, 0.04) 0%, transparent 50%),
+      radial-gradient(circle at 50% 90%, rgba(16, 185, 129, 0.05) 0%, transparent 45%),
+      linear-gradient(135deg, rgba(248, 250, 252, 0.98) 0%, rgba(255, 255, 255, 0.95) 50%, rgba(241, 245, 249, 0.98) 100%);
     animation: ocean-nightclub 12s ease infinite;
     position: relative;
     overflow: hidden;
@@ -204,12 +202,12 @@
     right: 0;
     bottom: 0;
     background-image: 
-      radial-gradient(circle at 20% 20%, rgba(13, 148, 136, 0.8) 2px, transparent 2px),
-      radial-gradient(circle at 80% 80%, rgba(6, 182, 212, 0.6) 1px, transparent 1px),
-      radial-gradient(circle at 40% 60%, rgba(59, 130, 246, 0.7) 1.5px, transparent 1.5px),
-      radial-gradient(circle at 60% 40%, rgba(34, 211, 238, 0.5) 1px, transparent 1px);
+      radial-gradient(circle at 20% 20%, rgba(13, 148, 136, 0.3) 2px, transparent 2px),
+      radial-gradient(circle at 80% 80%, rgba(6, 182, 212, 0.2) 1px, transparent 1px),
+      radial-gradient(circle at 40% 60%, rgba(59, 130, 246, 0.25) 1.5px, transparent 1.5px),
+      radial-gradient(circle at 60% 40%, rgba(34, 211, 238, 0.2) 1px, transparent 1px);
     background-size: 120px 120px, 80px 80px, 150px 150px, 100px 100px;
-    opacity: 0.6;
+    opacity: 0.3;
     animation: ocean-particles 30s linear infinite;
     pointer-events: none;
   }
@@ -235,7 +233,7 @@
       radial-gradient(circle at 35% 65%, #0891b2 1px, transparent 1px),
       radial-gradient(circle at 65% 35%, #0369a1 1.5px, transparent 1.5px);
     background-size: 100px 100px, 140px 140px, 180px 180px, 120px 120px, 160px 160px, 90px 90px, 110px 110px;
-    opacity: 0.5;
+    opacity: 0.2;
     animation: ocean-float-particles 35s linear infinite;
     pointer-events: none;
   }
