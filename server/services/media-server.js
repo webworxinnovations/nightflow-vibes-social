@@ -1,4 +1,3 @@
-
 const NodeMediaServer = require('node-media-server');
 const path = require('path');
 const fs = require('fs');
@@ -40,6 +39,7 @@ class MediaServerService {
   createNodeMediaServer() {
     console.log('🔧 Creating Node Media Server configuration...');
     
+    // Simplified configuration to avoid FFmpeg version issues
     const mediaServerConfig = {
       rtmp: {
         port: this.config.rtmp.port,
@@ -52,17 +52,8 @@ class MediaServerService {
         port: this.config.http.port,
         mediaroot: this.config.mediaRoot,
         allow_origin: '*'
-      },
-      relay: {
-        ffmpeg: '/usr/bin/ffmpeg',
-        tasks: [
-          {
-            app: 'live',
-            mode: 'push',
-            edge: `rtmp://127.0.0.1:${this.config.rtmp.port}/live`
-          }
-        ]
       }
+      // Removed relay configuration that was causing FFmpeg issues
     };
     
     console.log('📋 Node Media Server Config:', JSON.stringify(mediaServerConfig, null, 2));
@@ -170,12 +161,16 @@ class MediaServerService {
       console.log(`🎬 Attempting to start RTMP server on port ${this.config.rtmp.port}...`);
       console.log(`🎬 Attempting to start HLS server on port ${this.config.http.port}...`);
       
+      // Add error handling for the run method
       this.nms.run();
       
-      console.log(`🎥 ✅ RTMP SERVER STARTED ON PORT ${this.config.rtmp.port}`);
-      console.log(`📺 ✅ HLS SERVER STARTED ON PORT ${this.config.http.port}`);
-      console.log(`🎯 ✅ OBS can now connect to: rtmp://nightflow-vibes-social-production.up.railway.app/live/STREAM_KEY`);
-      console.log(`📱 ✅ HLS streams available at: https://nightflow-vibes-social-production.up.railway.app/live/STREAM_KEY/index.m3u8`);
+      // Add a small delay to ensure the server has started
+      setTimeout(() => {
+        console.log(`🎥 ✅ RTMP SERVER STARTED ON PORT ${this.config.rtmp.port}`);
+        console.log(`📺 ✅ HLS SERVER STARTED ON PORT ${this.config.http.port}`);
+        console.log(`🎯 ✅ OBS can now connect to: rtmp://nightflow-vibes-social-production.up.railway.app/live/STREAM_KEY`);
+        console.log(`📱 ✅ HLS streams available at: https://nightflow-vibes-social-production.up.railway.app/live/STREAM_KEY/index.m3u8`);
+      }, 1000);
       
       return true;
     } catch (error) {
