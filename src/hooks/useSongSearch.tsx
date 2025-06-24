@@ -1,6 +1,5 @@
 
-import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from 'react';
 
 interface SpotifyTrack {
   id: string;
@@ -10,37 +9,56 @@ interface SpotifyTrack {
     name: string;
     images: Array<{ url: string }>;
   };
-  external_urls: {
-    spotify: string;
-  };
 }
 
 export const useSongSearch = () => {
-  const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<SpotifyTrack[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
-  const searchSongs = async (query: string): Promise<SpotifyTrack[]> => {
-    if (!query.trim()) {
+  const searchSongs = async (query: string) => {
+    if (!query || query.length < 2) {
       setSearchResults([]);
-      return [];
+      return;
     }
 
     setIsSearching(true);
 
     try {
-      // Call edge function to search Spotify
-      const { data, error } = await supabase.functions.invoke('search-spotify', {
-        body: { query }
-      });
+      // For demo purposes, return mock data
+      // In production, this would call Spotify API through Supabase Edge Function
+      const mockResults: SpotifyTrack[] = [
+        {
+          id: '1',
+          name: `${query} - Song 1`,
+          artists: [{ name: 'Artist 1' }],
+          album: {
+            name: 'Album 1',
+            images: [
+              { url: '/placeholder.svg' },
+              { url: '/placeholder.svg' },
+              { url: '/placeholder.svg' }
+            ]
+          }
+        },
+        {
+          id: '2',
+          name: `${query} - Song 2`,
+          artists: [{ name: 'Artist 2' }],
+          album: {
+            name: 'Album 2',
+            images: [
+              { url: '/placeholder.svg' },
+              { url: '/placeholder.svg' },
+              { url: '/placeholder.svg' }
+            ]
+          }
+        }
+      ];
 
-      if (error) throw error;
-
-      const tracks = data.tracks?.items || [];
-      setSearchResults(tracks);
-      return tracks;
+      setSearchResults(mockResults);
     } catch (error) {
-      console.error('Error searching songs:', error);
-      return [];
+      console.error('Song search error:', error);
+      setSearchResults([]);
     } finally {
       setIsSearching(false);
     }

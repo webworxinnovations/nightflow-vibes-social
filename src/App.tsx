@@ -1,76 +1,95 @@
 
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
-import { ThemeProvider } from "@/providers/ThemeProvider";
-import { SupabaseAuthProvider } from "@/contexts/SupabaseAuthContext";
-import { SubPromoterProvider } from "@/contexts/SubPromoterContext";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { SupabaseAuthProvider, useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
+import Index from "./pages/Index";
+import AuthPage from "./pages/AuthPage";
+import DjDashboard from "./pages/DjDashboard";
+import PromoterDashboard from "./pages/PromoterDashboard";
+import SubPromoterDashboard from "./pages/SubPromoterDashboard";
+import SubPromoterManagement from "./pages/SubPromoterManagement";
+import Profile from "./pages/Profile";
+import Discover from "./pages/Discover";
+import LiveStreams from "./pages/LiveStreams";
+import Events from "./pages/Events";
+import EventDetails from "./pages/EventDetails";
+import CreateEvent from "./pages/CreateEvent";
+import Home from "./pages/Home";
+import NotFound from "./pages/NotFound";
 
-// Pages - using default imports
-import Index from "@/pages/Index";
-import AuthPage from "@/pages/AuthPage";
-import SignUp from "@/pages/SignUp";
-import Home from "@/pages/Home";
-import { LiveStreams } from "@/pages/LiveStreams";
-import Discover from "@/pages/Discover";
-import Events from "@/pages/Events";
-import CreateEvent from "@/pages/CreateEvent";
-import EventDetails from "@/pages/EventDetails";
-import DjDashboard from "@/pages/DjDashboard";
-import PromoterDashboard from "@/pages/PromoterDashboard";
-import SubPromoterDashboard from "@/pages/SubPromoterDashboard";
-import SubPromoterManagement from "@/pages/SubPromoterManagement";
-import Profile from "@/pages/Profile";
-import NotFound from "@/pages/NotFound";
+const queryClient = new QueryClient();
 
-// Layout
-import AppLayout from "@/layouts/AppLayout";
+// Protected Route Component
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading } = useSupabaseAuth();
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      retry: 1,
-    },
-  },
-});
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  return <>{children}</>;
+};
+
+// Public Route Component (redirects to dashboard if already logged in)
+const PublicRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading } = useSupabaseAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (user) {
+    return <Navigate to="/dj-dashboard" replace />;
+  }
+
+  return <>{children}</>;
+};
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="dark">
-        <SupabaseAuthProvider>
-          <SubPromoterProvider>
-            <Router>
-              <Routes>
-                {/* Public routes */}
-                <Route path="/" element={<Index />} />
-                <Route path="/auth" element={<AuthPage />} />
-                <Route path="/signup" element={<SignUp />} />
-                
-                {/* Protected routes with layout */}
-                <Route element={<AppLayout />}>
-                  <Route path="/home" element={<Home />} />
-                  <Route path="/live" element={<LiveStreams />} />
-                  <Route path="/discover" element={<Discover />} />
-                  <Route path="/events" element={<Events />} />
-                  <Route path="/events/create" element={<CreateEvent />} />
-                  <Route path="/events/:id" element={<EventDetails />} />
-                  <Route path="/dj-dashboard" element={<DjDashboard />} />
-                  <Route path="/promoter-dashboard" element={<PromoterDashboard />} />
-                  <Route path="/sub-promoter-dashboard" element={<SubPromoterDashboard />} />
-                  <Route path="/sub-promoter-management" element={<SubPromoterManagement />} />
-                  <Route path="/profile/:username?" element={<Profile />} />
-                </Route>
-                
-                {/* Catch all route */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-              <Toaster />
-            </Router>
-          </SubPromoterProvider>
-        </SupabaseAuthProvider>
-      </ThemeProvider>
+      <SupabaseAuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <BrowserRouter>
+            <Routes>
+              {/* Public routes */}
+              <Route path="/" element={<PublicRoute><Index /></PublicRoute>} />
+              <Route path="/auth" element={<PublicRoute><AuthPage /></PublicRoute>} />
+              
+              {/* Protected routes */}
+              <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+              <Route path="/dj-dashboard" element={<ProtectedRoute><DjDashboard /></ProtectedRoute>} />
+              <Route path="/promoter-dashboard" element={<ProtectedRoute><PromoterDashboard /></ProtectedRoute>} />
+              <Route path="/subpromoter-dashboard" element={<ProtectedRoute><SubPromoterDashboard /></ProtectedRoute>} />
+              <Route path="/subpromoter-management" element={<ProtectedRoute><SubPromoterManagement /></ProtectedRoute>} />
+              <Route path="/profile/:userId?" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+              <Route path="/discover" element={<ProtectedRoute><Discover /></ProtectedRoute>} />
+              <Route path="/live-streams" element={<ProtectedRoute><LiveStreams /></ProtectedRoute>} />
+              <Route path="/events" element={<ProtectedRoute><Events /></ProtectedRoute>} />
+              <Route path="/events/:eventId" element={<ProtectedRoute><EventDetails /></ProtectedRoute>} />
+              <Route path="/create-event" element={<ProtectedRoute><CreateEvent /></ProtectedRoute>} />
+              
+              {/* 404 */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </SupabaseAuthProvider>
     </QueryClientProvider>
   );
 }

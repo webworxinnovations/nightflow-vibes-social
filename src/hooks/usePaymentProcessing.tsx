@@ -1,13 +1,12 @@
 
-import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
-import { toast } from "sonner";
+import { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 
 interface PaymentIntent {
   id: string;
-  client_secret: string;
   amount: number;
+  status: string;
 }
 
 export const usePaymentProcessing = () => {
@@ -22,51 +21,52 @@ export const usePaymentProcessing = () => {
     songRequest?: string
   ): Promise<PaymentIntent | null> => {
     if (!user) {
-      toast.error("Please log in to send tips");
-      return null;
+      throw new Error('User not authenticated');
     }
 
     setIsProcessing(true);
-
+    
     try {
-      // Call edge function to create payment intent
-      const { data, error } = await supabase.functions.invoke('create-payment-intent', {
-        body: {
-          amount: Math.round(amount * 100), // Convert to cents
-          recipientId,
-          streamId,
-          message,
-          songRequest,
-          tipperId: user.id
-        }
-      });
+      // For now, simulate payment intent creation
+      // In production, this would call Stripe or your payment processor
+      const paymentIntent: PaymentIntent = {
+        id: `pi_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        amount: amount * 100, // Convert to cents
+        status: 'requires_confirmation'
+      };
 
-      if (error) throw error;
-
-      return data;
+      console.log('Payment intent created:', paymentIntent);
+      return paymentIntent;
     } catch (error) {
       console.error('Error creating payment intent:', error);
-      toast.error("Failed to process payment. Please try again.");
-      return null;
+      throw error;
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const confirmPayment = async (paymentIntentId: string) => {
+  const confirmPayment = async (paymentIntentId: string): Promise<boolean> => {
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    setIsProcessing(true);
+
     try {
-      const { data, error } = await supabase.functions.invoke('confirm-payment', {
-        body: { paymentIntentId }
-      });
-
-      if (error) throw error;
-
-      toast.success("Payment successful! 🎉");
+      // For demo purposes, simulate successful payment
+      // In production, this would confirm with Stripe
+      console.log('Confirming payment:', paymentIntentId);
+      
+      // Simulate processing delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      console.log('Payment confirmed successfully');
       return true;
     } catch (error) {
       console.error('Error confirming payment:', error);
-      toast.error("Payment confirmation failed.");
       return false;
+    } finally {
+      setIsProcessing(false);
     }
   };
 
