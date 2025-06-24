@@ -1,8 +1,8 @@
 
 export class StreamingAPI {
-  static async getServerStatus(): Promise<{ available: boolean; url: string }> {
+  static async getServerStatus(): Promise<{ available: boolean; url: string; version?: string; uptime?: number }> {
     try {
-      console.log('🔍 Checking server status...');
+      console.log('🔍 Checking production server status...');
       const baseUrl = 'https://nightflow-vibes-social-production.up.railway.app';
       
       // Test if the API server is responding
@@ -12,32 +12,21 @@ export class StreamingAPI {
       });
       
       if (response.ok) {
-        console.log('✅ API server is responding');
+        const data = await response.json();
+        console.log('✅ Production server is online and ready');
         
-        // Test if RTMP server info is available
-        try {
-          const rtmpStatus = await fetch(`${baseUrl}/api/rtmp/status`, {
-            method: 'GET',
-            signal: AbortSignal.timeout(5000)
-          });
-          
-          if (rtmpStatus.ok) {
-            console.log('✅ RTMP server status available');
-            return { available: true, url: baseUrl };
-          } else {
-            console.log('⚠️ RTMP server status not available, but API works');
-            return { available: true, url: baseUrl };
-          }
-        } catch (rtmpError) {
-          console.log('⚠️ RTMP status check failed, but API works');
-          return { available: true, url: baseUrl };
-        }
+        return {
+          available: true,
+          url: baseUrl,
+          version: data.version || '1.0.0',
+          uptime: data.uptime || 0
+        };
       } else {
-        console.error('❌ API server not responding:', response.status);
+        console.error('❌ Production server not responding:', response.status);
         return { available: false, url: baseUrl };
       }
     } catch (error) {
-      console.error('❌ Server status check failed:', error);
+      console.error('❌ Production server status check failed:', error);
       return {
         available: false,
         url: 'https://nightflow-vibes-social-production.up.railway.app'
@@ -50,11 +39,12 @@ export class StreamingAPI {
       const baseUrl = 'https://nightflow-vibes-social-production.up.railway.app';
       const response = await fetch(`${baseUrl}/api/stream/${streamKey}/status`, {
         method: 'GET',
-        signal: AbortSignal.timeout(5000)
+        signal: AbortSignal.timeout(10000)
       });
       
       if (response.ok) {
         const data = await response.json();
+        console.log('📊 Real stream status received:', data);
         return {
           isLive: data.isLive || false,
           viewerCount: data.viewerCount || 0,
@@ -64,7 +54,7 @@ export class StreamingAPI {
           timestamp: new Date().toISOString()
         };
       } else {
-        console.log('Stream status not available, returning defaults');
+        console.log('Stream not found or offline');
         return {
           isLive: false,
           viewerCount: 0,
@@ -75,7 +65,7 @@ export class StreamingAPI {
         };
       }
     } catch (error) {
-      console.error('Failed to get stream status:', error);
+      console.error('Failed to get real stream status:', error);
       return {
         isLive: false,
         viewerCount: 0,
@@ -96,25 +86,24 @@ export class StreamingAPI {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ streamKey }),
-        signal: AbortSignal.timeout(10000)
+        signal: AbortSignal.timeout(15000)
       });
       
       if (response.ok) {
-        const data = await response.json();
         return {
           success: true,
-          message: 'RTMP server is ready to accept connections'
+          message: 'RTMP server is ready and accepting connections'
         };
       } else {
         return {
           success: false,
-          message: `RTMP server test failed: ${response.status}`
+          message: `RTMP server test failed: ${response.status} - ${response.statusText}`
         };
       }
     } catch (error) {
       return {
         success: false,
-        message: `RTMP connection test failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        message: `RTMP connection test failed: ${error instanceof Error ? error.message : 'Network error'}`
       };
     }
   }

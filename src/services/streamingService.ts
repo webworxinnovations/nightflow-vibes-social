@@ -18,7 +18,6 @@ class StreamingService {
   private statusCallbacks: StatusUpdateCallback[] = [];
   private websocket: WebSocket | null = null;
   private currentStreamKey: string | null = null;
-  private simulationInterval: NodeJS.Timeout | null = null;
 
   async generateStreamKey(): Promise<StreamConfig> {
     try {
@@ -91,18 +90,29 @@ class StreamingService {
 
   async getServerStatus(): Promise<ServerStatus> {
     try {
-      // For demo purposes, simulate server status check
-      const mockStatus: ServerStatus = {
-        available: Math.random() > 0.3, // 70% chance of being available
-        url: 'https://nightflow-vibes-social-production.up.railway.app',
-        version: '1.0.0',
-        uptime: Math.floor(Math.random() * 86400) // Random uptime in seconds
-      };
+      console.log('🔍 Checking real server status...');
+      const baseUrl = 'https://nightflow-vibes-social-production.up.railway.app';
       
-      console.log('Server status checked:', mockStatus);
-      return mockStatus;
+      const response = await fetch(`${baseUrl}/api/health`, {
+        method: 'GET',
+        signal: AbortSignal.timeout(10000)
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Server is online and responding');
+        return {
+          available: true,
+          url: baseUrl,
+          version: data.version || '1.0.0',
+          uptime: data.uptime || 0
+        };
+      } else {
+        console.error('❌ Server not responding:', response.status);
+        return { available: false, url: baseUrl };
+      }
     } catch (error) {
-      console.error('Failed to get server status:', error);
+      console.error('❌ Server status check failed:', error);
       return {
         available: false,
         url: 'https://nightflow-vibes-social-production.up.railway.app'
@@ -113,15 +123,44 @@ class StreamingService {
   connectToStreamStatusWebSocket(streamKey: string) {
     this.currentStreamKey = streamKey;
     
-    // Only start simulation when explicitly connected to a stream
-    // and don't auto-trigger status changes
-    console.log('Connected to stream monitoring for key:', streamKey);
-  }
-
-  // Remove the automatic simulation that was causing random toasts
-  private simulateStreamStatus() {
-    // This method is now empty to prevent random status updates
-    console.log('Stream status monitoring active (simulation disabled)');
+    try {
+      const wsUrl = `wss://nightflow-vibes-social-production.up.railway.app/ws/stream/${streamKey}`;
+      console.log('🔌 Connecting to real-time stream status:', wsUrl);
+      
+      this.websocket = new WebSocket(wsUrl);
+      
+      this.websocket.onopen = () => {
+        console.log('✅ WebSocket connected for stream monitoring');
+      };
+      
+      this.websocket.onmessage = (event) => {
+        try {
+          const status: StreamStatus = JSON.parse(event.data);
+          console.log('📊 Real-time status update:', status);
+          this.notifyStatusUpdate(status);
+        } catch (error) {
+          console.error('Failed to parse status update:', error);
+        }
+      };
+      
+      this.websocket.onclose = () => {
+        console.log('🔌 WebSocket disconnected');
+        // Attempt to reconnect after 5 seconds
+        setTimeout(() => {
+          if (this.currentStreamKey) {
+            console.log('🔄 Attempting to reconnect WebSocket...');
+            this.connectToStreamStatusWebSocket(this.currentStreamKey);
+          }
+        }, 5000);
+      };
+      
+      this.websocket.onerror = (error) => {
+        console.error('❌ WebSocket error:', error);
+      };
+      
+    } catch (error) {
+      console.error('❌ Failed to create WebSocket connection:', error);
+    }
   }
 
   onStatusUpdate(callback: StatusUpdateCallback): () => void {
@@ -148,12 +187,8 @@ class StreamingService {
       this.websocket = null;
     }
     
-    if (this.simulationInterval) {
-      clearInterval(this.simulationInterval);
-      this.simulationInterval = null;
-    }
-    
     this.currentStreamKey = null;
+    console.log('🔌 Streaming service disconnected');
   }
 }
 
