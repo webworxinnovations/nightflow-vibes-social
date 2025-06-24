@@ -5,7 +5,7 @@ import { useRealTimeStream } from './useRealTimeStream';
 
 export const useStreamKey = () => {
   const { user } = useSupabaseAuth();
-  const { streamConfig, isLive: streamIsLive, viewerCount: streamViewerCount } = useRealTimeStream();
+  const { streamConfig, isLive: streamIsLive, viewerCount: streamViewerCount, generateStreamKey: generateKey } = useRealTimeStream();
   const [isLive, setIsLive] = useState(false);
   const [viewerCount, setViewerCount] = useState(0);
 
@@ -14,11 +14,21 @@ export const useStreamKey = () => {
     setViewerCount(streamViewerCount || 0);
   }, [streamIsLive, streamViewerCount]);
 
+  // Create streamData object for backward compatibility
+  const streamData = {
+    streamKey: streamConfig?.streamKey || '',
+    streamUrl: streamConfig?.hlsUrl || '',
+    rtmpUrl: streamConfig?.rtmpUrl || '',
+    hlsUrl: streamConfig?.hlsUrl || ''
+  };
+
   return {
     streamKey: streamConfig?.streamKey || '',
     isLive,
     viewerCount,
     hlsUrl: streamConfig?.hlsUrl || '',
-    rtmpUrl: streamConfig?.rtmpUrl || ''
+    rtmpUrl: streamConfig?.rtmpUrl || '',
+    streamData,
+    generateStreamKey: generateKey
   };
 };

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -50,11 +49,11 @@ export const TipDialog = ({ open, onOpenChange, streamId, streamerId }: TipDialo
     }
 
     const success = await sendTip(
-      streamerId,
-      streamId,
       tipAmount,
+      streamerId,
       message || undefined,
-      songRequest || undefined
+      songRequest || undefined,
+      streamId
     );
 
     if (success) {

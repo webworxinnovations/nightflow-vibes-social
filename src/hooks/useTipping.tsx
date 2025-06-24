@@ -48,6 +48,7 @@ export const useTipping = () => {
 
   return {
     sendTip,
-    isTipping: isTipping || isProcessing
+    isTipping: isTipping || isProcessing,
+    isLoading: isTipping || isProcessing
   };
 };
