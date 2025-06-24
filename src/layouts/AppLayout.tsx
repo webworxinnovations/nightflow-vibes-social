@@ -5,21 +5,12 @@ import { MobileNav } from "@/components/nav/MobileNav";
 import { Header } from "@/components/nav/Header";
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 
-export default function AppLayout() {
+export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user } = useSupabaseAuth();
   const location = useLocation();
 
-  // Don't show sidebar/nav on landing page
-  if (location.pathname === "/" || !user) {
-    return (
-      <div className="min-h-screen nightclub-bg floating-particles">
-        <Outlet />
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen nightclub-bg floating-particles flex">
+    <div className="min-h-screen nightclub-bg floating-particles flex dark">
       {/* Desktop Sidebar - Fixed positioning */}
       <div className="hidden sm:flex sm:flex-shrink-0 relative z-20">
         <Sidebar />
@@ -34,7 +25,7 @@ export default function AppLayout() {
         
         {/* Page Content */}
         <main className="flex-1 backdrop-blur-sm">
-          <Outlet />
+          {children}
         </main>
       </div>
       

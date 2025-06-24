@@ -5,44 +5,44 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 220 13% 18%;
+    --foreground: 0 0% 98%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 220 13% 18%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 220 13% 18%;
+    --popover-foreground: 0 0% 98%;
 
     --primary: 178 78% 57%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 188 95% 68%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 220 13% 25%;
+    --muted-foreground: 240 5% 64.9%;
 
     --accent: 198 93% 60%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
+    --border: 220 13% 25%;
+    --input: 220 13% 25%;
     --ring: 178 78% 57%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 198 93% 60%;
+    --sidebar-background: 220 13% 18%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 178 78% 57%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 220 13% 25%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 220 13% 25%;
+    --sidebar-ring: 178 78% 57%;
   }
 
   .dark {
@@ -93,5 +93,16 @@
   body {
     @apply bg-background text-foreground;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    background-color: #0a0a0a !important;
+    color: #ffffff !important;
+  }
+
+  html {
+    background-color: #0a0a0a !important;
+  }
+
+  #root {
+    background-color: #0a0a0a !important;
+    color: #ffffff !important;
   }
 }

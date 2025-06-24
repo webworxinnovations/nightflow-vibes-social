@@ -4,6 +4,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { SupabaseAuthProvider, useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
+import { ThemeProvider } from "@/providers/ThemeProvider";
+import AppLayout from "@/layouts/AppLayout";
 import Index from "./pages/Index";
 import AuthPage from "./pages/AuthPage";
 import DjDashboard from "./pages/DjDashboard";
@@ -27,7 +29,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center nightclub-bg">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
@@ -37,7 +39,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/auth" replace />;
   }
 
-  return <>{children}</>;
+  return <AppLayout>{children}</AppLayout>;
 };
 
 // Public Route Component (redirects to dashboard if already logged in)
@@ -46,14 +48,14 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center nightclub-bg">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   if (user) {
-    return <Navigate to="/dj-dashboard" replace />;
+    return <Navigate to="/home" replace />;
   }
 
   return <>{children}</>;
@@ -63,32 +65,34 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <SupabaseAuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <BrowserRouter>
-            <Routes>
-              {/* Public routes */}
-              <Route path="/" element={<PublicRoute><Index /></PublicRoute>} />
-              <Route path="/auth" element={<PublicRoute><AuthPage /></PublicRoute>} />
-              
-              {/* Protected routes */}
-              <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
-              <Route path="/dj-dashboard" element={<ProtectedRoute><DjDashboard /></ProtectedRoute>} />
-              <Route path="/promoter-dashboard" element={<ProtectedRoute><PromoterDashboard /></ProtectedRoute>} />
-              <Route path="/subpromoter-dashboard" element={<ProtectedRoute><SubPromoterDashboard /></ProtectedRoute>} />
-              <Route path="/subpromoter-management" element={<ProtectedRoute><SubPromoterManagement /></ProtectedRoute>} />
-              <Route path="/profile/:userId?" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-              <Route path="/discover" element={<ProtectedRoute><Discover /></ProtectedRoute>} />
-              <Route path="/live-streams" element={<ProtectedRoute><LiveStreams /></ProtectedRoute>} />
-              <Route path="/events" element={<ProtectedRoute><Events /></ProtectedRoute>} />
-              <Route path="/events/:eventId" element={<ProtectedRoute><EventDetails /></ProtectedRoute>} />
-              <Route path="/create-event" element={<ProtectedRoute><CreateEvent /></ProtectedRoute>} />
-              
-              {/* 404 */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
+        <ThemeProvider defaultTheme="dark">
+          <TooltipProvider>
+            <Toaster />
+            <BrowserRouter>
+              <Routes>
+                {/* Public routes */}
+                <Route path="/" element={<PublicRoute><Index /></PublicRoute>} />
+                <Route path="/auth" element={<PublicRoute><AuthPage /></PublicRoute>} />
+                
+                {/* Protected routes */}
+                <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+                <Route path="/dj-dashboard" element={<ProtectedRoute><DjDashboard /></ProtectedRoute>} />
+                <Route path="/promoter-dashboard" element={<ProtectedRoute><PromoterDashboard /></ProtectedRoute>} />
+                <Route path="/subpromoter-dashboard" element={<ProtectedRoute><SubPromoterDashboard /></ProtectedRoute>} />
+                <Route path="/subpromoter-management" element={<ProtectedRoute><SubPromoterManagement /></ProtectedRoute>} />
+                <Route path="/profile/:userId?" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                <Route path="/discover" element={<ProtectedRoute><Discover /></ProtectedRoute>} />
+                <Route path="/live-streams" element={<ProtectedRoute><LiveStreams /></ProtectedRoute>} />
+                <Route path="/events" element={<ProtectedRoute><Events /></ProtectedRoute>} />
+                <Route path="/events/:eventId" element={<ProtectedRoute><EventDetails /></ProtectedRoute>} />
+                <Route path="/create-event" element={<ProtectedRoute><CreateEvent /></ProtectedRoute>} />
+                
+                {/* 404 */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </ThemeProvider>
       </SupabaseAuthProvider>
     </QueryClientProvider>
   );

@@ -24,18 +24,23 @@ export function ThemeProvider({
   children,
   defaultTheme = 'dark',
 }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(defaultTheme);
+  const [theme, setTheme] = useState<Theme>('dark'); // Force dark theme
 
   useEffect(() => {
     const root = window.document.documentElement;
     
-    root.classList.remove('light', 'dark');
-    root.classList.add(theme);
+    // Always apply dark theme
+    root.classList.remove('light');
+    root.classList.add('dark');
+    
+    // Force dark theme styles
+    document.body.style.backgroundColor = '#0a0a0a';
+    document.body.style.color = '#ffffff';
   }, [theme]);
 
   const value = {
-    theme,
-    setTheme: (theme: Theme) => setTheme(theme),
+    theme: 'dark' as Theme, // Always return dark
+    setTheme: (theme: Theme) => setTheme('dark'), // Always set to dark
   };
 
   return (
