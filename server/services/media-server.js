@@ -1,46 +1,26 @@
 
 const NodeMediaServer = require('node-media-server');
-const path = require('path');
-const fs = require('fs');
+const MediaDirectoryManager = require('./media-directory-manager');
+const MediaEventHandlers = require('./media-event-handlers');
 
 class MediaServerService {
   constructor(config, streamManager) {
     this.config = config;
     this.streamManager = streamManager;
     this.nms = null;
-    console.log('🎬 Initializing Media Server Service...');
-    this.setupMediaDirectories();
-    this.createNodeMediaServer();
-  }
-  
-  setupMediaDirectories() {
-    // Ensure media directories exist
-    const mediaRoot = this.config.mediaRoot || '/tmp/media';
-    const liveDir = path.join(mediaRoot, 'live');
     
-    try {
-      if (!fs.existsSync(mediaRoot)) {
-        fs.mkdirSync(mediaRoot, { recursive: true });
-        console.log(`✅ Created media root: ${mediaRoot}`);
-      }
-      
-      if (!fs.existsSync(liveDir)) {
-        fs.mkdirSync(liveDir, { recursive: true });
-        console.log(`✅ Created live directory: ${liveDir}`);
-      }
-      
-      console.log(`📁 Media directories ready: ${mediaRoot}`);
-      console.log(`📁 Live streams directory: ${liveDir}`);
-    } catch (error) {
-      console.error('❌ Failed to create media directories:', error);
-      throw error;
-    }
+    console.log('🎬 Initializing Media Server Service...');
+    
+    this.mediaDirectoryManager = new MediaDirectoryManager(this.config.mediaRoot);
+    this.mediaDirectoryManager.setupDirectories();
+    
+    this.eventHandlers = new MediaEventHandlers(streamManager, this.mediaDirectoryManager);
+    this.createNodeMediaServer();
   }
   
   createNodeMediaServer() {
     console.log('🔧 Creating Node Media Server configuration...');
     
-    // Ultra-minimal configuration to prevent FFmpeg calls
     const mediaServerConfig = {
       rtmp: {
         port: this.config.rtmp.port,
@@ -48,18 +28,15 @@ class MediaServerService {
         gop_cache: true,
         ping: 30,
         ping_timeout: 60,
-        // Disable features that might trigger FFmpeg
         allow_origin: '*'
       },
       http: {
         port: this.config.http.port,
         mediaroot: this.config.mediaRoot,
         allow_origin: '*',
-        // Disable HLS generation to prevent FFmpeg calls
         api: false
       },
-      // Completely remove any relay or transcoding features
-      logType: 1 // Minimal logging
+      logType: 1
     };
     
     console.log('📋 Node Media Server Config:', JSON.stringify(mediaServerConfig, null, 2));
@@ -67,93 +44,11 @@ class MediaServerService {
     try {
       this.nms = new NodeMediaServer(mediaServerConfig);
       console.log('✅ Node Media Server instance created');
-      this.setupEventHandlers();
+      this.eventHandlers.setupAllHandlers(this.nms);
     } catch (error) {
       console.error('❌ Failed to create Node Media Server:', error);
       throw error;
     }
-  }
-  
-  setupEventHandlers() {
-    console.log('🔧 Setting up Node Media Server event handlers...');
-    
-    // RTMP Connection Events
-    this.nms.on('preConnect', (id, args) => {
-      console.log(`[RTMP] 🔌 Pre-connect: ${id} from ${args.ip}`);
-    });
-
-    this.nms.on('postConnect', (id, args) => {
-      console.log(`[RTMP] ✅ Connected: ${id} from ${args.ip}`);
-      console.log(`🎉 OBS SUCCESSFULLY CONNECTED!`);
-    });
-
-    this.nms.on('doneConnect', (id, args) => {
-      console.log(`[RTMP] ❌ Disconnected: ${id}`);
-    });
-
-    // RTMP Publishing Events (OBS starts streaming)
-    this.nms.on('prePublish', (id, StreamPath, args) => {
-      console.log(`[RTMP] 📡 Pre-publish: ${id} StreamPath=${StreamPath}`);
-      
-      // Extract stream key from path (format: /live/STREAM_KEY)
-      const pathParts = StreamPath.split('/');
-      if (pathParts.length >= 3 && pathParts[1] === 'live') {
-        const streamKey = pathParts[2];
-        console.log(`🔑 Stream key detected: ${streamKey}`);
-        
-        // Add stream to manager
-        this.streamManager.addStream(streamKey);
-        
-        // Validate stream key format
-        if (!streamKey.startsWith('nf_') || streamKey.length < 10) {
-          console.log(`❌ Invalid stream key format: ${streamKey}`);
-          // Reject the stream
-          return false;
-        }
-        
-        console.log(`✅ Stream authorized: ${streamKey}`);
-        console.log(`🎉 OBS IS NOW STREAMING LIVE!`);
-      }
-    });
-
-    this.nms.on('postPublish', (id, StreamPath, args) => {
-      const streamKey = StreamPath.split('/').pop();
-      console.log(`🔴 Stream LIVE: ${streamKey}`);
-      
-      // Ensure the stream directory exists for HLS files
-      const streamDir = path.join(this.config.mediaRoot, 'live', streamKey);
-      if (!fs.existsSync(streamDir)) {
-        fs.mkdirSync(streamDir, { recursive: true });
-        console.log(`📁 Created HLS directory: ${streamDir}`);
-      }
-    });
-
-    this.nms.on('donePublish', (id, StreamPath, args) => {
-      const streamKey = StreamPath.split('/').pop();
-      console.log(`⚫ Stream ended: ${streamKey}`);
-      
-      // Remove stream from manager
-      this.streamManager.removeStream(streamKey);
-    });
-
-    // RTMP Play Events (viewers watching)
-    this.nms.on('prePlay', (id, StreamPath, args) => {
-      console.log(`[RTMP] 👁️ Pre-play: ${id} StreamPath=${StreamPath}`);
-    });
-
-    this.nms.on('postPlay', (id, StreamPath, args) => {
-      const streamKey = StreamPath.split('/').pop();
-      console.log(`👁️ Viewer connected to: ${streamKey}`);
-      this.streamManager.incrementViewerCount(streamKey);
-    });
-
-    this.nms.on('donePlay', (id, StreamPath, args) => {
-      const streamKey = StreamPath.split('/').pop();
-      console.log(`👁️ Viewer disconnected from: ${streamKey}`);
-      this.streamManager.decrementViewerCount(streamKey);
-    });
-
-    console.log('✅ Event handlers setup complete');
   }
   
   start() {
@@ -167,7 +62,6 @@ class MediaServerService {
       console.log(`🎬 Attempting to start RTMP server on port ${this.config.rtmp.port}...`);
       console.log(`🎬 Attempting to start HLS server on port ${this.config.http.port}...`);
       
-      // Wrap the run method in a try-catch to handle any internal errors
       try {
         this.nms.run();
       } catch (runError) {
@@ -175,7 +69,6 @@ class MediaServerService {
         throw runError;
       }
       
-      // Add a small delay to ensure the server has started
       setTimeout(() => {
         console.log(`🎥 ✅ RTMP SERVER STARTED ON PORT ${this.config.rtmp.port}`);
         console.log(`📺 ✅ HLS SERVER STARTED ON PORT ${this.config.http.port}`);
@@ -189,14 +82,12 @@ class MediaServerService {
       console.error('Full error:', error);
       console.log('🚨 This is exactly why OBS shows "Failed to connect to server"!');
       
-      // Try to identify the specific issue
       if (error.message.includes('EADDRINUSE')) {
         console.log(`🔍 Port ${this.config.rtmp.port} is already in use - this is the problem!`);
       } else if (error.message.includes('EACCES')) {
         console.log(`🔍 Permission denied on port ${this.config.rtmp.port} - this is the problem!`);
       } else if (error.message.includes('ffmpeg') || error.message.includes('getFfmpegVersion')) {
         console.log(`🔍 FFmpeg issue detected - switching to basic RTMP mode!`);
-        // Don't throw the error, just log it
         console.log('⚠️ Continuing without FFmpeg features...');
         return true;
       }
