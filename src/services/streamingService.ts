@@ -1,25 +1,8 @@
-
 import { StreamingConfig } from './streaming/config';
 import { StreamingDatabase } from './streaming/database';
 import { StreamingAPI } from './streaming/api';
 import { supabase } from '@/lib/supabase';
-
-export interface StreamConfig {
-  rtmpUrl: string;
-  streamKey: string;
-  hlsUrl: string;
-  isLive?: boolean;
-  viewerCount?: number;
-}
-
-export interface StreamStatus {
-  isLive: boolean;
-  viewerCount: number;
-  duration: number;
-  bitrate: number;
-  resolution: string;
-  timestamp: string;
-}
+import { StreamConfig, StreamStatus } from '@/types/streaming';
 
 export interface ServerStatus {
   available: boolean;
@@ -54,16 +37,7 @@ class StreamingService {
         viewerCount: 0
       };
 
-      // Save to database - create a complete StreamConfig object
-      const streamConfigForDB: StreamConfig = {
-        rtmpUrl: config.rtmpUrl,
-        streamKey: config.streamKey,
-        hlsUrl: config.hlsUrl,
-        isLive: false,
-        viewerCount: 0
-      };
-
-      await StreamingDatabase.saveStream(streamConfigForDB, user.id);
+      await StreamingDatabase.saveStream(config, user.id);
       
       console.log('✅ Stream configuration generated:', { streamKey, rtmpUrl, hlsUrl });
       return config;
