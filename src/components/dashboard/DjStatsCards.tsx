@@ -18,33 +18,33 @@ export const DjStatsCards = ({
 }: DjStatsCardsProps) => {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-      <GlassmorphicCard className="bg-primary/10 backdrop-blur-lg">
+      <GlassmorphicCard className="glassmorphism">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-medium text-muted-foreground">Total Tips</h3>
-          <DollarSign className="h-5 w-5 text-primary" />
+          <h3 className="text-sm font-medium text-gray-600">Total Tips</h3>
+          <DollarSign className="h-5 w-5 text-teal-600" />
         </div>
-        <p className="mt-2 text-3xl font-bold">${earnings}</p>
-        <p className="mt-1 text-xs text-muted-foreground">+$50 from last week</p>
+        <p className="mt-2 text-3xl font-bold text-gray-900">${earnings}</p>
+        <p className="mt-1 text-xs text-gray-500">+$50 from last week</p>
       </GlassmorphicCard>
       
-      <GlassmorphicCard>
+      <GlassmorphicCard className="glassmorphism">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-medium text-muted-foreground">Total Requests</h3>
-          <Music className="h-5 w-5 text-muted-foreground" />
+          <h3 className="text-sm font-medium text-gray-600">Total Requests</h3>
+          <Music className="h-5 w-5 text-gray-600" />
         </div>
-        <p className="mt-2 text-3xl font-bold">{totalRequests}</p>
-        <p className="mt-1 text-xs text-muted-foreground">
+        <p className="mt-2 text-3xl font-bold text-gray-900">{totalRequests}</p>
+        <p className="mt-1 text-xs text-gray-500">
           {acceptedRequests} accepted
         </p>
       </GlassmorphicCard>
       
-      <GlassmorphicCard>
+      <GlassmorphicCard className="glassmorphism">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-medium text-muted-foreground">Upcoming Events</h3>
-          <Calendar className="h-5 w-5 text-muted-foreground" />
+          <h3 className="text-sm font-medium text-gray-600">Upcoming Events</h3>
+          <Calendar className="h-5 w-5 text-gray-600" />
         </div>
-        <p className="mt-2 text-3xl font-bold">{upcomingEvents.length}</p>
-        <p className="mt-1 text-xs text-muted-foreground">
+        <p className="mt-2 text-3xl font-bold text-gray-900">{upcomingEvents.length}</p>
+        <p className="mt-1 text-xs text-gray-500">
           Next: {upcomingEvents[0] ? formatDate(upcomingEvents[0].date) : 'None'}
         </p>
       </GlassmorphicCard>
