@@ -54,12 +54,16 @@ class StreamingService {
         viewerCount: 0
       };
 
-      // Save to database
-      await StreamingDatabase.saveStream({
+      // Save to database - create a complete StreamConfig object
+      const streamConfigForDB: StreamConfig = {
         rtmpUrl: config.rtmpUrl,
         streamKey: config.streamKey,
-        hlsUrl: config.hlsUrl
-      }, user.id);
+        hlsUrl: config.hlsUrl,
+        isLive: false,
+        viewerCount: 0
+      };
+
+      await StreamingDatabase.saveStream(streamConfigForDB, user.id);
       
       console.log('✅ Stream configuration generated:', { streamKey, rtmpUrl, hlsUrl });
       return config;

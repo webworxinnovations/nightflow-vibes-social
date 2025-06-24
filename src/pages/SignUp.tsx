@@ -19,6 +19,7 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { Music, Users, Building2, User } from "lucide-react";
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -42,7 +43,6 @@ type SignUpFormValues = z.infer<typeof formSchema>;
 
 export default function SignUp() {
   const navigate = useNavigate();
-  const { signUp } = useSupabaseAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<SignUpFormValues>({
@@ -60,13 +60,29 @@ export default function SignUp() {
     setIsSubmitting(true);
 
     try {
-      await signUp(values.email, values.password, values.username, values.name, values.role);
-      
-      // Redirect to home after successful signup
-      navigate("/");
+      const { error } = await supabase.auth.signUp({
+        email: values.email,
+        password: values.password,
+        options: {
+          data: {
+            username: values.username,
+            full_name: values.name,
+            role: values.role
+          },
+          emailRedirectTo: `${window.location.origin}/`
+        }
+      });
+
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+
+      toast.success('Please check your email to confirm your account');
+      navigate("/auth");
     } catch (error) {
       console.error('Signup error:', error);
-      // Error is already handled in the signUp function with toast
+      toast.error('An unexpected error occurred');
     } finally {
       setIsSubmitting(false);
     }
