@@ -5,8 +5,9 @@ import { supabase } from '@/lib/supabase';
 export interface LiveStream {
   id: string;
   title: string;
-  status: 'live' | 'offline';
+  status: 'live' | 'offline' | 'starting' | 'ending';
   viewer_count: number;
+  max_viewers: number;
   started_at: string;
   stream_key: string;
   hls_url: string;
@@ -40,6 +41,7 @@ export const useLiveStreams = () => {
           description,
           status,
           viewer_count,
+          max_viewers,
           started_at,
           hls_url,
           user_id,
@@ -72,8 +74,9 @@ export const useLiveStreams = () => {
             liveStreamData.push({
               id: stream.id,
               title: stream.title || 'Live Stream',
-              status: 'live',
+              status: stream.status as 'live' | 'offline' | 'starting' | 'ending',
               viewer_count: serverStatus.viewerCount || 0,
+              max_viewers: stream.max_viewers || 0,
               started_at: stream.started_at,
               stream_key: stream.stream_key,
               hls_url: stream.hls_url,
@@ -93,8 +96,9 @@ export const useLiveStreams = () => {
           liveStreamData.push({
             id: stream.id,
             title: stream.title || 'Live Stream',
-            status: 'live',
+            status: stream.status as 'live' | 'offline' | 'starting' | 'ending',
             viewer_count: stream.viewer_count || 0,
+            max_viewers: stream.max_viewers || 0,
             started_at: stream.started_at,
             stream_key: stream.stream_key,
             hls_url: stream.hls_url,
