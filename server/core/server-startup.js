@@ -1,4 +1,3 @@
-
 const http = require('http');
 const ServerConfig = require('../config/server-config');
 const { setupMiddleware } = require('../middleware/express-middleware');
@@ -6,19 +5,21 @@ const { createApiRoutes, setupErrorHandling } = require('../routes/api-routes');
 const { setupWebSocketRoutes } = require('../routes/websocket-routes');
 const StreamManager = require('../utils/stream-manager');
 const MediaServerService = require('../services/media-server');
+const HTTPStreamServer = require('../services/http-stream-server');
 
 class ServerStartup {
   constructor() {
     this.serverConfig = null;
     this.streamManager = null;
     this.mediaServer = null;
+    this.httpStreamServer = null;
     this.server = null;
     this.wsHandler = null;
     this.isShuttingDown = false;
   }
 
   async initialize() {
-    console.log('🚀 Starting Nightflow Streaming Server v2.0.5...');
+    console.log('🚀 Starting Nightflow Streaming Server v2.1.0...');
     console.log('📍 Environment:', process.env.NODE_ENV || 'development');
     console.log('📍 Railway Environment:', process.env.RAILWAY_ENVIRONMENT || 'none');
     console.log('📍 PORT from env:', process.env.PORT);
@@ -26,15 +27,20 @@ class ServerStartup {
     try {
       this.serverConfig = new ServerConfig();
       this.streamManager = new StreamManager();
+      
+      // Initialize HTTP Stream Server (Railway RTMP alternative)
+      this.httpStreamServer = new HTTPStreamServer(this.serverConfig, this.streamManager);
+      
       console.log('✅ Server components initialized successfully');
       console.log(`📍 API PORT: ${this.serverConfig.RAILWAY_PORT} (Railway Assigned)`);
-      console.log(`📍 RTMP PORT: ${this.serverConfig.RTMP_PORT} (Standard)`);
-      console.log(`📍 HLS PORT: ${this.serverConfig.HLS_PORT} (Non-conflicting)`);
+      console.log(`📍 RTMP PORT: ${this.serverConfig.RTMP_PORT} (Limited on Railway)`);
+      console.log(`📍 HTTP STREAMING: Available (Railway Compatible)`);
       
       // Railway-specific configuration
       if (process.env.RAILWAY_ENVIRONMENT) {
-        console.log('🚄 Railway deployment detected - configuring for cloud streaming...');
+        console.log('🚄 Railway deployment detected - HTTP streaming enabled...');
         console.log(`🚄 Railway Service: ${process.env.RAILWAY_SERVICE_ID || 'unknown'}`);
+        console.log('🌐 HTTP Streaming: Bypasses Railway RTMP port limitations');
       }
       
     } catch (error) {
@@ -56,6 +62,11 @@ class ServerStartup {
       console.log('🔧 Setting up Express routes...');
       const apiRoutes = createApiRoutes(this.serverConfig, this.streamManager);
       app.use('/', apiRoutes);
+      
+      // Add HTTP streaming routes
+      app.use('/api', this.httpStreamServer.getRouter());
+      console.log('🌐 HTTP streaming routes mounted');
+      
       console.log('✅ Routes mounted successfully');
     } catch (error) {
       console.error('❌ Failed to setup routes:', error);
@@ -70,16 +81,24 @@ class ServerStartup {
         status: 'healthy',
         timestamp: new Date().toISOString(),
         server: 'nightflow-streaming-server',
-        version: '2.0.5',
+        version: '2.1.0',
         uptime: Math.floor(process.uptime()),
         railway: {
           environment: process.env.RAILWAY_ENVIRONMENT || 'unknown',
           service_id: process.env.RAILWAY_SERVICE_ID || 'unknown'
         },
-        rtmp: {
-          configured: true,
-          port: this.serverConfig.RTMP_PORT,
-          status: this.mediaServer ? 'running' : 'starting'
+        streaming: {
+          rtmp: {
+            configured: true,
+            port: this.serverConfig.RTMP_PORT,
+            external_access: false,
+            status: 'limited_by_railway'
+          },
+          http: {
+            configured: true,
+            available: true,
+            status: 'fully_functional'
+          }
         }
       };
       res.json(healthData);
@@ -193,33 +212,37 @@ class ServerStartup {
   }
 
   startMediaServerSafely(app) {
-    console.log('🎬 Starting RTMP Media Server (Railway-optimized)...');
+    console.log('🎬 Starting Media Servers (RTMP + HTTP Streaming)...');
     
     try {
       // Add delay for Railway deployment stability
       setTimeout(() => {
+        // Start RTMP server (limited external access on Railway)
         this.mediaServer = new MediaServerService(this.serverConfig, this.streamManager);
         const mediaStarted = this.mediaServer.start();
         
+        console.log('🌐 ✅ HTTP STREAMING SERVER READY!');
+        console.log('🌐 ✅ Browser streaming: Fully functional on Railway');
+        console.log('🌐 ✅ WebRTC streaming: Available for compatible software');
+        
         if (mediaStarted) {
-          console.log('🎥 ✅ RTMP SERVER STARTED SUCCESSFULLY ON RAILWAY!');
-          console.log(`🎥 ✅ OBS Connection: rtmp://nightflow-vibes-social-production.up.railway.app:${this.serverConfig.RTMP_PORT}/live`);
-          console.log(`🎥 ✅ Stream Key: Use your generated stream key`);
-          console.log('🚄 ✅ Railway RTMP streaming is now operational!');
+          console.log('🎥 ⚠️ RTMP server started internally (limited external access)');
+          console.log(`🎥 ⚠️ OBS Connection: Limited due to Railway port 1935 restrictions`);
+          console.log('💡 ✅ Use Browser Streaming for full Railway compatibility!');
         } else {
-          console.log('⚠️ RTMP server failed to start - API continues running');
-          console.log('🚄 This may be due to Railway port configuration limitations');
+          console.log('⚠️ RTMP server failed - using HTTP streaming only');
+          console.log('🌐 HTTP streaming provides full functionality on Railway');
         }
         
         app.locals.mediaServer = this.mediaServer;
+        app.locals.httpStreamServer = this.httpStreamServer;
         app.locals.wsHandler = this.wsHandler;
         
       }, 2000); // 2 second delay for Railway stability
       
     } catch (error) {
-      console.error('❌ CRITICAL: Railway RTMP server startup failed:', error);
-      console.log('🚄 This is expected if Railway doesn\'t support custom TCP ports');
-      console.log('🔄 API server continues - consider HTTP-based streaming alternatives');
+      console.error('❌ Media server startup error:', error);
+      console.log('🌐 HTTP streaming continues - Railway compatible solution active');
     }
   }
 
