@@ -45,7 +45,6 @@ class ServerConfig {
         ping: 30,
         ping_timeout: 60,
         allow_origin: '*',
-        chunk_size: 4096,
         drop_idle_publisher: 300
       },
       http: {
@@ -63,7 +62,7 @@ class ServerConfig {
         key: this.SSL_KEY_PATH,
         cert: this.SSL_CERT_PATH
       };
-      console.log(`🔒 RTMPS SSL configuration added`);
+      console.log(`🔒 RTMPS SSL configuration added for port ${this.RTMP_PORT}`);
     }
 
     return config;
@@ -105,6 +104,7 @@ class ServerConfig {
       // Create SSL directory
       if (!fs.existsSync(sslDir)) {
         fs.mkdirSync(sslDir, { recursive: true });
+        console.log('📁 Created SSL directory');
       }
 
       // Check if certificates already exist
@@ -115,6 +115,14 @@ class ServerConfig {
 
       console.log('🔐 Generating self-signed SSL certificates for RTMPS...');
       
+      // Check if openssl is available
+      try {
+        execSync('which openssl', { stdio: 'ignore' });
+      } catch (error) {
+        console.log('❌ OpenSSL not available, disabling SSL');
+        return false;
+      }
+      
       // Generate self-signed certificate for Railway domain
       const domain = 'nightflow-vibes-social-production.up.railway.app';
       const opensslCmd = `openssl req -x509 -newkey rsa:2048 -keyout ${this.SSL_KEY_PATH} -out ${this.SSL_CERT_PATH} -days 365 -nodes -subj "/CN=${domain}"`;
@@ -123,10 +131,10 @@ class ServerConfig {
       
       console.log('✅ SSL certificates generated successfully');
       return true;
+      
     } catch (error) {
       console.error('❌ Failed to generate SSL certificates:', error.message);
       console.log('⚠️ Falling back to standard RTMP without SSL');
-      this.SSL_ENABLED = false;
       return false;
     }
   }
