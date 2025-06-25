@@ -1,4 +1,3 @@
-
 export class StreamingConfig {
   // Railway production URL - your server is actually running here
   private static RAILWAY_URL = 'nightflow-vibes-social-production.up.railway.app';
@@ -15,17 +14,14 @@ export class StreamingConfig {
       return 'rtmp://localhost:1935/live';
     }
     
-    // Use RTMPS (secure RTMP) on port 443 for maximum compatibility
-    // This combines SSL encryption + firewall bypass
-    return `rtmps://${this.RAILWAY_URL}:443/live`;
+    // Use standard RTMP on port 1935 for maximum OBS compatibility
+    // This is what OBS supports best
+    return `rtmp://${this.RAILWAY_URL}:1935/live`;
   }
   
-  // Fallback RTMP URL (non-secure) for clients that don't support RTMPS
+  // Keep fallback for legacy purposes
   static getFallbackRtmpUrl(): string {
-    if (this.isDevelopment()) {
-      return 'rtmp://localhost:1935/live';
-    }
-    return `rtmp://${this.RAILWAY_URL}:443/live`;
+    return this.getRtmpUrl();
   }
   
   static getHlsUrl(streamKey: string): string {
@@ -62,37 +58,19 @@ export class StreamingConfig {
   static getPortInfo(): { rtmpPort: number; description: string; compatibility: string } {
     const isProduction = this.isProduction();
     
-    if (isProduction) {
-      return {
-        rtmpPort: 443,
-        description: "RTMPS Port (443) - SSL Encrypted + Firewall Bypass",
-        compatibility: "Works on 100% of networks - combines HTTPS port (443) with SSL encryption for maximum compatibility"
-      };
-    } else {
-      return {
-        rtmpPort: 1935,
-        description: "Standard RTMP Port (1935) - Development Only",
-        compatibility: "May be blocked on restrictive networks"
-      };
-    }
+    return {
+      rtmpPort: 1935,
+      description: "Standard RTMP Port (1935) - Maximum OBS Compatibility",
+      compatibility: "Works with ALL versions of OBS Studio - the most compatible option"
+    };
   }
 
   // Get protocol info for UI display
   static getProtocolInfo(): { protocol: string; secure: boolean; description: string } {
-    const isProduction = this.isProduction();
-    
-    if (isProduction) {
-      return {
-        protocol: "RTMPS",
-        secure: true,
-        description: "Secure RTMP with SSL encryption over port 443"
-      };
-    } else {
-      return {
-        protocol: "RTMP",
-        secure: false,
-        description: "Standard RTMP protocol"
-      };
-    }
+    return {
+      protocol: "RTMP",
+      secure: false,
+      description: "Standard RTMP protocol - maximum OBS compatibility"
+    };
   }
 }

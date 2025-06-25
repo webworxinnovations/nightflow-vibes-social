@@ -18,17 +18,7 @@ class MediaServerService {
   }
   
   async createNodeMediaServer() {
-    console.log('🔧 Creating Node Media Server configuration...');
-    
-    // Generate SSL certificates if needed
-    if (this.serverConfig.SSL_ENABLED) {
-      console.log('🔐 SSL is enabled, generating certificates...');
-      const sslGenerated = await this.serverConfig.generateSSLCertificates();
-      if (!sslGenerated) {
-        console.log('⚠️ SSL generation failed, falling back to standard RTMP');
-        this.serverConfig.SSL_ENABLED = false;
-      }
-    }
+    console.log('🔧 Creating Node Media Server configuration for standard RTMP...');
     
     const mediaServerConfig = this.serverConfig.getMediaServerConfig();
     
@@ -36,7 +26,7 @@ class MediaServerService {
     
     try {
       this.nms = new NodeMediaServer(mediaServerConfig);
-      console.log('✅ Node Media Server instance created');
+      console.log('✅ Node Media Server instance created for standard RTMP');
       this.eventHandlers.setupAllHandlers(this.nms);
       
       // Add error handling for the NMS instance
@@ -56,45 +46,29 @@ class MediaServerService {
   }
   
   async start() {
-    console.log('🚀 Starting Node Media Server...');
+    console.log('🚀 Starting Standard RTMP Media Server...');
     
     try {
       if (!this.nms) {
         await this.createNodeMediaServer();
       }
       
-      const protocol = this.serverConfig.SSL_ENABLED ? 'RTMPS (SSL)' : 'RTMP';
-      console.log(`🎬 Attempting to start ${protocol} server on port ${this.serverConfig.RTMP_PORT}...`);
-      console.log(`🎬 Attempting to start HLS server on port ${this.serverConfig.HLS_PORT}...`);
+      console.log(`🎬 Starting standard RTMP server on port ${this.serverConfig.RTMP_PORT}...`);
+      console.log(`🎬 Starting HLS server on port ${this.serverConfig.HLS_PORT}...`);
       
-      // Wrap the run() call in a promise to handle errors properly
-      await new Promise((resolve, reject) => {
-        try {
-          this.nms.run();
-          
-          // Give it a moment to start up
-          setTimeout(() => {
-            console.log('🎥 Node Media Server run() completed');
-            resolve(true);
-          }, 2000);
-          
-        } catch (runError) {
-          console.error('❌ Error during NMS run:', runError);
-          reject(runError);
-        }
-      });
+      // Start the server
+      this.nms.run();
+      
+      // Give it a moment to start up
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
       const serverUrl = this.serverConfig.getRTMPUrl();
         
-      console.log(`🎥 ✅ ${protocol} SERVER STARTED ON PORT ${this.serverConfig.RTMP_PORT}`);
+      console.log(`🎥 ✅ STANDARD RTMP SERVER STARTED ON PORT ${this.serverConfig.RTMP_PORT}`);
       console.log(`📺 ✅ HLS SERVER STARTED ON PORT ${this.serverConfig.HLS_PORT}`);
       console.log(`🎯 ✅ OBS can now connect to: ${serverUrl}/STREAM_KEY`);
       console.log(`📱 ✅ HLS streams available at: https://nightflow-vibes-social-production.up.railway.app/live/STREAM_KEY/index.m3u8`);
-      
-      if (this.serverConfig.SSL_ENABLED) {
-        console.log(`🔒 ✅ RTMPS (Secure RTMP) is ACTIVE - SSL encrypted + port 443 bypass`);
-        console.log(`🌐 ✅ This should work on ALL networks including restrictive WiFi`);
-      }
+      console.log(`🎯 ✅ This uses STANDARD RTMP - compatible with ALL OBS versions`);
       
       return true;
       
@@ -105,51 +79,21 @@ class MediaServerService {
       
       if (error.message.includes('EADDRINUSE') || error.code === 'EADDRINUSE') {
         console.log(`🔍 Port ${this.serverConfig.RTMP_PORT} is already in use - this is the problem!`);
-        console.log('💡 Trying fallback port 1935...');
-        
-        // Try fallback to standard RTMP port
-        return await this.startWithFallback();
+        console.log('💡 The port conflict is preventing the RTMP server from starting');
+        return false;
         
       } else if (error.message.includes('EACCES') || error.code === 'EACCES') {
         console.log(`🔍 Permission denied on port ${this.serverConfig.RTMP_PORT} - this is the problem!`);
-        console.log('💡 Trying fallback port 1935...');
-        
-        // Try fallback to standard RTMP port
-        return await this.startWithFallback();
+        console.log('💡 Railway may not allow binding to this port');
+        return false;
         
       } else if (error.message.includes('ffmpeg') || error.message.includes('getFfmpegVersion')) {
-        console.log(`🔍 FFmpeg issue detected - switching to basic RTMP mode!`);
+        console.log(`🔍 FFmpeg issue detected - but RTMP server should still work!`);
         console.log('⚠️ Continuing without FFmpeg features...');
         return true;
       }
       
-      console.log('💡 Attempting fallback configuration...');
-      return await this.startWithFallback();
-    }
-  }
-  
-  async startWithFallback() {
-    console.log('🔄 Starting RTMP server with fallback configuration...');
-    
-    try {
-      // Disable SSL and use standard port
-      this.serverConfig.SSL_ENABLED = false;
-      this.serverConfig.RTMP_PORT = 1935;
-      
-      // Recreate with fallback config
-      await this.createNodeMediaServer();
-      this.nms.run();
-      
-      setTimeout(() => {
-        console.log(`🎥 ✅ FALLBACK RTMP SERVER STARTED ON PORT 1935`);
-        console.log(`🎯 ✅ OBS can connect to: rtmp://nightflow-vibes-social-production.up.railway.app:1935/live`);
-        console.log(`⚠️ Using standard RTMP (may not work on restrictive networks)`);
-      }, 1000);
-      
-      return true;
-      
-    } catch (fallbackError) {
-      console.error('❌ Even fallback RTMP failed:', fallbackError);
+      console.log('💡 Unknown RTMP server error - this needs investigation');
       return false;
     }
   }
