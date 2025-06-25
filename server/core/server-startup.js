@@ -94,7 +94,8 @@ class ServerStartup {
   startMediaServer(app) {
     console.log('🎬 Starting Node Media Server for RTMP streaming...');
     try {
-      this.mediaServer = new MediaServerService(this.serverConfig.getMediaServerConfig(), this.streamManager);
+      // Pass the ServerConfig instance, not the raw config object
+      this.mediaServer = new MediaServerService(this.serverConfig, this.streamManager);
       const mediaStarted = this.mediaServer.start();
       
       if (mediaStarted) {
