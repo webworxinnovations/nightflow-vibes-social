@@ -14,8 +14,7 @@ export class StreamingConfig {
       return 'rtmp://localhost:1935/live';
     }
     
-    // Use standard RTMP on port 1935 for maximum OBS compatibility
-    // This is what OBS supports best
+    // FORCE standard RTMP on port 1935 for maximum OBS compatibility
     return `rtmp://${this.RAILWAY_URL}:1935/live`;
   }
   
@@ -56,11 +55,9 @@ export class StreamingConfig {
 
   // Get user-friendly port info for troubleshooting
   static getPortInfo(): { rtmpPort: number; description: string; compatibility: string } {
-    const isProduction = this.isProduction();
-    
     return {
       rtmpPort: 1935,
-      description: "Standard RTMP Port (1935) - Maximum OBS Compatibility",
+      description: "FORCED Standard RTMP Port (1935) - Maximum OBS Compatibility",
       compatibility: "Works with ALL versions of OBS Studio - the most compatible option"
     };
   }
@@ -70,7 +67,7 @@ export class StreamingConfig {
     return {
       protocol: "RTMP",
       secure: false,
-      description: "Standard RTMP protocol - maximum OBS compatibility"
+      description: "FORCED standard RTMP protocol - maximum OBS compatibility, NO SSL"
     };
   }
 }

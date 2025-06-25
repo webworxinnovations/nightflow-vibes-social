@@ -10,6 +10,7 @@ class MediaServerService {
     this.nms = null;
     
     console.log('🎬 Initializing Media Server Service...');
+    console.log('🎬 FORCING standard RTMP on port 1935 for maximum OBS compatibility');
     
     this.mediaDirectoryManager = new MediaDirectoryManager(this.serverConfig.mediaRoot);
     this.mediaDirectoryManager.setupDirectories();
@@ -18,24 +19,29 @@ class MediaServerService {
   }
   
   async createNodeMediaServer() {
-    console.log('🔧 Creating Node Media Server configuration for standard RTMP...');
+    console.log('🔧 Creating Node Media Server configuration for FORCED standard RTMP port 1935...');
     
     const mediaServerConfig = this.serverConfig.getMediaServerConfig();
     
-    console.log('📋 Node Media Server Config:', JSON.stringify(mediaServerConfig, null, 2));
+    // FORCE the port to be 1935 regardless of any other configuration
+    mediaServerConfig.rtmp.port = 1935;
+    
+    console.log('📋 FORCED Node Media Server Config:', JSON.stringify(mediaServerConfig, null, 2));
     
     try {
       this.nms = new NodeMediaServer(mediaServerConfig);
-      console.log('✅ Node Media Server instance created for standard RTMP');
+      console.log('✅ Node Media Server instance created for FORCED standard RTMP port 1935');
       this.eventHandlers.setupAllHandlers(this.nms);
       
       // Add error handling for the NMS instance
       this.nms.on('error', (error) => {
         console.error('❌ Node Media Server error:', error);
         if (error.code === 'EADDRINUSE') {
-          console.log(`🔍 Port ${this.serverConfig.RTMP_PORT} is already in use!`);
+          console.log(`🔍 Port 1935 is already in use!`);
+          console.log(`🔍 This means another RTMP server is running on port 1935`);
         } else if (error.code === 'EACCES') {
-          console.log(`🔍 Permission denied on port ${this.serverConfig.RTMP_PORT}!`);
+          console.log(`🔍 Permission denied on port 1935!`);
+          console.log(`🔍 Railway may not allow binding to port 1935`);
         }
       });
       
@@ -46,45 +52,48 @@ class MediaServerService {
   }
   
   async start() {
-    console.log('🚀 Starting Standard RTMP Media Server...');
+    console.log('🚀 Starting FORCED Standard RTMP Media Server on port 1935...');
     
     try {
       if (!this.nms) {
         await this.createNodeMediaServer();
       }
       
-      console.log(`🎬 Starting standard RTMP server on port ${this.serverConfig.RTMP_PORT}...`);
-      console.log(`🎬 Starting HLS server on port ${this.serverConfig.HLS_PORT}...`);
+      console.log(`🎬 FORCING RTMP server start on port 1935...`);
+      console.log(`🎬 FORCING HLS server start on port ${this.serverConfig.HLS_PORT}...`);
       
       // Start the server
       this.nms.run();
       
       // Give it a moment to start up
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, 3000));
       
       const serverUrl = this.serverConfig.getRTMPUrl();
         
-      console.log(`🎥 ✅ STANDARD RTMP SERVER STARTED ON PORT ${this.serverConfig.RTMP_PORT}`);
+      console.log(`🎥 ✅ FORCED STANDARD RTMP SERVER STARTED ON PORT 1935`);
       console.log(`📺 ✅ HLS SERVER STARTED ON PORT ${this.serverConfig.HLS_PORT}`);
       console.log(`🎯 ✅ OBS can now connect to: ${serverUrl}/STREAM_KEY`);
       console.log(`📱 ✅ HLS streams available at: https://nightflow-vibes-social-production.up.railway.app/live/STREAM_KEY/index.m3u8`);
-      console.log(`🎯 ✅ This uses STANDARD RTMP - compatible with ALL OBS versions`);
+      console.log(`🎯 ✅ This uses FORCED STANDARD RTMP on port 1935 - compatible with ALL OBS versions`);
+      console.log(`🎯 ✅ NO SSL, NO ENCRYPTION - pure standard RTMP for maximum compatibility`);
       
       return true;
       
     } catch (error) {
-      console.error(`❌ CRITICAL RTMP SERVER ERROR: ${error.message}`);
+      console.error(`❌ CRITICAL RTMP SERVER ERROR on port 1935: ${error.message}`);
       console.error('Full error:', error);
       console.log('🚨 This is exactly why OBS shows "Failed to connect to server"!');
       
       if (error.message.includes('EADDRINUSE') || error.code === 'EADDRINUSE') {
-        console.log(`🔍 Port ${this.serverConfig.RTMP_PORT} is already in use - this is the problem!`);
-        console.log('💡 The port conflict is preventing the RTMP server from starting');
+        console.log(`🔍 Port 1935 is already in use - this is the problem!`);
+        console.log('💡 Another RTMP server may be running on port 1935');
+        console.log('💡 Railway may need to be configured to expose port 1935');
         return false;
         
       } else if (error.message.includes('EACCES') || error.code === 'EACCES') {
-        console.log(`🔍 Permission denied on port ${this.serverConfig.RTMP_PORT} - this is the problem!`);
-        console.log('💡 Railway may not allow binding to this port');
+        console.log(`🔍 Permission denied on port 1935 - this is the problem!`);
+        console.log('💡 Railway may not allow binding to port 1935');
+        console.log('💡 Check Railway port configuration');
         return false;
         
       } else if (error.message.includes('ffmpeg') || error.message.includes('getFfmpegVersion')) {
@@ -94,6 +103,7 @@ class MediaServerService {
       }
       
       console.log('💡 Unknown RTMP server error - this needs investigation');
+      console.log('💡 Port 1935 binding failed - Railway port configuration may be needed');
       return false;
     }
   }

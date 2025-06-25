@@ -6,12 +6,12 @@ class ServerConfig {
     // Railway assigns the PORT dynamically for HTTP
     this.RAILWAY_PORT = process.env.PORT || 3001;
     
-    // Use standard RTMP port for maximum OBS compatibility
-    this.RTMP_PORT = parseInt(process.env.RTMP_PORT) || 1935;
+    // Force standard RTMP port 1935 - Railway should expose this
+    this.RTMP_PORT = 1935;
     this.HLS_PORT = parseInt(process.env.HLS_PORT) || 8888;
     
-    // Disable SSL by default for OBS compatibility
-    this.SSL_ENABLED = process.env.SSL_ENABLED === 'true' && false; // Force disable for now
+    // Disable SSL completely for maximum OBS compatibility
+    this.SSL_ENABLED = false;
     this.SSL_CERT_PATH = process.env.SSL_CERT_PATH || '/tmp/ssl/cert.pem';
     this.SSL_KEY_PATH = process.env.SSL_KEY_PATH || '/tmp/ssl/key.pem';
     
@@ -20,9 +20,9 @@ class ServerConfig {
     
     console.log(`📍 Server Configuration:`);
     console.log(`   Railway HTTP Port: ${this.RAILWAY_PORT} (Railway assigned)`);
-    console.log(`   RTMP Port: ${this.RTMP_PORT} (Standard RTMP for OBS compatibility)`);
+    console.log(`   RTMP Port: ${this.RTMP_PORT} (FORCED to standard RTMP port)`);
     console.log(`   HLS Port: ${this.HLS_PORT} (for video playback)`);
-    console.log(`   SSL Enabled: ${this.SSL_ENABLED} (Disabled for OBS compatibility)`);
+    console.log(`   SSL Enabled: ${this.SSL_ENABLED} (DISABLED for OBS compatibility)`);
     console.log(`   Media Root: ${this.mediaRoot}`);
     console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
     
@@ -30,8 +30,8 @@ class ServerConfig {
     if (process.env.RAILWAY_ENVIRONMENT) {
       console.log(`🚄 Running on Railway Environment: ${process.env.RAILWAY_ENVIRONMENT}`);
       console.log(`🚄 Railway Service ID: ${process.env.RAILWAY_SERVICE_ID || 'unknown'}`);
-      console.log(`📡 Standard RTMP enabled on port ${this.RTMP_PORT} for maximum OBS compatibility`);
-      console.log(`🎯 This should work with ALL versions of OBS Studio`);
+      console.log(`📡 FORCING standard RTMP on port ${this.RTMP_PORT} for maximum OBS compatibility`);
+      console.log(`🎯 This MUST work with ALL versions of OBS Studio`);
     }
   }
   
@@ -54,7 +54,8 @@ class ServerConfig {
       mediaRoot: this.mediaRoot
     };
 
-    console.log(`🔧 Standard RTMP configuration created for port ${this.RTMP_PORT}`);
+    console.log(`🔧 FORCING standard RTMP configuration on port ${this.RTMP_PORT}`);
+    console.log(`🔧 NO SSL, NO ENCRYPTION - pure standard RTMP for OBS`);
     return config;
   }
   
@@ -65,7 +66,7 @@ class ServerConfig {
       return `rtmp://nightflow-vibes-social-production.up.railway.app:${this.RTMP_PORT}/live`;
     } else {
       // Local development - use standard RTMP
-      return `rtmp://localhost:1935/live`;
+      return `rtmp://localhost:${this.RTMP_PORT}/live`;
     }
   }
   
