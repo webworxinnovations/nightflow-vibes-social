@@ -8,6 +8,7 @@ import { OBSSetupInstructions } from "./OBSSetupInstructions";
 import { StreamConfigFields } from "./StreamConfigFields";
 import { LiveStreamStatsHeader } from "./LiveStreamStatsHeader";
 import { NetworkCompatibilityInfo } from "./NetworkCompatibilityInfo";
+import { StreamingConfig } from "@/services/streaming/config";
 import { 
   Key, 
   Trash2,
@@ -44,10 +45,8 @@ export const StreamConfigurationPanel = ({
 }: StreamConfigurationPanelProps) => {
   const [showDiagnostics, setShowDiagnostics] = useState(false);
 
-  // Extract server URL without /live for OBS
-  const getObsServerUrl = (rtmpUrl: string) => {
-    return rtmpUrl.replace('/live', '');
-  };
+  // Get the correct OBS server URL from StreamingConfig
+  const obsServerUrl = StreamingConfig.getOBSServerUrl();
 
   return (
     <div className="space-y-6">
@@ -74,12 +73,10 @@ export const StreamConfigurationPanel = ({
         {streamConfig ? (
           <>
             <OBSSetupInstructions 
-              obsServerUrl={getObsServerUrl(streamConfig.rtmpUrl)} 
+              obsServerUrl={obsServerUrl} 
             />
 
             <StreamConfigFields
-              obsServerUrl={getObsServerUrl(streamConfig.rtmpUrl)}
-              fullRtmpUrl={streamConfig.rtmpUrl}
               streamKey={streamConfig.streamKey}
             />
 

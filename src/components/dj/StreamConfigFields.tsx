@@ -5,19 +5,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Copy, Eye, EyeOff, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
+import { StreamingConfig } from "@/services/streaming/config";
 
 interface StreamConfigFieldsProps {
-  obsServerUrl: string;
-  fullRtmpUrl: string;
   streamKey: string;
 }
 
-export const StreamConfigFields = ({ 
-  obsServerUrl, 
-  fullRtmpUrl, 
-  streamKey 
-}: StreamConfigFieldsProps) => {
+export const StreamConfigFields = ({ streamKey }: StreamConfigFieldsProps) => {
   const [showKey, setShowKey] = useState(false);
+
+  // Get the correct URLs from StreamingConfig
+  const obsServerUrl = StreamingConfig.getOBSServerUrl();
+  const fullRtmpUrl = StreamingConfig.getRtmpUrl();
 
   const copyToClipboard = (text: string, type: string) => {
     navigator.clipboard.writeText(text);
@@ -37,7 +36,7 @@ export const StreamConfigFields = ({
       <div className="space-y-2">
         <Label className="text-base font-semibold">
           OBS Server URL 
-          <span className="text-xs text-orange-400 ml-2">(⚠️ Do NOT include /live)</span>
+          <span className="text-xs text-green-400 ml-2">(✅ Correct format for OBS)</span>
         </Label>
         <div className="flex gap-2">
           <Input
@@ -53,8 +52,8 @@ export const StreamConfigFields = ({
             <Copy className="h-4 w-4" />
           </Button>
         </div>
-        <p className="text-xs text-muted-foreground">
-          ✅ This is the correct URL for OBS Settings → Stream → Server field
+        <p className="text-xs text-green-400">
+          ✅ This is the correct URL for OBS Settings → Stream → Server field (OBS will add /live automatically)
         </p>
       </div>
 
@@ -85,17 +84,20 @@ export const StreamConfigFields = ({
         </div>
       </div>
 
-      {/* Common Mistake Warning */}
-      <div className="p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+      {/* Updated explanation */}
+      <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
         <div className="flex items-start gap-2">
-          <AlertTriangle className="h-4 w-4 text-orange-400 mt-0.5" />
+          <AlertTriangle className="h-4 w-4 text-green-400 mt-0.5" />
           <div className="text-sm">
-            <p className="font-medium text-orange-400 mb-1">Common OBS Mistake:</p>
+            <p className="font-medium text-green-400 mb-1">✅ Correct OBS Setup:</p>
             <p className="text-muted-foreground">
-              ❌ Don't use: <code className="bg-red-500/20 px-1 rounded">{fullRtmpUrl}</code>
+              <strong>Server:</strong> <code className="bg-green-500/20 px-1 rounded">{obsServerUrl}</code>
             </p>
             <p className="text-muted-foreground">
-              ✅ Use this instead: <code className="bg-green-500/20 px-1 rounded">{obsServerUrl}</code>
+              <strong>Stream Key:</strong> Copy your stream key from above
+            </p>
+            <p className="text-xs text-green-400 mt-2">
+              OBS will automatically append "/live" to create the full URL: {fullRtmpUrl}
             </p>
           </div>
         </div>

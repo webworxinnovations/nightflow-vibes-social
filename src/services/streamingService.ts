@@ -27,7 +27,7 @@ class StreamingService {
       }
 
       const streamKey = StreamingConfig.generateStreamKey(user.id);
-      const rtmpUrl = StreamingConfig.getRtmpUrl();
+      const rtmpUrl = StreamingConfig.getRtmpUrl(); // This now includes /live
       const hlsUrl = StreamingConfig.getHlsUrl(streamKey);
 
       const config: StreamConfig = {
@@ -41,6 +41,7 @@ class StreamingService {
       await StreamingDatabase.saveStream(config, user.id);
       
       console.log('✅ Stream configuration generated:', { streamKey, rtmpUrl, hlsUrl });
+      console.log('✅ OBS Server URL (for settings):', StreamingConfig.getOBSServerUrl());
       return config;
     } catch (error) {
       console.error('❌ Failed to generate stream key:', error);
