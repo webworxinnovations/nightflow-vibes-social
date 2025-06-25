@@ -17,6 +17,13 @@ export const LiveStreamTabs = ({ isLive, viewerCount }: LiveStreamTabsProps) => 
   const { streamKey } = useStreamKey();
   const [streamStatus, setStreamStatus] = useState(isLive);
 
+  // Default cameras for OBS integration
+  const defaultCameras = [
+    { id: "main", name: "Main Camera", position: "DJ Booth" },
+    { id: "crowd", name: "Crowd Camera", position: "Dance Floor" },
+    { id: "overhead", name: "Overhead Camera", position: "Overhead" }
+  ];
+
   const handleStreamStatusChange = (newStatus: boolean) => {
     setStreamStatus(newStatus);
   };
@@ -61,7 +68,7 @@ export const LiveStreamTabs = ({ isLive, viewerCount }: LiveStreamTabsProps) => 
       </TabsContent>
 
       <TabsContent value="obs" className="space-y-6">
-        <OBSIntegration />
+        <OBSIntegration cameras={defaultCameras} />
       </TabsContent>
     </Tabs>
   );
