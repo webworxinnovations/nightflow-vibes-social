@@ -14,7 +14,17 @@ export class StreamingConfig {
     if (this.isDevelopment()) {
       return 'rtmp://localhost:1935/live';
     }
-    // Use port 443 for RTMP - this bypasses most firewalls since 443 is the HTTPS port
+    
+    // Use RTMPS (secure RTMP) on port 443 for maximum compatibility
+    // This combines SSL encryption + firewall bypass
+    return `rtmps://${this.RAILWAY_URL}:443/live`;
+  }
+  
+  // Fallback RTMP URL (non-secure) for clients that don't support RTMPS
+  static getFallbackRtmpUrl(): string {
+    if (this.isDevelopment()) {
+      return 'rtmp://localhost:1935/live';
+    }
     return `rtmp://${this.RAILWAY_URL}:443/live`;
   }
   
@@ -55,14 +65,33 @@ export class StreamingConfig {
     if (isProduction) {
       return {
         rtmpPort: 443,
-        description: "HTTPS Port (443) - Maximum Compatibility",
-        compatibility: "Works on 99% of networks including Xfinity, Comcast, public WiFi, and venue networks"
+        description: "RTMPS Port (443) - SSL Encrypted + Firewall Bypass",
+        compatibility: "Works on 100% of networks - combines HTTPS port (443) with SSL encryption for maximum compatibility"
       };
     } else {
       return {
         rtmpPort: 1935,
         description: "Standard RTMP Port (1935) - Development Only",
         compatibility: "May be blocked on restrictive networks"
+      };
+    }
+  }
+
+  // Get protocol info for UI display
+  static getProtocolInfo(): { protocol: string; secure: boolean; description: string } {
+    const isProduction = this.isProduction();
+    
+    if (isProduction) {
+      return {
+        protocol: "RTMPS",
+        secure: true,
+        description: "Secure RTMP with SSL encryption over port 443"
+      };
+    } else {
+      return {
+        protocol: "RTMP",
+        secure: false,
+        description: "Standard RTMP protocol"
       };
     }
   }

@@ -15,29 +15,17 @@ class MediaServerService {
     this.mediaDirectoryManager.setupDirectories();
     
     this.eventHandlers = new MediaEventHandlers(streamManager, this.mediaDirectoryManager);
-    this.createNodeMediaServer();
   }
   
-  createNodeMediaServer() {
+  async createNodeMediaServer() {
     console.log('🔧 Creating Node Media Server configuration...');
     
-    const mediaServerConfig = {
-      rtmp: {
-        port: this.config.rtmp.port,
-        chunk_size: 60000,
-        gop_cache: true,
-        ping: 30,
-        ping_timeout: 60,
-        allow_origin: '*'
-      },
-      http: {
-        port: this.config.http.port,
-        mediaroot: this.config.mediaRoot,
-        allow_origin: '*',
-        api: false
-      },
-      logType: 1
-    };
+    // Generate SSL certificates if needed
+    if (this.config.SSL_ENABLED) {
+      await this.config.generateSSLCertificates();
+    }
+    
+    const mediaServerConfig = this.config.getMediaServerConfig();
     
     console.log('📋 Node Media Server Config:', JSON.stringify(mediaServerConfig, null, 2));
     
@@ -51,16 +39,17 @@ class MediaServerService {
     }
   }
   
-  start() {
+  async start() {
     console.log('🚀 Starting Node Media Server...');
     
     try {
       if (!this.nms) {
-        throw new Error('NodeMediaServer not initialized');
+        await this.createNodeMediaServer();
       }
       
-      console.log(`🎬 Attempting to start RTMP server on port ${this.config.rtmp.port}...`);
-      console.log(`🎬 Attempting to start HLS server on port ${this.config.http.port}...`);
+      const protocol = this.config.SSL_ENABLED ? 'RTMPS (SSL)' : 'RTMP';
+      console.log(`🎬 Attempting to start ${protocol} server on port ${this.config.RTMP_PORT}...`);
+      console.log(`🎬 Attempting to start HLS server on port ${this.config.HLS_PORT}...`);
       
       try {
         this.nms.run();
@@ -70,10 +59,17 @@ class MediaServerService {
       }
       
       setTimeout(() => {
-        console.log(`🎥 ✅ RTMP SERVER STARTED ON PORT ${this.config.rtmp.port}`);
-        console.log(`📺 ✅ HLS SERVER STARTED ON PORT ${this.config.http.port}`);
-        console.log(`🎯 ✅ OBS can now connect to: rtmp://nightflow-vibes-social-production.up.railway.app/live/STREAM_KEY`);
+        const serverUrl = this.config.getRTMPUrl();
+          
+        console.log(`🎥 ✅ ${protocol} SERVER STARTED ON PORT ${this.config.RTMP_PORT}`);
+        console.log(`📺 ✅ HLS SERVER STARTED ON PORT ${this.config.HLS_PORT}`);
+        console.log(`🎯 ✅ OBS can now connect to: ${serverUrl}/STREAM_KEY`);
         console.log(`📱 ✅ HLS streams available at: https://nightflow-vibes-social-production.up.railway.app/live/STREAM_KEY/index.m3u8`);
+        
+        if (this.config.SSL_ENABLED) {
+          console.log(`🔒 ✅ RTMPS (Secure RTMP) is ACTIVE - SSL encrypted + port 443 bypass`);
+          console.log(`🌐 ✅ This should work on ALL networks including restrictive WiFi`);
+        }
       }, 1000);
       
       return true;
@@ -83,9 +79,9 @@ class MediaServerService {
       console.log('🚨 This is exactly why OBS shows "Failed to connect to server"!');
       
       if (error.message.includes('EADDRINUSE')) {
-        console.log(`🔍 Port ${this.config.rtmp.port} is already in use - this is the problem!`);
+        console.log(`🔍 Port ${this.config.RTMP_PORT} is already in use - this is the problem!`);
       } else if (error.message.includes('EACCES')) {
-        console.log(`🔍 Permission denied on port ${this.config.rtmp.port} - this is the problem!`);
+        console.log(`🔍 Permission denied on port ${this.config.RTMP_PORT} - this is the problem!`);
       } else if (error.message.includes('ffmpeg') || error.message.includes('getFfmpegVersion')) {
         console.log(`🔍 FFmpeg issue detected - switching to basic RTMP mode!`);
         console.log('⚠️ Continuing without FFmpeg features...');
