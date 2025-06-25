@@ -1,0 +1,33 @@
+
+name: nightflow-streaming-server
+services:
+- name: streaming-server
+  source_dir: /
+  github:
+    repo: your-username/your-repo-name
+    branch: main
+  run_command: npm start
+  environment_slug: node-js
+  instance_count: 1
+  instance_size_slug: basic-xxs
+  http_port: 3001
+  routes:
+  - path: /
+  env:
+  - key: NODE_ENV
+    value: production
+  - key: PORT
+    value: "3001"
+  - key: RTMP_PORT
+    value: "1935"
+  - key: HLS_PORT
+    value: "8080"
+  - key: MEDIA_ROOT
+    value: "/tmp/media"
+alerts:
+- rule: CPU_UTILIZATION
+  disabled: false
+  value: 80
+- rule: MEM_UTILIZATION
+  disabled: false
+  value: 80
