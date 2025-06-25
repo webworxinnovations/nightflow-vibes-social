@@ -7,6 +7,7 @@ import { ServerStatusAlert } from "./ServerStatusAlert";
 import { OBSSetupInstructions } from "./OBSSetupInstructions";
 import { StreamConfigFields } from "./StreamConfigFields";
 import { LiveStreamStatsHeader } from "./LiveStreamStatsHeader";
+import { NetworkCompatibilityInfo } from "./NetworkCompatibilityInfo";
 import { 
   Key, 
   Trash2,
@@ -66,6 +67,9 @@ export const StreamConfigurationPanel = ({
         </div>
 
         <ServerStatusAlert serverAvailable={serverAvailable} />
+
+        {/* Network Compatibility Info */}
+        <NetworkCompatibilityInfo />
 
         {streamConfig ? (
           <>

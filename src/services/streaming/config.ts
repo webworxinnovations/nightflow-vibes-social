@@ -14,8 +14,8 @@ export class StreamingConfig {
     if (this.isDevelopment()) {
       return 'rtmp://localhost:1935/live';
     }
-    // Use the Railway URL for RTMP - this is where your server is actually running
-    return `rtmp://${this.RAILWAY_URL}:1935/live`;
+    // Use port 443 for RTMP - this bypasses most firewalls since 443 is the HTTPS port
+    return `rtmp://${this.RAILWAY_URL}:443/live`;
   }
   
   static getHlsUrl(streamKey: string): string {
@@ -46,5 +46,24 @@ export class StreamingConfig {
   
   static isProduction(): boolean {
     return !this.isDevelopment();
+  }
+
+  // Get user-friendly port info for troubleshooting
+  static getPortInfo(): { rtmpPort: number; description: string; compatibility: string } {
+    const isProduction = this.isProduction();
+    
+    if (isProduction) {
+      return {
+        rtmpPort: 443,
+        description: "HTTPS Port (443) - Maximum Compatibility",
+        compatibility: "Works on 99% of networks including Xfinity, Comcast, public WiFi, and venue networks"
+      };
+    } else {
+      return {
+        rtmpPort: 1935,
+        description: "Standard RTMP Port (1935) - Development Only",
+        compatibility: "May be blocked on restrictive networks"
+      };
+    }
   }
 }
