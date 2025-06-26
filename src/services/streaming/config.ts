@@ -13,7 +13,7 @@ export class StreamingConfig {
       : 'http://localhost:3001';
   }
   
-  // This is the CORRECT URL format for OBS Studio
+  // CRITICAL: This MUST match exactly what OBS expects
   static getOBSServerUrl(): string {
     return this.isProduction()
       ? `rtmp://${this.PRODUCTION_DOMAIN}:1935/live`
@@ -21,7 +21,7 @@ export class StreamingConfig {
   }
   
   static getRtmpUrl(): string {
-    return this.getOBSServerUrl(); // Same as OBS server URL
+    return this.getOBSServerUrl();
   }
   
   static getHlsUrl(streamKey: string): string {
@@ -37,45 +37,72 @@ export class StreamingConfig {
     return `${protocol}://${domain}/ws/stream/${streamKey}`;
   }
   
-  // Generate a unique stream key for a user
   static generateStreamKey(userId: string): string {
     const timestamp = Date.now();
     const random = Math.random().toString(36).substring(2, 10);
     return `nf_${userId.substring(0, 8)}_${timestamp}_${random}`;
   }
   
-  // Get port information for compatibility display
-  static getPortInfo(): {
-    rtmpPort: number;
-    description: string;
-    compatibility: string;
-  } {
-    return {
-      rtmpPort: 1935,
-      description: 'Standard RTMP port used by all streaming platforms',
-      compatibility: 'Universal - Works with OBS, XSplit, and all streaming software'
-    };
+  // Enhanced OBS connection testing
+  static async testRTMPConnection(): Promise<{ success: boolean; message: string }> {
+    try {
+      const rtmpUrl = this.getRtmpUrl();
+      console.log('🧪 Testing RTMP connection to:', rtmpUrl);
+      
+      // Basic URL validation
+      if (!rtmpUrl.startsWith('rtmp://')) {
+        return {
+          success: false,
+          message: 'Invalid RTMP URL format'
+        };
+      }
+      
+      // Check if domain resolves (basic test)
+      const domain = this.PRODUCTION_DOMAIN;
+      const isReachable = await this.testDomainReachability(domain);
+      
+      if (!isReachable) {
+        return {
+          success: false,
+          message: `Cannot reach ${domain} - check internet connection`
+        };
+      }
+      
+      return {
+        success: true,
+        message: 'RTMP server appears reachable - try OBS connection'
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: `Connection test failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      };
+    }
   }
   
-  // Get protocol information for compatibility display
-  static getProtocolInfo(): {
-    protocol: string;
-    description: string;
-  } {
-    return {
-      protocol: 'RTMP',
-      description: 'Real-Time Messaging Protocol - Industry standard for streaming'
-    };
+  private static async testDomainReachability(domain: string): Promise<boolean> {
+    try {
+      // Test domain reachability with a simple HTTPS request
+      const response = await fetch(`https://${domain}`, {
+        method: 'HEAD',
+        signal: AbortSignal.timeout(5000)
+      });
+      return response.ok || response.status < 500;
+    } catch (error) {
+      console.warn('Domain reachability test failed:', error);
+      return false;
+    }
   }
   
-  static getTroubleshootingSteps(): string[] {
+  static getOBSTroubleshootingSteps(): string[] {
     return [
-      '1. Make sure OBS is running and WebSocket server is enabled',
-      '2. In OBS: Tools → WebSocket Server Settings → Enable',
-      '3. Check your firewall - allow RTMP traffic on port 1935',
-      '4. Try connecting from a different network (mobile hotspot)',
-      '5. Restart OBS completely and try again',
-      '6. Verify you\'re using the RTMP URL (not HTTP/HTTPS)'
+      '✅ Server URL: rtmp://nightflow-app-wijb2.ondigitalocean.app:1935/live',
+      '✅ Service: Custom...',
+      '✅ Stream Key: Generated from the app',
+      '🔧 Try: Restart OBS completely',
+      '🔧 Try: Different network (mobile hotspot)',
+      '🔧 Try: Disable firewall temporarily',
+      '🔧 Try: Run OBS as administrator'
     ];
   }
 }
