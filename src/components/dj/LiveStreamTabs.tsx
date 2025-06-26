@@ -63,13 +63,7 @@ export const LiveStreamTabs = ({ isLive, viewerCount }: { isLive: boolean; viewe
       </TabsContent>
 
       <TabsContent value="viewer" className="mt-6">
-        {streamConfig?.hlsUrl && (
-          <LiveStreamViewer 
-            hlsUrl={streamConfig.hlsUrl}
-            streamKey={streamConfig.streamKey}
-            isLive={streamStatus.isLive}
-          />
-        )}
+        <LiveStreamViewer />
       </TabsContent>
 
       <TabsContent value="server" className="mt-6">
