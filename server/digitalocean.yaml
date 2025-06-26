@@ -23,8 +23,8 @@ services:
     deploy_on_push: true
     repo: webworxinnovations/nightflow-vibes-social
   http_port: 3001
-  instance_count: 2
-  instance_size_slug: apps-s-1vcpu-1gb
+  instance_count: 1
+  instance_size_slug: apps-s-1vcpu-2gb
   name: nightflow-vibes-social
   run_command: npm start
   source_dir: /server
@@ -39,3 +39,7 @@ services:
     value: "8080"
   - key: MEDIA_ROOT
     value: "/tmp/media"
+  - key: DIGITALOCEAN_APP_URL
+    value: "nightflow-app-wijb2.ondigitalocean.app"
+  - key: FORCE_HTTPS_REDIRECT
+    value: "false"

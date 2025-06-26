@@ -1,3 +1,4 @@
+
 const http = require('http');
 const ServerConfig = require('../config/server-config');
 const { setupMiddleware } = require('../middleware/express-middleware');
@@ -16,31 +17,32 @@ class ServerStartup {
     this.server = null;
     this.wsHandler = null;
     this.isShuttingDown = false;
+    this.rtmpReady = false;
   }
 
   async initialize() {
-    console.log('🚀 Starting Nightflow Streaming Server v2.1.0...');
+    console.log('🚀 Starting Nightflow Streaming Server v2.2.0...');
     console.log('📍 Environment:', process.env.NODE_ENV || 'development');
-    console.log('📍 Railway Environment:', process.env.RAILWAY_ENVIRONMENT || 'none');
+    console.log('📍 DigitalOcean Environment:', process.env.DIGITALOCEAN_APP_URL || 'none');
     console.log('📍 PORT from env:', process.env.PORT);
 
     try {
       this.serverConfig = new ServerConfig();
       this.streamManager = new StreamManager();
       
-      // Initialize HTTP Stream Server (Railway RTMP alternative)
+      // Initialize HTTP Stream Server
       this.httpStreamServer = new HTTPStreamServer(this.serverConfig, this.streamManager);
       
       console.log('✅ Server components initialized successfully');
-      console.log(`📍 API PORT: ${this.serverConfig.RAILWAY_PORT} (Railway Assigned)`);
-      console.log(`📍 RTMP PORT: ${this.serverConfig.RTMP_PORT} (Limited on Railway)`);
-      console.log(`📍 HTTP STREAMING: Available (Railway Compatible)`);
+      console.log(`📍 API PORT: ${this.serverConfig.RAILWAY_PORT} (DigitalOcean Assigned)`);
+      console.log(`📍 RTMP PORT: ${this.serverConfig.RTMP_PORT} (DigitalOcean Compatible)`);
+      console.log(`📍 HTTP STREAMING: Available (DigitalOcean Compatible)`);
       
-      // Railway-specific configuration
-      if (process.env.RAILWAY_ENVIRONMENT) {
-        console.log('🚄 Railway deployment detected - HTTP streaming enabled...');
-        console.log(`🚄 Railway Service: ${process.env.RAILWAY_SERVICE_ID || 'unknown'}`);
-        console.log('🌐 HTTP Streaming: Bypasses Railway RTMP port limitations');
+      // DigitalOcean-specific configuration
+      if (process.env.DIGITALOCEAN_APP_URL) {
+        console.log('🌊 DigitalOcean deployment detected - optimizing for platform...');
+        console.log(`🌊 App URL: ${process.env.DIGITALOCEAN_APP_URL}`);
+        console.log('🌐 HTTP Streaming: Primary method for DigitalOcean compatibility');
       }
       
     } catch (error) {
@@ -75,43 +77,58 @@ class ServerStartup {
 
     setupErrorHandling(app);
     
-    // Add Railway-specific health check endpoint
-    app.get('/railway-health', (req, res) => {
+    // Enhanced health check endpoint for DigitalOcean
+    app.get('/health', (req, res) => {
       const healthData = {
         status: 'healthy',
         timestamp: new Date().toISOString(),
         server: 'nightflow-streaming-server',
-        version: '2.1.0',
+        version: '2.2.0',
         uptime: Math.floor(process.uptime()),
-        railway: {
-          environment: process.env.RAILWAY_ENVIRONMENT || 'unknown',
-          service_id: process.env.RAILWAY_SERVICE_ID || 'unknown'
+        digitalocean: {
+          app_url: process.env.DIGITALOCEAN_APP_URL || 'unknown',
+          environment: process.env.NODE_ENV || 'development'
         },
         streaming: {
           rtmp: {
             configured: true,
             port: this.serverConfig.RTMP_PORT,
-            external_access: false,
-            status: 'limited_by_railway'
+            ready: this.rtmpReady,
+            status: this.rtmpReady ? 'ready' : 'initializing'
           },
           http: {
             configured: true,
             available: true,
-            status: 'fully_functional'
+            status: 'ready'
+          },
+          api: {
+            ready: true,
+            status: 'operational'
           }
         }
       };
       res.json(healthData);
+    });
+
+    // API health endpoint
+    app.get('/api/health', (req, res) => {
+      res.json({
+        status: 'ok',
+        rtmp_ready: this.rtmpReady,
+        api_ready: true,
+        timestamp: new Date().toISOString(),
+        uptime: Math.floor(process.uptime())
+      });
     });
   }
 
   async startServer(app) {
     this.server = http.createServer(app);
 
-    // Configure server timeouts for Railway
-    this.server.timeout = 60000; // 60 seconds
-    this.server.keepAliveTimeout = 65000; // Slightly longer than timeout
-    this.server.headersTimeout = 66000; // Slightly longer than keepAliveTimeout
+    // Configure server timeouts for DigitalOcean
+    this.server.timeout = 60000;
+    this.server.keepAliveTimeout = 65000;
+    this.server.headersTimeout = 66000;
 
     try {
       this.wsHandler = setupWebSocketRoutes(this.server, this.streamManager);
@@ -122,27 +139,20 @@ class ServerStartup {
     }
 
     return new Promise((resolve, reject) => {
-      // Handle Railway's graceful shutdown signals
-      this.setupRailwaySignalHandlers();
+      this.setupDigitalOceanSignalHandlers();
       
       this.server.listen(this.serverConfig.RAILWAY_PORT, '0.0.0.0', () => {
         console.log(`✅ API + WebSocket SERVER RUNNING ON PORT ${this.serverConfig.RAILWAY_PORT}`);
-        console.log(`🔗 Health: https://nightflow-vibes-social-production.up.railway.app/health`);
-        console.log(`🔗 Railway Health: https://nightflow-vibes-social-production.up.railway.app/railway-health`);
-        console.log(`🔗 API Health: https://nightflow-vibes-social-production.up.railway.app/api/health`);
-        console.log(`🔗 Root: https://nightflow-vibes-social-production.up.railway.app/`);
+        console.log(`🔗 Health: https://nightflow-app-wijb2.ondigitalocean.app/health`);
+        console.log(`🔗 API Health: https://nightflow-app-wijb2.ondigitalocean.app/api/health`);
+        console.log(`🔗 Root: https://nightflow-app-wijb2.ondigitalocean.app/`);
         
-        // Railway RTMP configuration
-        if (process.env.RAILWAY_ENVIRONMENT) {
-          console.log(`🎥 RTMP (Railway): rtmp://nightflow-vibes-social-production.up.railway.app:${this.serverConfig.RTMP_PORT}/live`);
-          console.log(`📺 HLS (Railway): https://nightflow-vibes-social-production.up.railway.app/live/`);
-          console.log(`🔌 WebSocket (Railway): wss://nightflow-vibes-social-production.up.railway.app/ws/stream/:streamKey`);
-        } else {
-          console.log(`🎥 RTMP (Local): rtmp://localhost:${this.serverConfig.RTMP_PORT}/live`);
-          console.log(`📺 HLS (Local): http://localhost:${this.serverConfig.HLS_PORT}/live/`);
-        }
+        // DigitalOcean streaming URLs
+        console.log(`🎥 RTMP: rtmp://nightflow-app-wijb2.ondigitalocean.app:${this.serverConfig.RTMP_PORT}/live`);
+        console.log(`📺 HLS: https://nightflow-app-wijb2.ondigitalocean.app/live/`);
+        console.log(`🔌 WebSocket: wss://nightflow-app-wijb2.ondigitalocean.app/ws/stream/:streamKey`);
         
-        // Start media server with Railway-aware configuration
+        // Start media server after API is ready
         this.startMediaServerSafely(app);
         resolve(this.server);
       });
@@ -157,43 +167,40 @@ class ServerStartup {
     });
   }
 
-  setupRailwaySignalHandlers() {
-    // Railway sends SIGTERM for graceful shutdown
+  setupDigitalOceanSignalHandlers() {
+    // DigitalOcean sends SIGTERM for graceful shutdown
     process.on('SIGTERM', () => {
       if (this.isShuttingDown) return;
       this.isShuttingDown = true;
       
-      console.log('🚄 Railway SIGTERM received - graceful shutdown initiated...');
-      this.gracefulShutdown('RAILWAY_SIGTERM');
+      console.log('🌊 DigitalOcean SIGTERM received - graceful shutdown initiated...');
+      this.gracefulShutdown('DIGITALOCEAN_SIGTERM');
     });
 
     process.on('SIGINT', () => {
       if (this.isShuttingDown) return;
       this.isShuttingDown = true;
       
-      console.log('🚄 Railway SIGINT received - graceful shutdown initiated...');
-      this.gracefulShutdown('RAILWAY_SIGINT');
+      console.log('🌊 DigitalOcean SIGINT received - graceful shutdown initiated...');
+      this.gracefulShutdown('DIGITALOCEAN_SIGINT');
     });
   }
 
   gracefulShutdown(signal) {
-    console.log(`🚄 ${signal} - Starting graceful shutdown sequence...`);
+    console.log(`🌊 ${signal} - Starting graceful shutdown sequence...`);
     
-    // Stop accepting new connections
     if (this.server) {
       this.server.close(() => {
         console.log('✅ HTTP server closed gracefully');
       });
     }
     
-    // Close WebSocket connections
     if (this.wsHandler && this.wsHandler.wss) {
       this.wsHandler.wss.close(() => {
         console.log('✅ WebSocket server closed gracefully');
       });
     }
     
-    // Stop media server
     if (this.mediaServer) {
       try {
         console.log('🎬 Stopping RTMP media server...');
@@ -204,9 +211,8 @@ class ServerStartup {
       }
     }
     
-    // Exit after cleanup
     setTimeout(() => {
-      console.log('🚄 Railway graceful shutdown complete');
+      console.log('🌊 DigitalOcean graceful shutdown complete');
       process.exit(0);
     }, 3000);
   }
@@ -215,34 +221,42 @@ class ServerStartup {
     console.log('🎬 Starting Media Servers (RTMP + HTTP Streaming)...');
     
     try {
-      // Add delay for Railway deployment stability
-      setTimeout(() => {
-        // Start RTMP server (limited external access on Railway)
+      // Start RTMP server with DigitalOcean optimizations
+      setTimeout(async () => {
         this.mediaServer = new MediaServerService(this.serverConfig, this.streamManager);
-        const mediaStarted = this.mediaServer.start();
+        
+        try {
+          const mediaStarted = await this.mediaServer.start();
+          
+          if (mediaStarted) {
+            this.rtmpReady = true;
+            console.log('🎥 ✅ RTMP server started successfully on DigitalOcean!');
+            console.log(`🎯 ✅ OBS Connection: rtmp://nightflow-app-wijb2.ondigitalocean.app:1935/live`);
+            console.log('📱 ✅ HLS streams: https://nightflow-app-wijb2.ondigitalocean.app/live/STREAM_KEY/index.m3u8');
+            console.log('🌊 ✅ DigitalOcean streaming infrastructure fully operational');
+          } else {
+            console.log('⚠️ RTMP server startup issues - using HTTP streaming as fallback');
+            console.log('🌐 HTTP streaming provides full functionality on DigitalOcean');
+          }
+          
+        } catch (error) {
+          console.error('❌ RTMP startup error:', error);
+          console.log('🌐 HTTP streaming continues - DigitalOcean compatible solution active');
+        }
         
         console.log('🌐 ✅ HTTP STREAMING SERVER READY!');
-        console.log('🌐 ✅ Browser streaming: Fully functional on Railway');
+        console.log('🌐 ✅ Browser streaming: Fully functional on DigitalOcean');
         console.log('🌐 ✅ WebRTC streaming: Available for compatible software');
-        
-        if (mediaStarted) {
-          console.log('🎥 ⚠️ RTMP server started internally (limited external access)');
-          console.log(`🎥 ⚠️ OBS Connection: Limited due to Railway port 1935 restrictions`);
-          console.log('💡 ✅ Use Browser Streaming for full Railway compatibility!');
-        } else {
-          console.log('⚠️ RTMP server failed - using HTTP streaming only');
-          console.log('🌐 HTTP streaming provides full functionality on Railway');
-        }
         
         app.locals.mediaServer = this.mediaServer;
         app.locals.httpStreamServer = this.httpStreamServer;
         app.locals.wsHandler = this.wsHandler;
         
-      }, 2000); // 2 second delay for Railway stability
+      }, 3000); // 3 second delay for DigitalOcean stability
       
     } catch (error) {
       console.error('❌ Media server startup error:', error);
-      console.log('🌐 HTTP streaming continues - Railway compatible solution active');
+      console.log('🌐 HTTP streaming continues - DigitalOcean compatible solution active');
     }
   }
 
