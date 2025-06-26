@@ -28,7 +28,7 @@ services:
   name: nightflow-vibes-social
   run_command: npm start
   source_dir: /server
-  env:
+  envs:
   - key: NODE_ENV
     value: production
   - key: PORT
