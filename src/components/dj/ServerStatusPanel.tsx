@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { GlassmorphicCard } from "@/components/ui/glassmorphic-card";
@@ -22,7 +21,7 @@ export const ServerStatusPanel = ({ onStatusChange }: ServerStatusPanelProps) =>
 
   const checkServerStatus = async () => {
     setCheckingServer(true);
-    console.log('🔍 Starting comprehensive server status check...');
+    console.log('🔍 Starting comprehensive DigitalOcean server status check...');
     
     try {
       const status = await streamingService.getServerStatus();
@@ -74,8 +73,8 @@ export const ServerStatusPanel = ({ onStatusChange }: ServerStatusPanelProps) =>
       console.log('📊 Complete debug results:', debugResults);
       
     } catch (error) {
-      console.error('❌ Server status check failed:', error);
-      const fallbackStatus = { available: false, url: 'https://nightflow-vibes-social-production.up.railway.app' };
+      console.error('❌ DigitalOcean server status check failed:', error);
+      const fallbackStatus = { available: false, url: 'https://nightflow-app-wijb2.ondigitalocean.app' };
       setServerStatus(fallbackStatus);
       onStatusChange?.(fallbackStatus);
       setDebugInfo({ error: error instanceof Error ? error.message : 'Unknown error' });
@@ -95,7 +94,7 @@ export const ServerStatusPanel = ({ onStatusChange }: ServerStatusPanelProps) =>
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold flex items-center gap-2">
           <Server className="h-5 w-5" />
-          RTMP Server Status & Diagnostics
+          DigitalOcean RTMP Server Status & Diagnostics
         </h3>
         
         <div className="flex items-center gap-2">
@@ -137,7 +136,7 @@ export const ServerStatusPanel = ({ onStatusChange }: ServerStatusPanelProps) =>
             <div className="space-y-3">
               <p className="text-green-400 font-medium flex items-center gap-2">
                 <Cloud className="h-4 w-4" />
-                ✅ RTMP streaming server is online and ready
+                ✅ DigitalOcean RTMP streaming server is online and ready
               </p>
               <p className="text-sm text-muted-foreground">
                 Server URL: {serverStatus.url}
@@ -165,7 +164,7 @@ export const ServerStatusPanel = ({ onStatusChange }: ServerStatusPanelProps) =>
             <div className="space-y-3">
               <p className="text-red-400 font-medium flex items-center gap-2">
                 <AlertCircle className="h-4 w-4" />
-                ❌ RTMP server not responding
+                ❌ DigitalOcean RTMP server not responding
               </p>
               <p className="text-sm text-muted-foreground">
                 This explains why OBS can't connect. The streaming infrastructure needs attention.

@@ -91,8 +91,8 @@ class StreamingService {
 
   async getServerStatus(): Promise<ServerStatus> {
     try {
-      console.log('🔍 Checking real server status...');
-      const baseUrl = 'https://nightflow-vibes-social-production.up.railway.app';
+      console.log('🔍 Checking DigitalOcean server status...');
+      const baseUrl = 'https://nightflow-app-wijb2.ondigitalocean.app';
       
       const response = await fetch(`${baseUrl}/api/health`, {
         method: 'GET',
@@ -101,7 +101,7 @@ class StreamingService {
       
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Server is online and responding');
+        console.log('✅ DigitalOcean server is online and responding');
         return {
           available: true,
           url: baseUrl,
@@ -109,14 +109,14 @@ class StreamingService {
           uptime: data.uptime || 0
         };
       } else {
-        console.error('❌ Server not responding:', response.status);
+        console.error('❌ DigitalOcean server not responding:', response.status);
         return { available: false, url: baseUrl };
       }
     } catch (error) {
-      console.error('❌ Server status check failed:', error);
+      console.error('❌ DigitalOcean server status check failed:', error);
       return {
         available: false,
-        url: 'https://nightflow-vibes-social-production.up.railway.app'
+        url: 'https://nightflow-app-wijb2.ondigitalocean.app'
       };
     }
   }
@@ -125,7 +125,7 @@ class StreamingService {
     this.currentStreamKey = streamKey;
     
     try {
-      const wsUrl = `wss://nightflow-vibes-social-production.up.railway.app/ws/stream/${streamKey}`;
+      const wsUrl = `wss://nightflow-app-wijb2.ondigitalocean.app/ws/stream/${streamKey}`;
       console.log('🔌 Connecting to real-time stream status:', wsUrl);
       
       this.websocket = new WebSocket(wsUrl);

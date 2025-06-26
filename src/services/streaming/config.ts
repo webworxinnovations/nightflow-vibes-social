@@ -1,12 +1,12 @@
 export class StreamingConfig {
-  // Railway production URL - your server is actually running here
-  private static RAILWAY_URL = 'nightflow-vibes-social-production.up.railway.app';
+  // DigitalOcean production URL - your server is now running here
+  private static DIGITALOCEAN_URL = 'nightflow-app-wijb2.ondigitalocean.app';
   
   static getBaseUrl(): string {
     if (this.isDevelopment()) {
       return 'http://localhost:3001';
     }
-    return `https://${this.RAILWAY_URL}`;
+    return `https://${this.DIGITALOCEAN_URL}`;
   }
   
   static getRtmpUrl(): string {
@@ -15,7 +15,7 @@ export class StreamingConfig {
     }
     
     // FIXED: Return the complete RTMP URL that the server expects
-    return `rtmp://${this.RAILWAY_URL}:1935/live`;
+    return `rtmp://${this.DIGITALOCEAN_URL}:1935/live`;
   }
   
   // Get the OBS server URL (without /live - OBS adds this automatically)
@@ -25,7 +25,7 @@ export class StreamingConfig {
     }
     
     // This is what goes in OBS Server field - WITHOUT /live
-    return `rtmp://${this.RAILWAY_URL}:1935`;
+    return `rtmp://${this.DIGITALOCEAN_URL}:1935`;
   }
   
   // Keep fallback for legacy purposes
@@ -48,7 +48,7 @@ export class StreamingConfig {
   }
   
   static isDevelopment(): boolean {
-    // Force production mode for now - the Lovable environment should always use Railway
+    // Force production mode for now - the Lovable environment should always use DigitalOcean
     const hostname = window.location.hostname;
     console.log('StreamingConfig: Current hostname:', hostname);
     

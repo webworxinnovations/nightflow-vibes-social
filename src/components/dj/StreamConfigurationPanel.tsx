@@ -139,7 +139,7 @@ export const StreamConfigurationPanel = ({
       {showDiagnostics && streamConfig && (
         <RTMPDiagnostics
           rtmpUrl={streamConfig.rtmpUrl}
-          serverUrl="https://nightflow-vibes-social-production.up.railway.app"
+          serverUrl="https://nightflow-app-wijb2.ondigitalocean.app"
           streamKey={streamConfig.streamKey}
         />
       )}

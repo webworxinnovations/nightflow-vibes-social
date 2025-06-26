@@ -2,8 +2,8 @@
 export class StreamingAPI {
   static async getServerStatus(): Promise<{ available: boolean; url: string; version?: string; uptime?: number }> {
     try {
-      console.log('🔍 Checking production server status...');
-      const baseUrl = 'https://nightflow-vibes-social-production.up.railway.app';
+      console.log('🔍 Checking DigitalOcean server status...');
+      const baseUrl = 'https://nightflow-app-wijb2.ondigitalocean.app';
       
       // Test if the API server is responding
       const response = await fetch(`${baseUrl}/api/health`, {
@@ -13,7 +13,7 @@ export class StreamingAPI {
       
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Production server is online and ready');
+        console.log('✅ DigitalOcean server is online and ready');
         
         return {
           available: true,
@@ -22,21 +22,21 @@ export class StreamingAPI {
           uptime: data.uptime || 0
         };
       } else {
-        console.error('❌ Production server not responding:', response.status);
+        console.error('❌ DigitalOcean server not responding:', response.status);
         return { available: false, url: baseUrl };
       }
     } catch (error) {
-      console.error('❌ Production server status check failed:', error);
+      console.error('❌ DigitalOcean server status check failed:', error);
       return {
         available: false,
-        url: 'https://nightflow-vibes-social-production.up.railway.app'
+        url: 'https://nightflow-app-wijb2.ondigitalocean.app'
       };
     }
   }
 
   static async getStreamStatus(streamKey: string) {
     try {
-      const baseUrl = 'https://nightflow-vibes-social-production.up.railway.app';
+      const baseUrl = 'https://nightflow-app-wijb2.ondigitalocean.app';
       const response = await fetch(`${baseUrl}/api/stream/${streamKey}/status`, {
         method: 'GET',
         signal: AbortSignal.timeout(10000)
@@ -79,7 +79,7 @@ export class StreamingAPI {
 
   static async testRtmpConnection(streamKey: string): Promise<{ success: boolean; message: string }> {
     try {
-      const baseUrl = 'https://nightflow-vibes-social-production.up.railway.app';
+      const baseUrl = 'https://nightflow-app-wijb2.ondigitalocean.app';
       const response = await fetch(`${baseUrl}/api/rtmp/test`, {
         method: 'POST',
         headers: {
