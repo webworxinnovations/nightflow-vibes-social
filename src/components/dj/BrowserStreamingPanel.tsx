@@ -1,17 +1,13 @@
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { GlassmorphicCard } from "@/components/ui/glassmorphic-card";
-import { 
-  Video, 
-  VideoOff, 
-  Mic, 
-  MicOff,
-  Monitor,
-  Smartphone,
-  Wifi
-} from "lucide-react";
+import { Wifi } from "lucide-react";
 import { toast } from "sonner";
+import { MediaStreamControls } from "./MediaStreamControls";
+import { StreamPreview } from "./StreamPreview";
+import { StreamingStatus } from "./StreamingStatus";
+import { NetworkCompatibilityCard } from "./NetworkCompatibilityCard";
 
 interface BrowserStreamingPanelProps {
   streamKey: string;
@@ -28,7 +24,6 @@ export const BrowserStreamingPanel = ({
   const [cameraEnabled, setCameraEnabled] = useState(true);
   const [micEnabled, setMicEnabled] = useState(true);
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
 
   const startBrowserStream = async () => {
     try {
@@ -48,11 +43,6 @@ export const BrowserStreamingPanel = ({
       });
 
       setMediaStream(stream);
-      
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
-
       setIsStreaming(true);
       onStreamStart?.();
       
@@ -68,10 +58,6 @@ export const BrowserStreamingPanel = ({
     if (mediaStream) {
       mediaStream.getTracks().forEach(track => track.stop());
       setMediaStream(null);
-    }
-    
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
     }
     
     setIsStreaming(false);
@@ -116,73 +102,21 @@ export const BrowserStreamingPanel = ({
             Browser Streaming (No Network Issues!)
           </h3>
           
-          <div className="flex items-center gap-2">
-            {isStreaming && (
-              <div className="flex items-center gap-2 text-red-500">
-                <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-                LIVE
-              </div>
-            )}
-          </div>
+          <StreamingStatus isStreaming={isStreaming} />
         </div>
 
-        <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
-          <div className="flex items-start gap-3">
-            <Smartphone className="h-5 w-5 text-green-400 mt-0.5" />
-            <div>
-              <h4 className="font-medium text-green-400 mb-2">✅ Works with ANY Internet Connection!</h4>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• No RTMP/port 1935 restrictions</li>
-                <li>• No firewall issues</li>
-                <li>• No ISP blocking</li>
-                <li>• Works on mobile data, WiFi, any network</li>
-                <li>• High quality HD streaming</li>
-              </ul>
-            </div>
-          </div>
-        </div>
+        <NetworkCompatibilityCard />
 
-        {/* Video Preview */}
-        <div className="relative bg-black rounded-lg overflow-hidden aspect-video">
-          <video
-            ref={videoRef}
-            autoPlay
-            muted
-            playsInline
-            className="w-full h-full object-cover"
-          />
-          {!isStreaming && (
-            <div className="absolute inset-0 flex items-center justify-center bg-slate-800">
-              <div className="text-center">
-                <Monitor className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">Click Start Stream to begin</p>
-              </div>
-            </div>
-          )}
-        </div>
+        <StreamPreview mediaStream={mediaStream} isStreaming={isStreaming} />
 
-        {/* Controls */}
         <div className="flex items-center justify-between">
-          <div className="flex gap-2">
-            {isStreaming && (
-              <>
-                <Button
-                  onClick={toggleCamera}
-                  variant={cameraEnabled ? "default" : "destructive"}
-                  size="sm"
-                >
-                  {cameraEnabled ? <Video className="h-4 w-4" /> : <VideoOff className="h-4 w-4" />}
-                </Button>
-                <Button
-                  onClick={toggleMic}
-                  variant={micEnabled ? "default" : "destructive"}
-                  size="sm"
-                >
-                  {micEnabled ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
-                </Button>
-              </>
-            )}
-          </div>
+          <MediaStreamControls
+            isStreaming={isStreaming}
+            cameraEnabled={cameraEnabled}
+            micEnabled={micEnabled}
+            onToggleCamera={toggleCamera}
+            onToggleMic={toggleMic}
+          />
 
           <div className="flex gap-2">
             {!isStreaming ? (
