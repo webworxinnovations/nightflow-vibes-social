@@ -62,7 +62,7 @@ export class StreamingConfig {
     return this.getOBSTroubleshootingSteps();
   }
   
-  // Enhanced DNS and connectivity testing
+  // Enhanced DNS and connectivity testing with actual server IP
   static async testDNSAndConnectivity(): Promise<{
     success: boolean;
     message: string;
@@ -81,22 +81,38 @@ export class StreamingConfig {
         };
       }
 
-      // Test 1: Try to resolve DNS
-      let serverIP: string | null = null;
+      // Hard-coded server IP for DigitalOcean deployment
+      const serverIP = '137.184.108.62'; // DigitalOcean IP for nightflow-app-wijb2.ondigitalocean.app
+      
+      // Test 1: Try to resolve DNS using multiple methods
       let dnsWorking = false;
       
       try {
-        const response = await fetch(`https://dns.google/resolve?name=${this.PRODUCTION_DOMAIN}&type=A`);
+        // Method 1: Try Google DNS API
+        const response = await fetch(`https://dns.google/resolve?name=${this.PRODUCTION_DOMAIN}&type=A`, {
+          signal: AbortSignal.timeout(3000)
+        });
         const data = await response.json();
         
         if (data.Answer && data.Answer.length > 0) {
-          serverIP = data.Answer[0].data;
           dnsWorking = true;
-          console.log('✅ DNS Resolution successful:', serverIP);
+          console.log('✅ DNS Resolution successful via Google DNS');
         }
       } catch (dnsError) {
-        console.log('⚠️ DNS resolution failed:', dnsError);
-        dnsWorking = false;
+        console.log('⚠️ Google DNS resolution failed:', dnsError);
+        
+        // Method 2: Try direct domain ping test
+        try {
+          await fetch(`https://${this.PRODUCTION_DOMAIN}/favicon.ico`, {
+            method: 'HEAD',
+            signal: AbortSignal.timeout(2000)
+          });
+          dnsWorking = true;
+          console.log('✅ DNS working via direct domain test');
+        } catch (directError) {
+          console.log('⚠️ Direct domain test failed:', directError);
+          dnsWorking = false;
+        }
       }
 
       // Test 2: Try to reach the server via HTTP health check
@@ -107,22 +123,24 @@ export class StreamingConfig {
           signal: AbortSignal.timeout(5000)
         });
         serverReachable = healthResponse.ok;
+        console.log('✅ Server health check passed');
       } catch (healthError) {
         console.log('⚠️ Server health check failed:', healthError);
+        serverReachable = false;
       }
 
-      // Determine the result
+      // Determine the result and provide IP backup
       if (dnsWorking && serverReachable) {
         return {
           success: true,
-          message: '✅ DNS and server connectivity perfect!',
+          message: '✅ Perfect connection! Domain and server working.',
           serverIP,
           dnsWorking: true
         };
       } else if (!dnsWorking && serverIP) {
         return {
           success: false,
-          message: '⚠️ DNS issue detected - use IP address instead',
+          message: '⚠️ DNS issue detected! Use IP address below instead.',
           serverIP,
           dnsWorking: false,
           alternativeUrl: `rtmp://${serverIP}:1935/live`
@@ -130,15 +148,21 @@ export class StreamingConfig {
       } else {
         return {
           success: false,
-          message: '❌ Unable to resolve server address',
-          dnsWorking: false
+          message: '❌ Unable to reach streaming server. Please try again later.',
+          serverIP,
+          dnsWorking: false,
+          alternativeUrl: `rtmp://${serverIP}:1935/live`
         };
       }
     } catch (error) {
+      // Always provide IP fallback even on error
+      const serverIP = '137.184.108.62';
       return {
         success: false,
-        message: `Connection test error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        dnsWorking: false
+        message: `⚠️ Connection test failed. Try IP address instead.`,
+        serverIP,
+        dnsWorking: false,
+        alternativeUrl: `rtmp://${serverIP}:1935/live`
       };
     }
   }
@@ -157,18 +181,7 @@ export class StreamingConfig {
 
   // Add method to get the server IP for DNS troubleshooting
   static async getServerIP(): Promise<string | null> {
-    try {
-      // Use a DNS over HTTPS service to resolve the domain
-      const response = await fetch(`https://dns.google/resolve?name=${this.PRODUCTION_DOMAIN}&type=A`);
-      const data = await response.json();
-      
-      if (data.Answer && data.Answer.length > 0) {
-        return data.Answer[0].data;
-      }
-      return null;
-    } catch (error) {
-      console.error('DNS resolution failed:', error);
-      return null;
-    }
+    // Return the known DigitalOcean IP immediately
+    return '137.184.108.62';
   }
 }
