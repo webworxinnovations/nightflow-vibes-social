@@ -37,6 +37,37 @@ export class StreamingConfig {
     return `${protocol}://${domain}/ws/stream/${streamKey}`;
   }
   
+  // Generate a unique stream key for a user
+  static generateStreamKey(userId: string): string {
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(2, 10);
+    return `nf_${userId.substring(0, 8)}_${timestamp}_${random}`;
+  }
+  
+  // Get port information for compatibility display
+  static getPortInfo(): {
+    rtmpPort: number;
+    description: string;
+    compatibility: string;
+  } {
+    return {
+      rtmpPort: 1935,
+      description: 'Standard RTMP port used by all streaming platforms',
+      compatibility: 'Universal - Works with OBS, XSplit, and all streaming software'
+    };
+  }
+  
+  // Get protocol information for compatibility display
+  static getProtocolInfo(): {
+    protocol: string;
+    description: string;
+  } {
+    return {
+      protocol: 'RTMP',
+      description: 'Real-Time Messaging Protocol - Industry standard for streaming'
+    };
+  }
+  
   static getTroubleshootingSteps(): string[] {
     return [
       '1. Make sure OBS is running and WebSocket server is enabled',

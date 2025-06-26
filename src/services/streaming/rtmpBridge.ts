@@ -14,14 +14,14 @@ export class RTMPBridge {
 
   // Create a bridge URL that works through standard HTTP/HTTPS ports
   static getBridgeUrl(streamKey: string): string {
-    const baseUrl = StreamingConfig.getBaseUrl();
+    const baseUrl = StreamingConfig.getApiBaseUrl();
     // Use HTTPS port 443 for bridge connection - never blocked by ISPs
     return `${baseUrl}/rtmp-bridge/${streamKey}`;
   }
 
   // Get OBS-compatible server URL that routes through HTTP bridge
   static getOBSBridgeUrl(): string {
-    const baseUrl = StreamingConfig.getBaseUrl();
+    const baseUrl = StreamingConfig.getApiBaseUrl();
     // This creates an HTTP tunnel for RTMP traffic
     return `${baseUrl}/obs-bridge`;
   }

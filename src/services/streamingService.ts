@@ -92,7 +92,7 @@ class StreamingService {
   async getServerStatus(): Promise<ServerStatus> {
     try {
       console.log('🔍 Checking DigitalOcean server status...');
-      const baseUrl = StreamingConfig.getBaseUrl();
+      const baseUrl = StreamingConfig.getApiBaseUrl();
       
       const response = await fetch(`${baseUrl}/api/health`, {
         method: 'GET',
@@ -116,7 +116,7 @@ class StreamingService {
       console.error('❌ DigitalOcean server status check failed:', error);
       return {
         available: false,
-        url: StreamingConfig.getBaseUrl()
+        url: StreamingConfig.getApiBaseUrl()
       };
     }
   }

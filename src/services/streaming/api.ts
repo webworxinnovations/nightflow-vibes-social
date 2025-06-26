@@ -5,7 +5,7 @@ export class StreamingAPI {
   static async getServerStatus(): Promise<{ available: boolean; url: string; version?: string; uptime?: number }> {
     try {
       console.log('🔍 Checking DigitalOcean server status...');
-      const baseUrl = StreamingConfig.getBaseUrl();
+      const baseUrl = StreamingConfig.getApiBaseUrl();
       
       // Test if the API server is responding
       const response = await fetch(`${baseUrl}/api/health`, {
@@ -31,14 +31,14 @@ export class StreamingAPI {
       console.error('❌ DigitalOcean server status check failed:', error);
       return {
         available: false,
-        url: StreamingConfig.getBaseUrl()
+        url: StreamingConfig.getApiBaseUrl()
       };
     }
   }
 
   static async getStreamStatus(streamKey: string) {
     try {
-      const baseUrl = StreamingConfig.getBaseUrl();
+      const baseUrl = StreamingConfig.getApiBaseUrl();
       const response = await fetch(`${baseUrl}/api/stream/${streamKey}/status`, {
         method: 'GET',
         signal: AbortSignal.timeout(10000)
@@ -81,7 +81,7 @@ export class StreamingAPI {
 
   static async testRtmpConnection(streamKey: string): Promise<{ success: boolean; message: string }> {
     try {
-      const baseUrl = StreamingConfig.getBaseUrl();
+      const baseUrl = StreamingConfig.getApiBaseUrl();
       const response = await fetch(`${baseUrl}/api/rtmp/test`, {
         method: 'POST',
         headers: {
