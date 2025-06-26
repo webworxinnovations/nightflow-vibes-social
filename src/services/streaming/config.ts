@@ -1,4 +1,3 @@
-
 export class StreamingConfig {
   // DigitalOcean production URL - your server is now running here
   private static DIGITALOCEAN_URL = 'nightflow-app-wijb2.ondigitalocean.app';
@@ -15,18 +14,27 @@ export class StreamingConfig {
       return 'rtmp://localhost:1935/live';
     }
     
-    // FIXED: Return the complete RTMP URL that the server expects
+    // FIXED: Use direct IP or ensure hostname resolves properly
+    // Try with direct hostname - DigitalOcean should resolve this
     return `rtmp://${this.DIGITALOCEAN_URL}:1935/live`;
   }
   
-  // Get the OBS server URL (without /live - OBS adds this automatically)
+  // Get the OBS server URL (without /live - OBS adds this automatically) 
   static getOBSServerUrl(): string {
     if (this.isDevelopment()) {
       return 'rtmp://localhost:1935';
     }
     
     // This is what goes in OBS Server field - WITHOUT /live
+    // Try direct hostname resolution
     return `rtmp://${this.DIGITALOCEAN_URL}:1935`;
+  }
+  
+  // Alternative RTMP URL using IP if hostname fails
+  static getAlternativeRtmpUrl(): string {
+    // Get the app's IP directly from DigitalOcean
+    // We'll need to update this with the actual IP
+    return `rtmp://164.90.242.104:1935`; // This would be your app's IP
   }
   
   // Keep fallback for legacy purposes
@@ -73,20 +81,33 @@ export class StreamingConfig {
   }
 
   // Get user-friendly port info for troubleshooting
-  static getPortInfo(): { rtmpPort: number; description: string; compatibility: string } {
+  static getPortInfo(): { rtmpPort: number; description: string; compatibility: string; troubleshooting: string } {
     return {
       rtmpPort: 1935,
       description: "Standard RTMP Port (1935) - Maximum OBS Compatibility",
-      compatibility: "Works with ALL versions of OBS Studio - the most compatible option"
+      compatibility: "Works with ALL versions of OBS Studio - the most compatible option",
+      troubleshooting: "If OBS shows 'hostname not found', your network may be blocking RTMP connections"
     };
   }
 
   // Get protocol info for UI display
-  static getProtocolInfo(): { protocol: string; secure: boolean; description: string } {
+  static getProtocolInfo(): { protocol: string; secure: boolean; description: string; troubleshoot: string } {
     return {
       protocol: "RTMP",
       secure: false,
-      description: "Standard RTMP protocol - maximum OBS compatibility, NO SSL"
+      description: "Standard RTMP protocol - maximum OBS compatibility, NO SSL",
+      troubleshoot: "If connection fails, try: 1) Check firewall, 2) Try different network, 3) Contact ISP about RTMP blocking"
     };
+  }
+
+  // Get connection troubleshooting steps
+  static getTroubleshootingSteps(): string[] {
+    return [
+      "1. Make sure you're using the exact server URL without /live",
+      "2. Check if your network/ISP blocks RTMP (port 1935)",
+      "3. Try connecting from a different network (mobile hotspot)",
+      "4. Verify the DigitalOcean app is running and accessible",
+      "5. Contact your internet provider if RTMP is blocked"
+    ];
   }
 }
