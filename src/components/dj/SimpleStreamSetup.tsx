@@ -1,9 +1,9 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Copy, Eye, EyeOff, Play, Trash2, AlertTriangle, CheckCircle, Wifi } from "lucide-react";
+import { Copy, Eye, EyeOff, Play, Trash2, AlertTriangle, CheckCircle, Wifi, Globe } from "lucide-react";
 import { toast } from "sonner";
 import { GlassmorphicCard } from "@/components/ui/glassmorphic-card";
 import { useRealTimeStream } from "@/hooks/useRealTimeStream";
@@ -12,8 +12,22 @@ import { StreamingConfig } from "@/services/streaming/config";
 export const SimpleStreamSetup = () => {
   const [showKey, setShowKey] = useState(false);
   const [testingConnection, setTestingConnection] = useState(false);
-  const [serverIP, setServerIP] = useState<string | null>(null);
+  const [dnsTestResult, setDnsTestResult] = useState<any>(null);
   const { streamConfig, isLoading, generateStreamKey, revokeStreamKey, isLive, viewerCount } = useRealTimeStream();
+
+  // Automatically test DNS when component loads
+  useEffect(() => {
+    const testDNSOnLoad = async () => {
+      const result = await StreamingConfig.testDNSAndConnectivity();
+      setDnsTestResult(result);
+      
+      if (!result.dnsWorking && result.serverIP) {
+        toast.warning('DNS issue detected - IP address backup ready!', { duration: 5000 });
+      }
+    };
+
+    testDNSOnLoad();
+  }, []);
 
   const copyToClipboard = (text: string, type: string) => {
     navigator.clipboard.writeText(text);
@@ -27,30 +41,27 @@ export const SimpleStreamSetup = () => {
     return key;
   };
 
-  const testRTMPConnection = async () => {
+  const testDNSConnection = async () => {
     setTestingConnection(true);
     try {
-      const result = await StreamingConfig.testRTMPConnection();
+      const result = await StreamingConfig.testDNSAndConnectivity();
+      setDnsTestResult(result);
       
-      // Also try to get server IP for DNS troubleshooting
-      const ip = await StreamingConfig.getServerIP();
-      if (ip) {
-        setServerIP(ip);
-        toast.success(`🎯 Server Status: Ready! IP: ${ip}`);
+      if (result.success) {
+        toast.success(result.message);
       } else {
-        toast.success('🎯 Server Status: Ready for streaming!');
+        toast.warning(result.message, { duration: 7000 });
       }
-      
-      toast.info('💡 If OBS still fails, try the troubleshooting steps below', { duration: 5000 });
     } catch (error) {
-      toast.error('Connection test failed - but server may still work');
+      toast.error('Connection test failed');
     } finally {
       setTestingConnection(false);
     }
   };
 
-  // Get the exact OBS server URL
+  // Get the server URLs (both domain and IP if available)
   const obsServerUrl = StreamingConfig.getOBSServerUrl();
+  const ipServerUrl = dnsTestResult?.serverIP ? `rtmp://${dnsTestResult.serverIP}:1935/live` : null;
 
   return (
     <GlassmorphicCard>
@@ -67,27 +78,42 @@ export const SimpleStreamSetup = () => {
 
         {streamConfig ? (
           <div className="space-y-4">
-            {/* Success Message */}
-            <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
-              <div className="flex items-start gap-3">
-                <CheckCircle className="h-5 w-5 text-green-400 mt-0.5" />
-                <div>
-                  <p className="text-green-400 font-medium mb-2">
-                    ✅ Stream ready! Your DigitalOcean server is running perfectly.
-                  </p>
-                  <div className="text-sm text-green-300">
-                    <p>• Service: <strong>Custom...</strong></p>
-                    <p>• Server: <strong>{obsServerUrl}</strong></p>
-                    <p>• Stream Key: <strong>Your generated key below</strong></p>
+            {/* DNS Status Display */}
+            {dnsTestResult && (
+              <div className={`p-4 border rounded-lg ${
+                dnsTestResult.success 
+                  ? 'bg-green-500/10 border-green-500/20' 
+                  : 'bg-amber-500/10 border-amber-500/20'
+              }`}>
+                <div className="flex items-start gap-3">
+                  {dnsTestResult.success ? (
+                    <CheckCircle className="h-5 w-5 text-green-400 mt-0.5" />
+                  ) : (
+                    <Globe className="h-5 w-5 text-amber-400 mt-0.5" />
+                  )}
+                  <div>
+                    <p className={`font-medium mb-2 ${
+                      dnsTestResult.success ? 'text-green-400' : 'text-amber-400'
+                    }`}>
+                      {dnsTestResult.success ? '✅ Perfect Connection' : '⚠️ DNS Issue Detected'}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {dnsTestResult.message}
+                    </p>
+                    {dnsTestResult.serverIP && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Server IP: {dnsTestResult.serverIP}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
-            </div>
+            )}
 
-            {/* OBS Server URL */}
+            {/* Primary Server URL */}
             <div className="space-y-2">
               <Label className="text-base font-semibold text-blue-400">
-                📹 OBS Server URL (Copy Exactly)
+                📹 Primary OBS Server URL
               </Label>
               <div className="flex gap-2">
                 <Input
@@ -96,7 +122,7 @@ export const SimpleStreamSetup = () => {
                   className="font-mono text-sm bg-blue-500/10 border-blue-500/20 text-blue-300"
                 />
                 <Button
-                  onClick={() => copyToClipboard(obsServerUrl, 'Server URL')}
+                  onClick={() => copyToClipboard(obsServerUrl, 'Primary Server URL')}
                   variant="outline"
                   size="sm"
                 >
@@ -104,9 +130,35 @@ export const SimpleStreamSetup = () => {
                 </Button>
               </div>
               <p className="text-xs text-blue-400">
-                ⚠️ Copy this EXACT URL into OBS Settings → Stream → Server
+                ✅ Use this URL first - works for most users
               </p>
             </div>
+
+            {/* Backup IP Server URL (if DNS issue detected) */}
+            {ipServerUrl && !dnsTestResult?.dnsWorking && (
+              <div className="space-y-2">
+                <Label className="text-base font-semibold text-amber-400">
+                  🔄 Backup Server URL (DNS Fix)
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={ipServerUrl}
+                    readOnly
+                    className="font-mono text-sm bg-amber-500/10 border-amber-500/20 text-amber-300"
+                  />
+                  <Button
+                    onClick={() => copyToClipboard(ipServerUrl, 'Backup IP Server URL')}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+                <p className="text-xs text-amber-400">
+                  ⚠️ If primary URL fails in OBS, use this IP address instead
+                </p>
+              </div>
+            )}
 
             {/* Stream Key */}
             <div className="space-y-2">
@@ -135,78 +187,44 @@ export const SimpleStreamSetup = () => {
               </div>
             </div>
 
-            {/* Server Status Test */}
+            {/* Connection Test */}
             <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-blue-400 font-medium">🧪 Server Status Check</p>
+                <p className="text-blue-400 font-medium">🧪 Test Connection</p>
                 <Button
-                  onClick={testRTMPConnection}
+                  onClick={testDNSConnection}
                   disabled={testingConnection}
                   variant="outline"
                   size="sm"
                 >
                   <Wifi className="h-4 w-4 mr-2" />
-                  {testingConnection ? 'Checking...' : 'Check Server'}
+                  {testingConnection ? 'Testing...' : 'Test DNS'}
                 </Button>
               </div>
-              {serverIP && (
-                <p className="text-xs text-green-400 mb-2">
-                  ✅ Server IP: {serverIP} (use this if domain fails)
-                </p>
-              )}
               <p className="text-sm text-muted-foreground">
-                Your DigitalOcean deployment logs confirm RTMP server is running on port 1935
+                Automatically detects DNS issues and provides backup solutions
               </p>
             </div>
 
-            {/* OBS Troubleshooting for "Hostname not found" */}
-            <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
-              <div className="flex items-start gap-2">
-                <AlertTriangle className="h-5 w-5 text-red-400 mt-0.5" />
-                <div>
-                  <h4 className="font-medium text-red-400 mb-3">🚨 OBS "Hostname not found" Fix:</h4>
-                  
-                  <div className="space-y-3 text-sm">
-                    <div className="bg-amber-500/10 border border-amber-500/20 rounded p-2">
-                      <p className="font-medium text-amber-400">Method 1: Try Server IP Instead</p>
-                      {serverIP ? (
-                        <div className="mt-1">
-                          <p className="text-amber-300">Use: <code className="bg-amber-500/20 px-1 rounded">rtmp://{serverIP}:1935/live</code></p>
-                          <Button 
-                            onClick={() => copyToClipboard(`rtmp://${serverIP}:1935/live`, 'Server IP URL')}
-                            variant="outline" 
-                            size="sm" 
-                            className="mt-1"
-                          >
-                            Copy IP URL
-                          </Button>
-                        </div>
-                      ) : (
-                        <p className="text-amber-300">Click "Check Server" above to get IP address</p>
-                      )}
-                    </div>
-                    
-                    <div className="bg-blue-500/10 border border-blue-500/20 rounded p-2">
-                      <p className="font-medium text-blue-400">Method 2: Network Fixes</p>
-                      <ul className="text-blue-300 mt-1 space-y-1 text-xs">
-                        <li>• Try mobile hotspot instead of WiFi</li>
-                        <li>• Restart your router/modem</li>
-                        <li>• Flush DNS: Open CMD as admin → type "ipconfig /flushdns"</li>
-                        <li>• Try different DNS: 8.8.8.8 or 1.1.1.1</li>
-                      </ul>
-                    </div>
-                    
-                    <div className="bg-purple-500/10 border border-purple-500/20 rounded p-2">
-                      <p className="font-medium text-purple-400">Method 3: OBS Fixes</p>
-                      <ul className="text-purple-300 mt-1 space-y-1 text-xs">
-                        <li>• Completely close and restart OBS</li>
-                        <li>• Run OBS as Administrator</li>
-                        <li>• Temporarily disable Windows Defender/antivirus</li>
-                      </ul>
-                    </div>
-                  </div>
+            {/* User-Friendly Instructions */}
+            <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+              <h4 className="font-medium text-green-400 mb-3">📋 Easy OBS Setup:</h4>
+              <ol className="list-decimal list-inside space-y-1 text-sm text-green-300">
+                <li>Open OBS → Settings → Stream</li>
+                <li>Service: Select "Custom..."</li>
+                <li>Server: Copy the {dnsTestResult?.dnsWorking === false ? 'backup' : 'primary'} URL above</li>
+                <li>Stream Key: Copy your stream key above</li>
+                <li>Click Apply → OK → Start Streaming</li>
+              </ol>
+              
+              {!dnsTestResult?.dnsWorking && (
+                <div className="mt-3 p-2 bg-amber-500/10 border border-amber-500/20 rounded text-xs">
+                  <p className="text-amber-400 font-medium">💡 Pro Tip:</p>
+                  <p className="text-amber-300">
+                    Your network has a DNS issue. Use the backup IP URL above - it will work perfectly!
+                  </p>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Action Buttons */}
@@ -236,7 +254,7 @@ export const SimpleStreamSetup = () => {
             </div>
             <h4 className="font-medium mb-2">Ready to Stream</h4>
             <p className="text-sm text-muted-foreground mb-4">
-              Your DigitalOcean server is confirmed running - generate your stream key
+              Generate your stream key and we'll automatically check for DNS issues
             </p>
             <Button 
               onClick={generateStreamKey} 

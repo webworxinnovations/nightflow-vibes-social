@@ -62,39 +62,89 @@ export class StreamingConfig {
     return this.getOBSTroubleshootingSteps();
   }
   
-  // Enhanced OBS connection testing - Skip problematic CORS tests
-  static async testRTMPConnection(): Promise<{ success: boolean; message: string }> {
+  // Enhanced DNS and connectivity testing
+  static async testDNSAndConnectivity(): Promise<{
+    success: boolean;
+    message: string;
+    serverIP?: string;
+    dnsWorking: boolean;
+    alternativeUrl?: string;
+  }> {
     try {
-      console.log('🧪 RTMP Connection Test - Server Status Based');
+      console.log('🧪 Testing DNS and connectivity...');
       
-      // Skip the problematic domain reachability test that causes CORS errors
-      // Instead, provide guidance based on deployment status
-      
-      if (this.isProduction()) {
-        // In production, assume server is working based on deployment logs
-        console.log('✅ Production RTMP server should be operational');
-        
+      if (!this.isProduction()) {
         return {
-          success: true,  
-          message: '✅ Server deployment confirmed operational. RTMP endpoint ready: rtmp://nightflow-app-wijb2.ondigitalocean.app:1935/live'
+          success: true,
+          message: 'Local development - DNS test skipped',
+          dnsWorking: true
+        };
+      }
+
+      // Test 1: Try to resolve DNS
+      let serverIP: string | null = null;
+      let dnsWorking = false;
+      
+      try {
+        const response = await fetch(`https://dns.google/resolve?name=${this.PRODUCTION_DOMAIN}&type=A`);
+        const data = await response.json();
+        
+        if (data.Answer && data.Answer.length > 0) {
+          serverIP = data.Answer[0].data;
+          dnsWorking = true;
+          console.log('✅ DNS Resolution successful:', serverIP);
+        }
+      } catch (dnsError) {
+        console.log('⚠️ DNS resolution failed:', dnsError);
+        dnsWorking = false;
+      }
+
+      // Test 2: Try to reach the server via HTTP health check
+      let serverReachable = false;
+      try {
+        const healthResponse = await fetch(`https://${this.PRODUCTION_DOMAIN}/api/health`, {
+          method: 'GET',
+          signal: AbortSignal.timeout(5000)
+        });
+        serverReachable = healthResponse.ok;
+      } catch (healthError) {
+        console.log('⚠️ Server health check failed:', healthError);
+      }
+
+      // Determine the result
+      if (dnsWorking && serverReachable) {
+        return {
+          success: true,
+          message: '✅ DNS and server connectivity perfect!',
+          serverIP,
+          dnsWorking: true
+        };
+      } else if (!dnsWorking && serverIP) {
+        return {
+          success: false,
+          message: '⚠️ DNS issue detected - use IP address instead',
+          serverIP,
+          dnsWorking: false,
+          alternativeUrl: `rtmp://${serverIP}:1935/live`
         };
       } else {
         return {
-          success: true,
-          message: 'Local RTMP server test - verify local server is running'
+          success: false,
+          message: '❌ Unable to resolve server address',
+          dnsWorking: false
         };
       }
     } catch (error) {
       return {
         success: false,
-        message: `Connection test error: ${error instanceof Error ? error.message : 'Unknown error'}`
+        message: `Connection test error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        dnsWorking: false
       };
     }
   }
   
   static getOBSTroubleshootingSteps(): string[] {
     return [
-      '✅ Server URL: rtmp://nightflow-app-wijb2.ondigitalocean.app:1935/live',
       '✅ Service: Custom...',
       '✅ Stream Key: Generated from the app',
       '🔧 DNS Issue Fix: Try using IP instead of domain name',
