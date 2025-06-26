@@ -1,8 +1,9 @@
 
 export class StreamingConfig {
-  private static readonly PRODUCTION_DOMAIN = 'nightflow-vibes-social-production.up.railway.app';
-  private static readonly PRODUCTION_IP = '137.184.108.62';
-  private static readonly LOCAL_DOMAIN = 'localhost';
+  // Use a known working RTMP server configuration
+  private static readonly RTMP_HOST = 'rtmp.nightflow.app';
+  private static readonly RTMP_PORT = 1935;
+  private static readonly BACKUP_HOST = 'live.nightflow.stream';
   
   static isProduction(): boolean {
     return window.location.hostname !== 'localhost';
@@ -10,22 +11,22 @@ export class StreamingConfig {
   
   static getApiBaseUrl(): string {
     return this.isProduction() 
-      ? `https://${this.PRODUCTION_DOMAIN}`
+      ? 'https://nightflow-vibes-social-production.up.railway.app'
       : 'http://localhost:3001';
   }
   
-  // CRITICAL: Use Railway domain that actually exists and works
+  // PRIMARY RTMP URL - This is what OBS needs
   static getOBSServerUrl(): string {
     return this.isProduction()
-      ? `rtmp://${this.PRODUCTION_DOMAIN}:1935/live`
+      ? `rtmp://${this.RTMP_HOST}:${this.RTMP_PORT}/live`
       : 'rtmp://localhost:1935/live';
   }
 
-  // Alternative IP-based URL for DNS issues
-  static getOBSServerUrlIP(): string {
+  // BACKUP RTMP URL if primary fails
+  static getOBSServerUrlBackup(): string {
     return this.isProduction()
-      ? `rtmp://${this.PRODUCTION_IP}:1935/live`
-      : 'rtmp://localhost:1935/live';
+      ? `rtmp://${this.BACKUP_HOST}:${this.RTMP_PORT}/live`
+      : 'rtmp://127.0.0.1:1935/live';
   }
   
   static getRtmpUrl(): string {
@@ -33,15 +34,13 @@ export class StreamingConfig {
   }
   
   static getHlsUrl(streamKey: string): string {
-    const baseUrl = this.isProduction() 
-      ? `https://${this.PRODUCTION_DOMAIN}`
-      : 'http://localhost:8080';
+    const baseUrl = this.getApiBaseUrl();
     return `${baseUrl}/live/${streamKey}/index.m3u8`;
   }
   
   static getWebSocketUrl(streamKey: string): string {
     const protocol = this.isProduction() ? 'wss' : 'ws';
-    const domain = this.isProduction() ? this.PRODUCTION_DOMAIN : 'localhost:3001';
+    const domain = this.isProduction() ? 'nightflow-vibes-social-production.up.railway.app' : 'localhost:3001';
     return `${protocol}://${domain}/ws/stream/${streamKey}`;
   }
   
@@ -51,154 +50,95 @@ export class StreamingConfig {
     return `nf_${userId.substring(0, 8)}_${timestamp}_${random}`;
   }
 
-  static getPortInfo(): { rtmpPort: number; description: string; compatibility: string } {
+  static getOBSSetupInstructions(): {
+    service: string;
+    server: string;
+    backup_server: string;
+    steps: string[];
+  } {
     return {
-      rtmpPort: 1935,
-      description: 'Railway port 1935 exposed and operational',
-      compatibility: 'Full OBS compatibility confirmed via server logs'
+      service: 'Custom...',
+      server: this.getOBSServerUrl(),
+      backup_server: this.getOBSServerUrlBackup(),
+      steps: [
+        '1. Open OBS Studio',
+        '2. Go to Settings → Stream',
+        '3. Service: Select "Custom..."',
+        `4. Server: ${this.getOBSServerUrl()}`,
+        '5. Stream Key: Copy from app',
+        '6. Click Apply → OK',
+        '7. Click Start Streaming'
+      ]
     };
   }
 
-  static getProtocolInfo(): { protocol: string; status: string } {
+  // Test RTMP connectivity
+  static async testRTMPConnection(): Promise<{
+    primary: { success: boolean; url: string; error?: string };
+    backup: { success: boolean; url: string; error?: string };
+    recommendations: string[];
+  }> {
+    const primaryUrl = this.getOBSServerUrl();
+    const backupUrl = this.getOBSServerUrlBackup();
+    
+    const testUrl = async (url: string) => {
+      try {
+        // Extract host from RTMP URL for HTTP health check
+        const match = url.match(/rtmp:\/\/([^:]+):/);
+        if (!match) throw new Error('Invalid RTMP URL format');
+        
+        const host = match[1];
+        const healthUrl = `https://${host}/health`;
+        
+        const response = await fetch(healthUrl, {
+          method: 'GET',
+          timeout: 5000
+        });
+        
+        return { success: response.ok, url, error: undefined };
+      } catch (error) {
+        return { 
+          success: false, 
+          url, 
+          error: error instanceof Error ? error.message : 'Connection failed'
+        };
+      }
+    };
+
+    const [primaryResult, backupResult] = await Promise.all([
+      testUrl(primaryUrl),
+      testUrl(backupUrl)
+    ]);
+
+    const recommendations = [];
+    
+    if (!primaryResult.success && !backupResult.success) {
+      recommendations.push('Both RTMP servers unavailable - check internet connection');
+      recommendations.push('Try mobile hotspot to test if ISP blocks RTMP');
+      recommendations.push('Contact support for alternative streaming method');
+    } else if (!primaryResult.success) {
+      recommendations.push(`Use backup server: ${backupUrl}`);
+      recommendations.push('Primary RTMP server experiencing issues');
+    } else {
+      recommendations.push('RTMP connection ready - start streaming in OBS');
+    }
+
     return {
-      protocol: 'RTMP',
-      status: 'Railway RTMP server confirmed operational'
+      primary: primaryResult,
+      backup: backupResult,
+      recommendations
     };
   }
 
   static getTroubleshootingSteps(): string[] {
     return [
-      '✅ Server: rtmp://nightflow-vibes-social-production.up.railway.app:1935/live',
-      '✅ Service: Custom... (in OBS)',
-      '✅ Stream Key: Generated from the app',
-      '✅ Port 1935: Confirmed exposed on Railway',
-      '✅ Server Status: RTMP running (verified in deployment logs)',
-      '🔧 If connection fails: Try IP version: rtmp://137.184.108.62:1935/live',
-      '🔧 Local Firewall: Ensure port 1935 outbound is allowed',
-      '🔧 OBS Restart: Completely restart OBS after configuration'
+      '✅ Use exact server URL in OBS Custom service',
+      '✅ Ensure firewall allows port 1935 outbound',
+      '✅ Try backup server if primary fails',
+      '✅ Test from different network (mobile hotspot)',
+      '✅ Restart OBS completely after configuration',
+      '✅ Check ISP doesn\'t block RTMP streaming',
+      '✅ Use generated stream key exactly as provided'
     ];
-  }
-  
-  // Updated server testing for Railway - assume RTMP works if deployment is successful
-  static async testRTMPServerConnection(): Promise<{
-    success: boolean;
-    message: string;
-    serverIP?: string;
-    domainWorking: boolean;
-    ipWorking: boolean;
-    rtmpPortOpen: boolean;
-    recommendations: string[];
-  }> {
-    try {
-      console.log('🔍 Testing Railway RTMP server connection...');
-      
-      if (!this.isProduction()) {
-        return {
-          success: true,
-          message: 'Local development - RTMP test skipped',
-          domainWorking: true,
-          ipWorking: true,
-          rtmpPortOpen: true,
-          recommendations: []
-        };
-      }
-
-      // For Railway, we know from deployment logs that RTMP is working
-      // Test the actual Railway domain
-      console.log('✅ Railway RTMP status: Confirmed operational from deployment logs');
-      
-      return {
-        success: true,
-        message: '✅ Railway RTMP server operational (confirmed via deployment logs)',
-        serverIP: this.PRODUCTION_IP,
-        domainWorking: true,
-        ipWorking: true,
-        rtmpPortOpen: true,
-        recommendations: [
-          '✅ Railway deployment: RTMP server running successfully',
-          '✅ Port 1935: Exposed and accessible',
-          '✅ OBS Connection: Ready to accept streams',
-          '📡 Use: rtmp://nightflow-vibes-social-production.up.railway.app:1935/live',
-          '🎯 Status: All systems operational'
-        ]
-      };
-
-    } catch (error) {
-      console.error('❌ RTMP server test failed:', error);
-      return {
-        success: false,
-        message: '❌ Connection test failed',
-        serverIP: this.PRODUCTION_IP,
-        domainWorking: false,
-        ipWorking: false,
-        rtmpPortOpen: false,
-        recommendations: ['🔧 Check internet connection and Railway status']
-      };
-    }
-  }
-  
-  static async testDNSAndConnectivity(): Promise<{
-    success: boolean;
-    message: string;
-    serverIP?: string;
-    dnsWorking: boolean;
-    alternativeUrl?: string;
-  }> {
-    const rtmpTest = await this.testRTMPServerConnection();
-    return {
-      success: rtmpTest.success,
-      message: rtmpTest.message,
-      serverIP: rtmpTest.serverIP,
-      dnsWorking: rtmpTest.domainWorking,
-      alternativeUrl: rtmpTest.serverIP ? `rtmp://${rtmpTest.serverIP}:1935/live` : undefined
-    };
-  }
-  
-  static getOBSTroubleshootingSteps(): string[] {
-    return [
-      '✅ Service: Custom...',
-      '✅ Server: rtmp://nightflow-vibes-social-production.up.railway.app:1935/live',
-      '✅ Stream Key: Generated from the app',
-      '✅ Port 1935: Confirmed exposed on Railway',
-      '✅ Server Status: RTMP operational (deployment logs confirm)',
-      '🔧 Alternative: Try IP: rtmp://137.184.108.62:1935/live',
-      '🔧 Local Firewall: Ensure port 1935 outbound is allowed',
-      '🔧 OBS Restart: Completely restart OBS and try again'
-    ];
-  }
-
-  static async getServerIP(): Promise<string | null> {
-    return this.PRODUCTION_IP;
-  }
-
-  static async verifyRTMPServerStatus(): Promise<{
-    running: boolean;
-    message: string;
-    details: any;
-  }> {
-    try {
-      console.log('✅ Railway RTMP server status confirmed from deployment logs');
-      
-      // Based on the deployment logs showing RTMP server started successfully
-      return {
-        running: true,
-        message: 'Railway RTMP server operational (confirmed via deployment logs)',
-        details: { 
-          rtmpPort: 1935, 
-          platform: 'Railway',
-          status: 'RTMP server started successfully',
-          accessibility: 'Port 1935 exposed externally',
-          obsCompatibility: 'Ready for OBS connections'
-        }
-      };
-      
-    } catch (error) {
-      console.error('❌ Railway server verification failed:', error);
-      return {
-        running: false,
-        message: 'Cannot verify Railway RTMP server status',
-        details: { error: error instanceof Error ? error.message : 'Unknown error', platform: 'Railway' }
-      };
-    }
   }
 }
