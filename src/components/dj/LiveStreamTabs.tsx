@@ -1,74 +1,79 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { StreamKeyManager } from "./StreamKeyManager";
+import { StreamConfigurationPanel } from "./StreamConfigurationPanel";
+import { BrowserStreamingPanel } from "./BrowserStreamingPanel";
 import { LiveStreamViewer } from "./LiveStreamViewer";
-import { StreamingMethodSelector } from "./StreamingMethodSelector";
-import { LiveStreamStats } from "./LiveStreamStats";
-import { OBSIntegration } from "./OBSIntegration";
-import { useStreamKey } from "@/hooks/useStreamKey";
+import { ServerStatusPanel } from "./ServerStatusPanel";
+import { useRealTimeStream } from "@/hooks/useRealTimeStream";
 import { useState } from "react";
 
-interface LiveStreamTabsProps {
-  isLive: boolean;
-  viewerCount: number;
-}
-
-export const LiveStreamTabs = ({ isLive, viewerCount }: LiveStreamTabsProps) => {
-  const { streamKey } = useStreamKey();
-  const [streamStatus, setStreamStatus] = useState(isLive);
-
-  // Default cameras for OBS integration
-  const defaultCameras = [
-    { id: "main", name: "Main Camera", position: "DJ Booth" },
-    { id: "crowd", name: "Crowd Camera", position: "Dance Floor" },
-    { id: "overhead", name: "Overhead Camera", position: "Overhead" }
-  ];
-
-  const handleStreamStatusChange = (newStatus: boolean) => {
-    setStreamStatus(newStatus);
-  };
+export const LiveStreamTabs = ({ isLive, viewerCount }: { isLive: boolean; viewerCount: number }) => {
+  const { 
+    streamConfig, 
+    streamStatus, 
+    isLoading, 
+    generateStreamKey, 
+    revokeStreamKey 
+  } = useRealTimeStream();
+  
+  const [serverStatus, setServerStatus] = useState<{ available: boolean; url: string } | null>(null);
 
   return (
-    <Tabs defaultValue="setup" className="w-full">
-      <TabsList className="grid w-full grid-cols-5">
-        <TabsTrigger value="setup">Stream Setup</TabsTrigger>
-        <TabsTrigger value="methods">Streaming Methods</TabsTrigger>
-        <TabsTrigger value="preview">Live Preview</TabsTrigger>
-        <TabsTrigger value="stats">Analytics</TabsTrigger>
-        <TabsTrigger value="obs">OBS Control</TabsTrigger>
+    <Tabs defaultValue="browser" className="w-full">
+      <TabsList className="grid w-full grid-cols-4">
+        <TabsTrigger value="browser">🌐 Browser Stream</TabsTrigger>
+        <TabsTrigger value="obs">📹 OBS Setup</TabsTrigger>
+        <TabsTrigger value="viewer">👀 Stream View</TabsTrigger>
+        <TabsTrigger value="server">🖥️ Server Status</TabsTrigger>
       </TabsList>
 
-      <TabsContent value="setup" className="space-y-6">
-        <StreamKeyManager />
-      </TabsContent>
-
-      <TabsContent value="methods" className="space-y-6">
-        {streamKey ? (
-          <StreamingMethodSelector 
-            streamKey={streamKey}
-            onStreamStatusChange={handleStreamStatusChange}
+      <TabsContent value="browser" className="mt-6">
+        {streamConfig ? (
+          <BrowserStreamingPanel 
+            streamKey={streamConfig.streamKey}
+            onStreamStart={() => console.log('Browser stream started')}
+            onStreamStop={() => console.log('Browser stream stopped')}
           />
         ) : (
-          <div className="text-center p-8 text-muted-foreground">
-            <p>Generate a stream key first to access streaming methods.</p>
+          <div className="text-center py-8">
+            <p className="text-muted-foreground mb-4">Generate a stream key to start browser streaming</p>
+            <button 
+              onClick={generateStreamKey}
+              className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-white"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Generating...' : 'Generate Stream Key'}
+            </button>
           </div>
         )}
       </TabsContent>
 
-      <TabsContent value="preview" className="space-y-6">
-        <LiveStreamViewer />
-      </TabsContent>
-
-      <TabsContent value="stats" className="space-y-6">
-        <LiveStreamStats 
-          isLive={streamStatus || isLive} 
-          viewerCount={viewerCount} 
-          streamKey={streamKey || ''} 
+      <TabsContent value="obs" className="mt-6">
+        <StreamConfigurationPanel
+          streamConfig={streamConfig}
+          isLive={streamStatus.isLive}
+          viewerCount={streamStatus.viewerCount}
+          duration={streamStatus.duration}
+          bitrate={streamStatus.bitrate}
+          isLoading={isLoading}
+          serverAvailable={serverStatus?.available ?? false}
+          onGenerateKey={generateStreamKey}
+          onRevokeKey={revokeStreamKey}
         />
       </TabsContent>
 
-      <TabsContent value="obs" className="space-y-6">
-        <OBSIntegration cameras={defaultCameras} />
+      <TabsContent value="viewer" className="mt-6">
+        {streamConfig?.hlsUrl && (
+          <LiveStreamViewer 
+            hlsUrl={streamConfig.hlsUrl}
+            streamKey={streamConfig.streamKey}
+            isLive={streamStatus.isLive}
+          />
+        )}
+      </TabsContent>
+
+      <TabsContent value="server" className="mt-6">
+        <ServerStatusPanel onStatusChange={setServerStatus} />
       </TabsContent>
     </Tabs>
   );
