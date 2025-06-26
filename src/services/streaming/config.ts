@@ -1,7 +1,7 @@
 
-
 export class StreamingConfig {
-  // Use your actual Railway deployment URL
+  // Use your actual DigitalOcean deployment URL for RTMP
+  private static readonly DIGITALOCEAN_DOMAIN = 'nightflow-app-wijb2.ondigitalocean.app';
   private static readonly RAILWAY_DOMAIN = 'nightflow-vibes-social-production.up.railway.app';
   private static readonly RTMP_PORT = 1935;
   
@@ -15,14 +15,14 @@ export class StreamingConfig {
       : 'http://localhost:3001';
   }
   
-  // ACTUAL WORKING RTMP URL - using your real Railway deployment
+  // ACTUAL WORKING RTMP URL - using DigitalOcean which supports port 1935
   static getOBSServerUrl(): string {
     return this.isProduction()
-      ? `rtmp://${this.RAILWAY_DOMAIN}:${this.RTMP_PORT}/live`
+      ? `rtmp://${this.DIGITALOCEAN_DOMAIN}:${this.RTMP_PORT}/live`
       : 'rtmp://localhost:1935/live';
   }
 
-  // Backup URL (same as primary since Railway is our only server)
+  // Backup URL (same as primary since DigitalOcean is our RTMP server)
   static getOBSServerUrlBackup(): string {
     return this.getOBSServerUrl();
   }
@@ -32,13 +32,15 @@ export class StreamingConfig {
   }
   
   static getHlsUrl(streamKey: string): string {
-    const baseUrl = this.getApiBaseUrl();
+    const baseUrl = this.isProduction() 
+      ? `https://${this.DIGITALOCEAN_DOMAIN}`
+      : 'http://localhost:3001';
     return `${baseUrl}/live/${streamKey}/index.m3u8`;
   }
   
   static getWebSocketUrl(streamKey: string): string {
     const protocol = this.isProduction() ? 'wss' : 'ws';
-    const domain = this.isProduction() ? this.RAILWAY_DOMAIN : 'localhost:3001';
+    const domain = this.isProduction() ? this.DIGITALOCEAN_DOMAIN : 'localhost:3001';
     return `${protocol}://${domain}/ws/stream/${streamKey}`;
   }
   
@@ -48,7 +50,6 @@ export class StreamingConfig {
     return `nf_${userId.substring(0, 8)}_${timestamp}_${random}`;
   }
 
-  // Add missing getPortInfo method
   static getPortInfo(): {
     rtmpPort: number;
     description: string;
@@ -61,7 +62,6 @@ export class StreamingConfig {
     };
   }
 
-  // Add missing getProtocolInfo method
   static getProtocolInfo(): {
     protocol: string;
     description: string;
@@ -82,7 +82,7 @@ export class StreamingConfig {
     return {
       service: 'Custom...',
       server: serverUrl,
-      backup_server: serverUrl, // Same server for now
+      backup_server: serverUrl,
       steps: [
         '1. Open OBS Studio',
         '2. Go to Settings → Stream',
@@ -95,7 +95,7 @@ export class StreamingConfig {
     };
   }
 
-  // Test RTMP connectivity - Fixed to use actual Railway server
+  // Test RTMP connectivity - Fixed to use DigitalOcean server
   static async testRTMPConnection(): Promise<{
     primary: { success: boolean; url: string; error?: string };
     backup: { success: boolean; url: string; error?: string };
@@ -105,8 +105,10 @@ export class StreamingConfig {
     
     const testServer = async () => {
       try {
-        // Test the actual Railway server health endpoint
-        const healthUrl = `${this.getApiBaseUrl()}/api/health`;
+        // Test the DigitalOcean server health endpoint
+        const healthUrl = this.isProduction() 
+          ? `https://${this.DIGITALOCEAN_DOMAIN}/api/health`
+          : 'http://localhost:3001/api/health';
         
         // Use AbortController for timeout
         const controller = new AbortController();
@@ -141,14 +143,14 @@ export class StreamingConfig {
     const recommendations = [];
     
     if (result.success) {
-      recommendations.push('✅ Railway server is responding!');
+      recommendations.push('✅ DigitalOcean RTMP server is responding!');
       recommendations.push(`✅ Use this RTMP URL in OBS: ${serverUrl}`);
       recommendations.push('✅ Copy your stream key from the app');
       recommendations.push('✅ In OBS: Settings → Stream → Custom → Paste server URL');
     } else {
-      recommendations.push('❌ Railway server is not responding');
-      recommendations.push('⚠️ Check Railway deployment status');
-      recommendations.push('💡 Verify server is running and deployed');
+      recommendations.push('❌ DigitalOcean RTMP server is not responding');
+      recommendations.push('⚠️ Check DigitalOcean deployment status');
+      recommendations.push('💡 Verify RTMP server is running on port 1935');
       recommendations.push('🔄 Try refreshing the page and testing again');
     }
 
@@ -165,10 +167,9 @@ export class StreamingConfig {
       '✅ Ensure firewall allows port 1935 outbound',
       '✅ Restart OBS completely after configuration',
       '✅ Test from different network (mobile hotspot)',
-      '✅ Check Railway deployment is running',
+      '✅ Check DigitalOcean deployment is running',
       '✅ Use generated stream key exactly as provided',
       '✅ In OBS: Service = Custom, not a preset service'
     ];
   }
 }
-
