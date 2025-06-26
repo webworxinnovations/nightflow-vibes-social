@@ -3,15 +3,18 @@ import { EnvironmentConfig } from './environment';
 
 export class URLGenerator {
   static getApiBaseUrl(): string {
+    if (EnvironmentConfig.isDropletEnvironment()) {
+      return `https://${EnvironmentConfig.getDropletDomain()}`;
+    }
+    
     return EnvironmentConfig.isProduction() 
       ? `https://${EnvironmentConfig.getRailwayDomain()}`
       : 'http://localhost:3001';
   }
 
   static getOBSServerUrl(): string {
-    return EnvironmentConfig.isProduction()
-      ? `rtmp://${EnvironmentConfig.getDropletIP()}:${EnvironmentConfig.getRtmpPort()}/live`
-      : 'rtmp://localhost:1935/live';
+    // Always use droplet for RTMP - it's specifically configured for this
+    return `rtmp://${EnvironmentConfig.getDropletIP()}:${EnvironmentConfig.getRtmpPort()}/live`;
   }
 
   static getRtmpUrl(): string {
@@ -27,7 +30,11 @@ export class URLGenerator {
 
   static getWebSocketUrl(streamKey: string): string {
     const protocol = EnvironmentConfig.isProduction() ? 'wss' : 'ws';
-    const domain = EnvironmentConfig.isProduction() ? EnvironmentConfig.getRailwayDomain() : 'localhost:3001';
+    const domain = EnvironmentConfig.isDropletEnvironment() 
+      ? EnvironmentConfig.getDropletDomain() 
+      : EnvironmentConfig.isProduction() 
+        ? EnvironmentConfig.getRailwayDomain() 
+        : 'localhost:3001';
     return `${protocol}://${domain}/ws/stream/${streamKey}`;
   }
 }
