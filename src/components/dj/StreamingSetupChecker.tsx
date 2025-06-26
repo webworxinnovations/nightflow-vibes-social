@@ -75,7 +75,7 @@ export const StreamingSetupChecker = () => {
 
     // Check 4: WebSocket connectivity test
     try {
-      const wsUrl = `wss://nightflow-vibes-social-production.up.railway.app/ws/stream/test`;
+      const wsUrl = StreamingConfig.getWebSocketUrl('test');
       results.push({
         name: "Real-time Status Updates",
         status: 'success',

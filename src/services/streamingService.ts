@@ -92,7 +92,7 @@ class StreamingService {
   async getServerStatus(): Promise<ServerStatus> {
     try {
       console.log('🔍 Checking DigitalOcean server status...');
-      const baseUrl = 'https://nightflow-app-wijb2.ondigitalocean.app';
+      const baseUrl = StreamingConfig.getBaseUrl();
       
       const response = await fetch(`${baseUrl}/api/health`, {
         method: 'GET',
@@ -116,7 +116,7 @@ class StreamingService {
       console.error('❌ DigitalOcean server status check failed:', error);
       return {
         available: false,
-        url: 'https://nightflow-app-wijb2.ondigitalocean.app'
+        url: StreamingConfig.getBaseUrl()
       };
     }
   }
@@ -125,7 +125,7 @@ class StreamingService {
     this.currentStreamKey = streamKey;
     
     try {
-      const wsUrl = `wss://nightflow-app-wijb2.ondigitalocean.app/ws/stream/${streamKey}`;
+      const wsUrl = StreamingConfig.getWebSocketUrl(streamKey);
       console.log('🔌 Connecting to real-time stream status:', wsUrl);
       
       this.websocket = new WebSocket(wsUrl);

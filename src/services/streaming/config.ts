@@ -1,3 +1,4 @@
+
 export class StreamingConfig {
   // DigitalOcean production URL - your server is now running here
   private static DIGITALOCEAN_URL = 'nightflow-app-wijb2.ondigitalocean.app';
@@ -36,6 +37,14 @@ export class StreamingConfig {
   static getHlsUrl(streamKey: string): string {
     const baseUrl = this.getBaseUrl();
     return `${baseUrl}/live/${streamKey}/index.m3u8`;
+  }
+  
+  // Fixed WebSocket URL to use DigitalOcean
+  static getWebSocketUrl(streamKey: string): string {
+    if (this.isDevelopment()) {
+      return `ws://localhost:3001/ws/stream/${streamKey}`;
+    }
+    return `wss://${this.DIGITALOCEAN_URL}/ws/stream/${streamKey}`;
   }
   
   static generateStreamKey(userId: string): string {
