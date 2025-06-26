@@ -1,0 +1,22 @@
+
+export class EnvironmentConfig {
+  private static readonly DROPLET_IP = 'YOUR_DROPLET_IP_HERE';
+  private static readonly RAILWAY_DOMAIN = 'nightflow-vibes-social-production.up.railway.app';
+  private static readonly RTMP_PORT = 1935;
+
+  static isProduction(): boolean {
+    return window.location.hostname !== 'localhost';
+  }
+
+  static getDropletIP(): string {
+    return this.DROPLET_IP;
+  }
+
+  static getRailwayDomain(): string {
+    return this.RAILWAY_DOMAIN;
+  }
+
+  static getRtmpPort(): number {
+    return this.RTMP_PORT;
+  }
+}
