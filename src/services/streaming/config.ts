@@ -42,6 +42,25 @@ export class StreamingConfig {
     const random = Math.random().toString(36).substring(2, 10);
     return `nf_${userId.substring(0, 8)}_${timestamp}_${random}`;
   }
+
+  // Add missing methods
+  static getPortInfo(): { rtmpPort: number; description: string; compatibility: string } {
+    return {
+      rtmpPort: 1935,
+      description: 'Standard RTMP port',
+      compatibility: 'Universal OBS compatibility'
+    };
+  }
+
+  static getProtocolInfo(): { protocol: string } {
+    return {
+      protocol: 'RTMP'
+    };
+  }
+
+  static getTroubleshootingSteps(): string[] {
+    return this.getOBSTroubleshootingSteps();
+  }
   
   // Enhanced OBS connection testing
   static async testRTMPConnection(): Promise<{ success: boolean; message: string }> {

@@ -53,7 +53,9 @@ class StreamingService {
       const config: StreamConfig = {
         streamKey,
         rtmpUrl,
-        hlsUrl
+        hlsUrl,
+        isLive: false,
+        viewerCount: 0
       };
 
       console.log('✅ Stream configuration generated:', config);
@@ -92,7 +94,9 @@ class StreamingService {
       return {
         streamKey: stream.stream_key,
         rtmpUrl: stream.rtmp_url,
-        hlsUrl: stream.hls_url
+        hlsUrl: stream.hls_url,
+        isLive: stream.status === 'live',
+        viewerCount: stream.viewer_count || 0
       };
     } catch (error) {
       console.error('❌ Failed to get current stream:', error);
