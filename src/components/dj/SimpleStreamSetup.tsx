@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Copy, Eye, EyeOff, Play, Trash2, AlertTriangle, CheckCircle, Wifi, Globe } from "lucide-react";
 import { toast } from "sonner";
-import { GlassmorphicCard } from "@/components/ui/glas};
+import { GlassmorphicCard } from "@/components/ui/glassmorphic-card";
 import { useRealTimeStream } from "@/hooks/useRealTimeStream";
 import { StreamingConfig } from "@/services/streaming/config";
 
