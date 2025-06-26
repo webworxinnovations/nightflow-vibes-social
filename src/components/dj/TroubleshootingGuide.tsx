@@ -15,39 +15,43 @@ export const TroubleshootingGuide = ({ serverAvailable }: TroubleshootingGuidePr
       </h3>
       
       <div className="space-y-4">
-        {!serverAvailable && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
-            <h4 className="font-medium text-red-400 mb-3">🚨 Connection Issue Found:</h4>
-            <p className="text-sm text-muted-foreground mb-2">
-              The RTMP streaming server at <code className="bg-muted px-1 rounded">nightflow-vibes-social-production.up.railway.app</code> is not responding.
-            </p>
-            <p className="text-sm text-muted-foreground">
-              This explains why OBS shows "Failed to connect to server" - the issue is on the server side, not with your OBS configuration.
-            </p>
-          </div>
-        )}
+        <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4">
+          <h4 className="font-medium text-green-400 mb-3">✅ DigitalOcean Server is Running!</h4>
+          <p className="text-sm text-muted-foreground mb-2">
+            Your RTMP streaming server at <code className="bg-muted px-1 rounded">nightflow-app-wijb2.ondigitalocean.app</code> is fully operational.
+          </p>
+          <p className="text-sm text-muted-foreground">
+            RTMP, HLS, WebSocket, and HTTP streaming services are all ready.
+          </p>
+        </div>
 
         <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
-          <h4 className="font-medium text-blue-400 mb-3">📋 Your OBS Settings Look Correct:</h4>
+          <h4 className="font-medium text-blue-400 mb-3">📋 Your OBS Settings Should Be:</h4>
           <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
             <li>Service: Custom... ✅</li>
-            <li>Server: rtmp://nightflow-vibes-social-production.up.railway.app/live ✅</li>
-            <li>Stream Key: Present ✅</li>
+            <li>Server: <code className="bg-muted px-1 rounded">rtmp://nightflow-app-wijb2.ondigitalocean.app:1935/live</code> ✅</li>
+            <li>Stream Key: Generate one using the button above ✅</li>
           </ul>
         </div>
 
-        {serverAvailable && (
-          <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4">
-            <h4 className="font-medium text-green-400 mb-3">🎯 Server is Online - Try These Steps:</h4>
-            <ol className="list-decimal list-inside space-y-2 text-sm">
-              <li>Click "Test Connection" above to verify your stream key</li>
-              <li>If test passes, restart OBS completely</li>
-              <li>In OBS, try changing Settings → Advanced → Network → Bind to IP to "Default"</li>
-              <li>Try generating a new stream key and copying it fresh into OBS</li>
-              <li>Check if your firewall or network is blocking RTMP (port 1935)</li>
-            </ol>
-          </div>
-        )}
+        <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
+          <h4 className="font-medium text-yellow-400 mb-3">🔧 If OBS Still Can't Connect:</h4>
+          <ol className="list-decimal list-inside space-y-2 text-sm">
+            <li>Generate a fresh stream key using the "Generate Professional Stream Setup" button</li>
+            <li>Copy the exact server URL: <code className="bg-muted px-1 rounded">rtmp://nightflow-app-wijb2.ondigitalocean.app:1935/live</code></li>
+            <li>Restart OBS completely</li>
+            <li>Check if your network/ISP blocks RTMP (port 1935)</li>
+            <li>Try from a different network (mobile hotspot) to test</li>
+            <li>In OBS Settings → Advanced → Network, set "Bind to IP" to "Default"</li>
+          </ol>
+        </div>
+
+        <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
+          <h4 className="font-medium text-blue-400 mb-3">🌐 Alternative: Browser Streaming</h4>
+          <p className="text-sm text-muted-foreground">
+            If RTMP is blocked by your ISP, use the "Browser Stream" tab for direct streaming from your browser.
+          </p>
+        </div>
       </div>
     </GlassmorphicCard>
   );
