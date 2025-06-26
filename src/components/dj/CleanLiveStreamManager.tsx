@@ -3,8 +3,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SimpleStreamSetup } from "./SimpleStreamSetup";
 import { BrowserStreamingPanel } from "./BrowserStreamingPanel";
 import { Monitor, Videotape } from "lucide-react";
+import { useRealTimeStream } from "@/hooks/useRealTimeStream";
 
 export const CleanLiveStreamManager = () => {
+  const { streamConfig } = useRealTimeStream();
+
   return (
     <div className="space-y-6">
       <div className="text-center mb-6">
@@ -31,7 +34,9 @@ export const CleanLiveStreamManager = () => {
         </TabsContent>
         
         <TabsContent value="browser" className="mt-6">
-          <BrowserStreamingPanel />
+          <BrowserStreamingPanel 
+            streamKey={streamConfig?.streamKey || ""}
+          />
         </TabsContent>
       </Tabs>
     </div>
