@@ -1,7 +1,6 @@
-
 export class StreamingConfig {
-  // Use your actual DigitalOcean deployment URL for RTMP
-  private static readonly DIGITALOCEAN_DOMAIN = 'nightflow-app-wijb2.ondigitalocean.app';
+  // Update to use your actual DigitalOcean Droplet IP
+  private static readonly DROPLET_IP = 'YOUR_DROPLET_IP_HERE'; // You'll need to replace this with your actual droplet IP
   private static readonly RAILWAY_DOMAIN = 'nightflow-vibes-social-production.up.railway.app';
   private static readonly RTMP_PORT = 1935;
   
@@ -15,14 +14,13 @@ export class StreamingConfig {
       : 'http://localhost:3001';
   }
   
-  // ACTUAL WORKING RTMP URL - using DigitalOcean which supports port 1935
+  // UPDATED: Use your DigitalOcean Droplet for RTMP
   static getOBSServerUrl(): string {
     return this.isProduction()
-      ? `rtmp://${this.DIGITALOCEAN_DOMAIN}:${this.RTMP_PORT}/live`
+      ? `rtmp://${this.DROPLET_IP}:${this.RTMP_PORT}/live`
       : 'rtmp://localhost:1935/live';
   }
 
-  // Backup URL (same as primary since DigitalOcean is our RTMP server)
   static getOBSServerUrlBackup(): string {
     return this.getOBSServerUrl();
   }
@@ -33,16 +31,17 @@ export class StreamingConfig {
   
   static getHlsUrl(streamKey: string): string {
     const baseUrl = this.isProduction() 
-      ? `https://${this.DIGITALOCEAN_DOMAIN}`
+      ? `http://${this.DROPLET_IP}:8080`
       : 'http://localhost:3001';
     return `${baseUrl}/live/${streamKey}/index.m3u8`;
   }
   
   static getWebSocketUrl(streamKey: string): string {
     const protocol = this.isProduction() ? 'wss' : 'ws';
-    const domain = this.isProduction() ? this.DIGITALOCEAN_DOMAIN : 'localhost:3001';
+    const domain = this.isProduction() ? this.RAILWAY_DOMAIN : 'localhost:3001';
     return `${protocol}://${domain}/ws/stream/${streamKey}`;
   }
+  
   
   static generateStreamKey(userId: string): string {
     const timestamp = Date.now();
@@ -95,7 +94,7 @@ export class StreamingConfig {
     };
   }
 
-  // Test RTMP connectivity - Updated to handle DigitalOcean specifics
+  // Updated connection test for Droplet
   static async testRTMPConnection(): Promise<{
     primary: { success: boolean; url: string; error?: string };
     backup: { success: boolean; url: string; error?: string };
@@ -105,16 +104,15 @@ export class StreamingConfig {
     
     const testServer = async () => {
       try {
-        console.log('🔍 Testing DigitalOcean RTMP server accessibility...');
+        console.log('🔍 Testing DigitalOcean Droplet RTMP server...');
         
-        // Test the DigitalOcean server health endpoint
+        // Test the Droplet server health
         const healthUrl = this.isProduction() 
-          ? `https://${this.DIGITALOCEAN_DOMAIN}/api/health`
-          : 'http://localhost:3001/api/health';
+          ? `http://${this.DROPLET_IP}:3001/health`
+          : 'http://localhost:3001/health';
         
-        console.log('📡 Testing health endpoint:', healthUrl);
+        console.log('📡 Testing Droplet health endpoint:', healthUrl);
         
-        // Use AbortController for timeout
         const controller = new AbortController();
         const timeoutId = setTimeout(() => {
           console.log('⏰ Request timed out after 15 seconds');
@@ -132,14 +130,14 @@ export class StreamingConfig {
         
         clearTimeout(timeoutId);
         
-        console.log('📊 Health check response:', response.status, response.statusText);
+        console.log('📊 Droplet health response:', response.status, response.statusText);
         
         if (response.ok) {
           const data = await response.text();
-          console.log('✅ DigitalOcean server responded successfully:', data);
+          console.log('✅ DigitalOcean Droplet responded successfully:', data);
           return { success: true, url: serverUrl, error: undefined };
         } else {
-          console.log('⚠️ DigitalOcean server returned error:', response.status);
+          console.log('⚠️ Droplet returned error:', response.status);
           return { 
             success: false, 
             url: serverUrl, 
@@ -147,7 +145,7 @@ export class StreamingConfig {
           };
         }
       } catch (error) {
-        console.error('❌ DigitalOcean connectivity test failed:', error);
+        console.error('❌ Droplet connectivity test failed:', error);
         
         if (error instanceof Error) {
           if (error.name === 'AbortError') {
@@ -177,23 +175,21 @@ export class StreamingConfig {
     const recommendations = [];
     
     if (result.success) {
-      recommendations.push('✅ DigitalOcean server is online and responding!');
-      recommendations.push('✅ RTMP server logs show successful startup');
+      recommendations.push('✅ DigitalOcean Droplet is online and responding!');
+      recommendations.push('✅ RTMP server should be accessible on port 1935');
       recommendations.push(`✅ Try OBS connection: ${serverUrl}`);
       recommendations.push('✅ Your stream key should work now');
-      recommendations.push('⚠️ If OBS still fails, DigitalOcean may not expose port 1935 externally');
     } else {
-      recommendations.push('❌ DigitalOcean server health check failed');
-      recommendations.push('⚠️ Based on your logs, the RTMP server IS running internally');
-      recommendations.push('💡 The issue is likely external port access on DigitalOcean');
-      recommendations.push('🔧 DigitalOcean App Platform may require port configuration');
-      recommendations.push('📞 Contact DigitalOcean support about exposing port 1935');
-      recommendations.push('🔄 Alternative: Try browser streaming method');
+      recommendations.push('❌ DigitalOcean Droplet health check failed');
+      recommendations.push('⚠️ Check if your Droplet is running');
+      recommendations.push('💡 Verify firewall allows port 1935');
+      recommendations.push('🔧 Ensure RTMP server is started on the Droplet');
+      recommendations.push('📞 Check Droplet status in DigitalOcean dashboard');
     }
 
     return {
       primary: result,
-      backup: result, // Same server for both
+      backup: result,
       recommendations
     };
   }
@@ -201,13 +197,13 @@ export class StreamingConfig {
   static getTroubleshootingSteps(): string[] {
     return [
       `✅ Use exact server URL: ${this.getOBSServerUrl()}`,
-      '✅ Ensure firewall allows port 1935 outbound',
+      '✅ Ensure Droplet firewall allows port 1935',
       '✅ Restart OBS completely after configuration',
       '✅ Test from different network (mobile hotspot)',
-      '✅ Check DigitalOcean app is running (it is per your logs)',
+      '✅ Check Droplet is running in DigitalOcean dashboard',
       '✅ Use generated stream key exactly as provided',
       '✅ In OBS: Service = Custom, not a preset service',
-      '⚠️ If fails: DigitalOcean may not expose RTMP port externally'
+      '⚠️ If fails: SSH into Droplet and check RTMP server status'
     ];
   }
 }
