@@ -50,6 +50,30 @@ export class StreamingConfig {
     return `nf_${userId.substring(0, 8)}_${timestamp}_${random}`;
   }
 
+  // Add missing getPortInfo method
+  static getPortInfo(): {
+    rtmpPort: number;
+    description: string;
+    compatibility: string;
+  } {
+    return {
+      rtmpPort: this.RTMP_PORT,
+      description: 'Standard RTMP streaming port',
+      compatibility: 'Compatible with all RTMP streaming software including OBS Studio'
+    };
+  }
+
+  // Add missing getProtocolInfo method
+  static getProtocolInfo(): {
+    protocol: string;
+    description: string;
+  } {
+    return {
+      protocol: 'RTMP',
+      description: 'Real-Time Messaging Protocol - Industry standard for live streaming'
+    };
+  }
+
   static getOBSSetupInstructions(): {
     service: string;
     server: string;
@@ -72,7 +96,7 @@ export class StreamingConfig {
     };
   }
 
-  // Test RTMP connectivity
+  // Test RTMP connectivity - Fixed fetch timeout issue
   static async testRTMPConnection(): Promise<{
     primary: { success: boolean; url: string; error?: string };
     backup: { success: boolean; url: string; error?: string };
@@ -90,11 +114,16 @@ export class StreamingConfig {
         const host = match[1];
         const healthUrl = `https://${host}/health`;
         
+        // Use AbortController instead of timeout property
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        
         const response = await fetch(healthUrl, {
           method: 'GET',
-          timeout: 5000
+          signal: controller.signal
         });
         
+        clearTimeout(timeoutId);
         return { success: response.ok, url, error: undefined };
       } catch (error) {
         return { 
