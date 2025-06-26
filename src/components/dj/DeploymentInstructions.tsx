@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, AlertTriangle } from "lucide-react";
 
 interface DeploymentInstructionsProps {
   className?: string;
@@ -10,33 +10,54 @@ export const DeploymentInstructions = ({ className }: DeploymentInstructionsProp
   const deployInstructions = [
     {
       step: 1,
-      title: "Generate Stream Key",
-      description: "Go to the OBS Streaming tab and generate your stream key",
-      action: null
+      title: "RTMP Connection Issue Detected",
+      description: "OBS shows 'Hostname not found' - DigitalOcean may not support RTMP port 1935",
+      action: null,
+      type: "error"
     },
     {
       step: 2,
-      title: "Configure OBS",
-      description: "Use rtmp://nightflow-app-wijb2.ondigitalocean.app:1935/live as server URL",
-      action: null
+      title: "Use Browser Streaming Instead",
+      description: "Go to Browser Stream tab for direct streaming from your browser",
+      action: null,
+      type: "solution"
     },
     {
       step: 3,
-      title: "Start Streaming",
-      description: "Click Start Streaming in OBS - your server is ready!",
-      action: null
+      title: "Alternative: Deploy to VPS",
+      description: "For OBS support, consider deploying to a VPS with full port control",
+      action: null,
+      type: "alternative"
     }
   ];
 
   return (
     <div className={`space-y-4 ${className}`}>
-      <h4 className="font-semibold text-lg">🚀 Ready to Stream!</h4>
+      <div className="flex items-center gap-2 mb-4">
+        <AlertTriangle className="h-5 w-5 text-amber-400" />
+        <h4 className="font-semibold text-lg text-amber-400">RTMP Connection Issue</h4>
+      </div>
       
       {deployInstructions.map((instruction) => (
-        <div key={instruction.step} className="p-4 border border-green-500/20 rounded-lg bg-green-500/5">
+        <div 
+          key={instruction.step} 
+          className={`p-4 border rounded-lg ${
+            instruction.type === 'error' 
+              ? 'border-red-500/20 bg-red-500/5' 
+              : instruction.type === 'solution'
+              ? 'border-blue-500/20 bg-blue-500/5'
+              : 'border-amber-500/20 bg-amber-500/5'
+          }`}
+        >
           <div className="flex items-start justify-between">
             <div>
-              <h5 className="font-medium text-green-400">
+              <h5 className={`font-medium ${
+                instruction.type === 'error' 
+                  ? 'text-red-400' 
+                  : instruction.type === 'solution'
+                  ? 'text-blue-400'
+                  : 'text-amber-400'
+              }`}>
                 Step {instruction.step}: {instruction.title}
               </h5>
               <p className="text-sm text-muted-foreground mt-1">
@@ -55,6 +76,13 @@ export const DeploymentInstructions = ({ className }: DeploymentInstructionsProp
           </div>
         </div>
       ))}
+      
+      <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg text-sm">
+        <p className="text-blue-400 font-medium mb-1">💡 Recommended Solution:</p>
+        <p className="text-blue-300">
+          Switch to the "Browser Stream" tab in the DJ Dashboard for immediate streaming capability without OBS setup issues.
+        </p>
+      </div>
     </div>
   );
 };

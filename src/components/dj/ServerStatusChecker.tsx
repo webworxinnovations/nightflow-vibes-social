@@ -1,7 +1,6 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
   CheckCircle, 
   RefreshCw,
@@ -23,7 +22,7 @@ export const ServerStatusChecker = ({ onStatusUpdate }: ServerStatusCheckerProps
 
   const checkDigitalOceanStatus = async () => {
     setChecking(true);
-    console.log('🔍 Starting DigitalOcean server status check...');
+    console.log('🔍 Starting real DigitalOcean RTMP connectivity test...');
     
     const debugResults: any = {
       timestamp: new Date().toISOString(),
@@ -33,82 +32,103 @@ export const ServerStatusChecker = ({ onStatusUpdate }: ServerStatusCheckerProps
     try {
       const baseUrl = 'https://nightflow-app-wijb2.ondigitalocean.app';
       
-      // Test 1: Basic connectivity to root
-      console.log('🧪 Test 1: Basic app connectivity...');
+      // Test 1: Check if the web server is running
+      console.log('🧪 Test 1: Web server connectivity...');
       try {
         const basicResponse = await fetch(baseUrl, {
           method: 'GET',
           signal: AbortSignal.timeout(10000)
         });
-        const responseText = await basicResponse.text();
-        debugResults.tests.basicConnectivity = {
+        debugResults.tests.webServer = {
           status: basicResponse.status,
           success: basicResponse.ok,
-          statusText: basicResponse.statusText,
-          hasContent: responseText.length > 0,
-          contentPreview: responseText.substring(0, 100)
+          statusText: basicResponse.statusText
         };
-        console.log('✅ Basic connectivity test:', debugResults.tests.basicConnectivity);
+        console.log('✅ Web server test:', debugResults.tests.webServer);
       } catch (error) {
-        debugResults.tests.basicConnectivity = {
+        debugResults.tests.webServer = {
           error: error instanceof Error ? error.message : 'Unknown error',
           success: false
         };
-        console.log('❌ Basic connectivity failed:', debugResults.tests.basicConnectivity);
+        console.log('❌ Web server failed:', debugResults.tests.webServer);
       }
 
-      console.log('✅ Based on deployment logs: Server is running perfectly!');
-      console.log('✅ RTMP server operational on port 1935');
-      console.log('✅ HLS streaming ready on port 8080');
-      console.log('✅ WebSocket server ready');
-      console.log('✅ HTTP streaming infrastructure ready');
-      
-      onStatusUpdate({
-        status: 'online',
-        details: 'DigitalOcean streaming server is fully operational!',
-        nextSteps: [
-          '✅ RTMP Server: Running on port 1935',
-          '✅ HLS Streaming: Ready on port 8080', 
-          '✅ WebSocket: Connected and ready',
-          '✅ HTTP Streaming: Fully functional',
-          '🎯 OBS Server URL: rtmp://nightflow-app-wijb2.ondigitalocean.app:1935/live',
-          '🎥 Ready for professional streaming!',
-          '📱 Browser streaming: Available',
-          '🔴 All systems operational - start streaming now!'
-        ],
-        debugInfo: {
-          ...debugResults,
-          serverLogs: {
-            rtmpServer: 'Started successfully on port 1935',
-            hlsServer: 'Started successfully on port 8080',
-            webSocketServer: 'Started successfully on port 8080',
-            httpStreamingServer: 'Ready',
-            obsConnection: 'rtmp://nightflow-app-wijb2.ondigitalocean.app:1935/live',
-            status: 'All services operational'
-          }
-        }
-      });
-      
-      toast.success('🎉 DigitalOcean streaming server is fully operational!');
+      // Test 2: Try to check RTMP port accessibility
+      console.log('🧪 Test 2: RTMP port connectivity test...');
+      try {
+        // We can't directly test RTMP from browser, but we can check if the domain resolves
+        const dnsTest = await fetch(`https://dns.google/resolve?name=nightflow-app-wijb2.ondigitalocean.app&type=A`);
+        const dnsData = await dnsTest.json();
+        debugResults.tests.dnsResolution = {
+          success: dnsData.Status === 0,
+          answers: dnsData.Answer || [],
+          status: dnsData.Status
+        };
+        console.log('🌐 DNS resolution test:', debugResults.tests.dnsResolution);
+      } catch (error) {
+        debugResults.tests.dnsResolution = {
+          error: error instanceof Error ? error.message : 'DNS test failed',
+          success: false
+        };
+      }
+
+      // Based on OBS error, the hostname is not found - this means DigitalOcean app is not accessible
+      if (!debugResults.tests.webServer.success) {
+        console.log('❌ DigitalOcean app is not accessible - deployment may have failed');
+        
+        onStatusUpdate({
+          status: 'offline',
+          details: 'DigitalOcean deployment is not accessible',
+          nextSteps: [
+            '❌ DigitalOcean app URL is not responding',
+            '❌ OBS cannot connect because the hostname does not resolve',
+            '⚠️ The deployment may have failed or the app is not running',
+            '💡 Check DigitalOcean dashboard for deployment status',
+            '💡 Verify the app URL: nightflow-app-wijb2.ondigitalocean.app',
+            '🔄 Try redeploying to DigitalOcean',
+            '🔄 Alternative: Use browser streaming method instead'
+          ],
+          debugInfo: debugResults
+        });
+        
+        toast.error('❌ DigitalOcean deployment is not accessible');
+      } else {
+        // Web server is up but RTMP might still not work
+        console.log('⚠️ Web server is running but RTMP port may not be exposed');
+        
+        onStatusUpdate({
+          status: 'needs-deployment',
+          details: 'DigitalOcean web server is running but RTMP port may not be accessible',
+          nextSteps: [
+            '✅ DigitalOcean web server: Running',
+            '❌ RTMP port 1935: May not be exposed externally',
+            '⚠️ OBS cannot connect - this is a common DigitalOcean limitation',
+            '💡 DigitalOcean App Platform may not support custom TCP ports',
+            '💡 Many cloud platforms block RTMP port 1935 for security',
+            '🔄 Recommended: Use Browser Streaming method instead',
+            '🔄 Alternative: Deploy to a VPS with full port control'
+          ],
+          debugInfo: debugResults
+        });
+        
+        toast.warning('⚠️ RTMP port may not be accessible - use Browser Streaming');
+      }
 
     } catch (error) {
       console.error('❌ Deployment check failed:', error);
       onStatusUpdate({
-        status: 'online',
-        details: 'DigitalOcean streaming server is confirmed operational (based on deployment logs)',
+        status: 'offline',
+        details: 'Unable to verify DigitalOcean deployment status',
         nextSteps: [
-          '✅ Server deployment successful (verified from logs)',
-          '✅ RTMP server running on port 1935',
-          '✅ HLS streaming operational on port 8080',
-          '✅ WebSocket services ready',
-          '✅ HTTP streaming infrastructure ready',
-          '🎯 OBS Server: rtmp://nightflow-app-wijb2.ondigitalocean.app:1935/live',
-          '📺 Ready to generate stream keys and start streaming',
-          '🔴 All systems confirmed operational from deployment logs'
+          '❌ Connection test failed',
+          '⚠️ DigitalOcean app may not be deployed correctly',
+          '💡 Check your internet connection',
+          '💡 Verify DigitalOcean deployment status',
+          '🔄 Try browser streaming as alternative'
         ],
         debugInfo: debugResults
       });
-      toast.success('🎉 Server confirmed operational from deployment logs!');
+      toast.error('❌ Could not verify deployment status');
     } finally {
       setChecking(false);
     }
@@ -125,7 +145,7 @@ export const ServerStatusChecker = ({ onStatusUpdate }: ServerStatusCheckerProps
       ) : (
         <Zap className="h-4 w-4 mr-2" />
       )}
-      {checking ? 'Checking Status...' : 'Confirm Server Status'}
+      {checking ? 'Testing Real Connectivity...' : 'Test Real Server Status'}
     </Button>
   );
 };
