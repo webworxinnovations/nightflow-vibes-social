@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Copy, Eye, EyeOff, AlertTriangle, Wifi, WifiOff } from "lucide-react";
+import { Copy, Eye, EyeOff, CheckCircle, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { StreamingConfig } from "@/services/streaming/config";
 
@@ -16,7 +16,6 @@ export const StreamConfigFields = ({ streamKey }: StreamConfigFieldsProps) => {
 
   // Get the correct URLs from StreamingConfig
   const obsServerUrl = StreamingConfig.getOBSServerUrl();
-  const fullRtmpUrl = StreamingConfig.getRtmpUrl();
   const troubleshootingSteps = StreamingConfig.getTroubleshootingSteps();
 
   const copyToClipboard = (text: string, type: string) => {
@@ -33,17 +32,26 @@ export const StreamConfigFields = ({ streamKey }: StreamConfigFieldsProps) => {
 
   return (
     <div className="space-y-4">
-      {/* OBS Server URL - Clear and separate */}
+      {/* Clear Success Message */}
+      <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+        <div className="flex items-center gap-2">
+          <CheckCircle className="h-4 w-4 text-green-400" />
+          <p className="text-sm text-green-400 font-medium">
+            ✅ Your OBS streaming configuration is ready! Copy the values below.
+          </p>
+        </div>
+      </div>
+
+      {/* OBS Server URL */}
       <div className="space-y-2">
-        <Label className="text-base font-semibold">
-          OBS Server URL 
-          <span className="text-xs text-green-400 ml-2">(✅ Copy this exactly into OBS)</span>
+        <Label className="text-base font-semibold text-blue-400">
+          📹 OBS Server URL
         </Label>
         <div className="flex gap-2">
           <Input
             value={obsServerUrl}
             readOnly
-            className="font-mono text-sm bg-green-500/10 border-green-500/20"
+            className="font-mono text-sm bg-blue-500/10 border-blue-500/20"
           />
           <Button
             onClick={() => copyToClipboard(obsServerUrl, 'OBS Server URL')}
@@ -53,8 +61,8 @@ export const StreamConfigFields = ({ streamKey }: StreamConfigFieldsProps) => {
             <Copy className="h-4 w-4" />
           </Button>
         </div>
-        <p className="text-xs text-green-400">
-          ✅ This is the correct URL for OBS Settings → Stream → Server field
+        <p className="text-xs text-blue-400">
+          ✅ Copy this into OBS Settings → Stream → Server field
         </p>
       </div>
 
@@ -83,41 +91,35 @@ export const StreamConfigFields = ({ streamKey }: StreamConfigFieldsProps) => {
             <Copy className="h-4 w-4" />
           </Button>
         </div>
+        <p className="text-xs text-green-400">
+          ✅ Paste this into OBS Settings → Stream → Stream Key field
+        </p>
       </div>
 
-      {/* Connection troubleshooting */}
-      <div className="p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+      {/* Quick Setup Steps */}
+      <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+        <h4 className="font-medium text-blue-400 mb-2">📋 Quick OBS Setup:</h4>
+        <ol className="text-sm text-blue-300 space-y-1 list-decimal list-inside">
+          <li>Open OBS → Settings → Stream</li>
+          <li>Service: Select "Custom..."</li>
+          <li>Server: Paste the server URL above</li>
+          <li>Stream Key: Paste your stream key</li>
+          <li>Click "Apply" → "OK" → "Start Streaming"</li>
+        </ol>
+      </div>
+
+      {/* Troubleshooting (Simplified) */}
+      <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
         <div className="flex items-start gap-2">
-          <AlertTriangle className="h-4 w-4 text-orange-400 mt-0.5" />
+          <AlertTriangle className="h-4 w-4 text-amber-400 mt-0.5" />
           <div className="text-sm">
-            <p className="font-medium text-orange-400 mb-2">🔧 If OBS shows "Failed to connect" or "Hostname not found":</p>
-            <ul className="text-muted-foreground space-y-1 text-xs">
-              {troubleshootingSteps.map((step, index) => (
-                <li key={index}>{step}</li>
-              ))}
+            <p className="font-medium text-amber-400 mb-1">If OBS can't connect:</p>
+            <ul className="text-amber-300 space-y-1 text-xs">
+              <li>• Make sure you're using the RTMP URL (not HTTP/HTTPS)</li>
+              <li>• Check your firewall allows port 1935</li>
+              <li>• Try from a different network (mobile hotspot)</li>
+              <li>• Restart OBS completely</li>
             </ul>
-            <p className="text-xs text-orange-400 mt-2">
-              📶 Most connection issues are caused by network/ISP blocking RTMP traffic on port 1935
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Success setup confirmation */}
-      <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
-        <div className="flex items-start gap-2">
-          <Wifi className="h-4 w-4 text-green-400 mt-0.5" />
-          <div className="text-sm">
-            <p className="font-medium text-green-400 mb-1">✅ Quick Setup Check:</p>
-            <p className="text-muted-foreground">
-              <strong>OBS Server:</strong> <code className="bg-green-500/20 px-1 rounded">{obsServerUrl}</code>
-            </p>
-            <p className="text-muted-foreground">
-              <strong>Stream Key:</strong> The key you copied above
-            </p>
-            <p className="text-xs text-green-400 mt-2">
-              When you click "Start Streaming" in OBS, it creates: {fullRtmpUrl}
-            </p>
           </div>
         </div>
       </div>

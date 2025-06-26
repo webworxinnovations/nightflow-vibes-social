@@ -11,7 +11,7 @@ export const OBSSetupInstructions = ({ obsServerUrl }: OBSSetupInstructionsProps
       <div className="flex items-start gap-3">
         <CheckCircle className="h-5 w-5 text-green-400 mt-0.5" />
         <div>
-          <h4 className="font-medium text-green-400 mb-2">✅ Correct OBS Setup Instructions:</h4>
+          <h4 className="font-medium text-green-400 mb-2">✅ Perfect OBS Setup Instructions:</h4>
           <ol className="list-decimal list-inside space-y-1 text-sm text-muted-foreground">
             <li>In OBS: Go to Settings → Stream</li>
             <li>Service: Select "Custom..."</li>
@@ -22,11 +22,11 @@ export const OBSSetupInstructions = ({ obsServerUrl }: OBSSetupInstructionsProps
           
           <div className="mt-3 p-2 bg-blue-500/10 border border-blue-500/20 rounded text-xs">
             <div className="flex items-center gap-2 text-blue-400">
-              <AlertTriangle className="h-3 w-3" />
-              <strong>Important:</strong>
+              <CheckCircle className="h-3 w-3" />
+              <strong>Perfect!</strong>
             </div>
             <p className="text-blue-300 mt-1">
-              Do NOT include "/live" in the server field - OBS adds this automatically when connecting!
+              This RTMP URL is exactly what OBS needs. No HTTP/HTTPS confusion!
             </p>
           </div>
         </div>

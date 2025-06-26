@@ -1,148 +1,134 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { GlassmorphicCard } from "@/components/ui/glassmorphic-card";
-import { Copy, CheckCircle, Wifi, Globe } from "lucide-react";
+import { Copy, Eye, EyeOff, CheckCircle, Settings } from "lucide-react";
 import { toast } from "sonner";
-import { RTMPBridge } from "@/services/streaming/rtmpBridge";
+import { StreamingConfig } from "@/services/streaming/config";
 
 interface ProfessionalStreamSetupProps {
   streamKey: string;
 }
 
 export const ProfessionalStreamSetup = ({ streamKey }: ProfessionalStreamSetupProps) => {
-  const [bridgeConfig, setBridgeConfig] = useState<{
-    obsServerUrl: string;
-    bridgeUrl: string;
-    instructions: string[];
-  } | null>(null);
-
-  useEffect(() => {
-    const setupBridge = async () => {
-      const bridge = RTMPBridge.getInstance();
-      const config = await bridge.createBridge(streamKey);
-      setBridgeConfig(config);
-    };
-
-    if (streamKey) {
-      setupBridge();
-    }
-  }, [streamKey]);
+  const [showKey, setShowKey] = useState(false);
+  
+  // Get the correct RTMP URL for OBS
+  const obsServerUrl = StreamingConfig.getOBSServerUrl();
 
   const copyToClipboard = (text: string, type: string) => {
     navigator.clipboard.writeText(text);
     toast.success(`${type} copied to clipboard!`);
   };
 
-  const compatibilityInfo = RTMPBridge.getCompatibilityInfo();
-
-  if (!bridgeConfig) {
-    return <div>Setting up professional streaming bridge...</div>;
-  }
+  const formatStreamKey = (key: string) => {
+    if (!showKey && key) {
+      return `${key.slice(0, 8)}${'•'.repeat(20)}${key.slice(-4)}`;
+    }
+    return key;
+  };
 
   return (
-    <GlassmorphicCard>
-      <div className="space-y-6">
-        <div className="flex items-center gap-3">
-          <Globe className="h-6 w-6 text-green-400" />
+    <div className="space-y-6">
+      {/* Clear OBS Setup Instructions */}
+      <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+        <div className="flex items-start gap-3">
+          <CheckCircle className="h-5 w-5 text-green-400 mt-0.5" />
           <div>
-            <h3 className="text-lg font-semibold text-green-400">
-              Professional Streaming Setup
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              Universal compatibility - works with ANY internet provider
+            <h4 className="font-medium text-green-400 mb-2">✅ Perfect! Your Professional Stream Setup is Ready</h4>
+            <p className="text-sm text-green-300 mb-3">
+              Copy these exact values into OBS Studio for guaranteed compatibility:
             </p>
           </div>
         </div>
+      </div>
 
-        {/* Compatibility Guarantee */}
-        <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
-          <div className="flex items-start gap-3">
-            <CheckCircle className="h-5 w-5 text-green-400 mt-0.5" />
-            <div>
-              <h4 className="font-medium text-green-400 mb-2">✅ Universal Compatibility Guarantee</h4>
-              <ul className="text-sm text-green-300 space-y-1">
-                <li>• {compatibilityInfo.compatibility}</li>
-                <li>• {compatibilityInfo.ports}</li>
-                <li>• {compatibilityInfo.reliability}</li>
-                <li>• {compatibilityInfo.description}</li>
-              </ul>
-            </div>
-          </div>
+      {/* OBS Server URL - Primary */}
+      <div className="space-y-2">
+        <Label className="text-lg font-bold text-blue-400">
+          📹 OBS Server URL (Copy this exactly)
+        </Label>
+        <div className="flex gap-2">
+          <Input
+            value={obsServerUrl}
+            readOnly
+            className="font-mono text-sm bg-blue-500/10 border-blue-500/30 text-blue-300"
+          />
+          <Button
+            onClick={() => copyToClipboard(obsServerUrl, 'OBS Server URL')}
+            variant="outline"
+            size="sm"
+            className="bg-blue-500/20 border-blue-500/30 hover:bg-blue-500/30"
+          >
+            <Copy className="h-4 w-4" />
+          </Button>
         </div>
+        <p className="text-sm font-medium text-blue-400">
+          ✅ This goes in OBS Settings → Stream → Server field
+        </p>
+      </div>
 
-        {/* OBS Setup Instructions */}
-        <div className="space-y-4">
-          <h4 className="font-medium flex items-center gap-2">
-            <Wifi className="h-4 w-4" />
-            OBS Studio Setup (Works with ANY Network)
-          </h4>
-
-          {/* Server URL */}
-          <div className="space-y-2">
-            <Label className="text-base font-semibold">
-              Server URL 
-              <span className="text-xs text-green-400 ml-2">(✅ Universal - No ISP blocking)</span>
-            </Label>
-            <div className="flex gap-2">
-              <Input
-                value={bridgeConfig.obsServerUrl}
-                readOnly
-                className="font-mono text-sm bg-green-500/10 border-green-500/20"
-              />
-              <Button
-                onClick={() => copyToClipboard(bridgeConfig.obsServerUrl, 'Server URL')}
-                variant="outline"
-                size="sm"
-              >
-                <Copy className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-
-          {/* Stream Key */}
-          <div className="space-y-2">
-            <Label className="text-base font-semibold">Stream Key</Label>
-            <div className="flex gap-2">
-              <Input
-                value={streamKey}
-                readOnly
-                type="password"
-                className="font-mono text-sm"
-              />
-              <Button
-                onClick={() => copyToClipboard(streamKey, 'Stream key')}
-                variant="outline"
-                size="sm"
-              >
-                <Copy className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
+      {/* Stream Key */}
+      <div className="space-y-2">
+        <Label className="text-lg font-bold text-green-400">
+          🔑 Stream Key (Keep private)
+        </Label>
+        <div className="flex gap-2">
+          <Input
+            value={formatStreamKey(streamKey)}
+            readOnly
+            type={showKey ? "text" : "password"}
+            className="font-mono text-sm bg-green-500/10 border-green-500/30"
+          />
+          <Button
+            onClick={() => setShowKey(!showKey)}
+            variant="outline"
+            size="sm"
+            className="bg-green-500/20 border-green-500/30"
+          >
+            {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </Button>
+          <Button
+            onClick={() => copyToClipboard(streamKey, 'Stream key')}
+            variant="outline"
+            size="sm"
+            className="bg-green-500/20 border-green-500/30 hover:bg-green-500/30"
+          >
+            <Copy className="h-4 w-4" />
+          </Button>
         </div>
+        <p className="text-sm font-medium text-green-400">
+          ✅ This goes in OBS Settings → Stream → Stream Key field
+        </p>
+      </div>
 
-        {/* Simple Setup Steps */}
-        <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-          <h4 className="font-medium text-blue-400 mb-3">📋 Simple OBS Setup (3 Steps)</h4>
-          <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
-            <li>Open OBS → Settings → Stream</li>
-            <li>Service: "Custom..." → Server: Copy the URL above</li>
-            <li>Stream Key: Copy the key above → Apply → Start Streaming</li>
-          </ol>
-          <p className="text-xs text-blue-300 mt-3">
-            🎯 That's it! No network troubleshooting, no ISP calls, no firewall issues.
-          </p>
-        </div>
-
-        {/* Technology Info */}
-        <div className="text-xs text-muted-foreground p-3 bg-slate-500/10 rounded">
-          <p><strong>Technology:</strong> HTTP-to-RTMP Bridge (Industry Standard)</p>
-          <p><strong>Used by:</strong> Twitch, YouTube Live, Facebook Live, TikTok Live</p>
-          <p><strong>Ports:</strong> HTTP/HTTPS (80/443) - Never blocked by any ISP</p>
+      {/* Step-by-Step OBS Setup */}
+      <div className="p-4 bg-slate-500/10 border border-slate-500/20 rounded-lg">
+        <div className="flex items-start gap-3">
+          <Settings className="h-5 w-5 text-slate-400 mt-0.5" />
+          <div>
+            <h4 className="font-medium text-slate-300 mb-3">📋 OBS Studio Setup (Follow exactly):</h4>
+            <ol className="list-decimal list-inside space-y-2 text-sm text-slate-300">
+              <li>Open OBS Studio</li>
+              <li>Click <strong>Settings</strong> → <strong>Stream</strong></li>
+              <li>Service: Select <strong>"Custom..."</strong></li>
+              <li>Server: Paste → <code className="bg-blue-500/20 px-1 rounded text-blue-300">{obsServerUrl}</code></li>
+              <li>Stream Key: Paste your stream key from above</li>
+              <li>Click <strong>"Apply"</strong> → <strong>"OK"</strong></li>
+              <li>Click <strong>"Start Streaming"</strong> in main OBS window</li>
+            </ol>
+          </div>
         </div>
       </div>
-    </GlassmorphicCard>
+
+      {/* Success Confirmation */}
+      <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+        <p className="text-sm text-green-400 font-medium">
+          🎉 <strong>Ready to Go Live!</strong> Once you paste these values into OBS and click "Start Streaming", 
+          your stream will be live on Night Flow!
+        </p>
+      </div>
+    </div>
   );
 };
