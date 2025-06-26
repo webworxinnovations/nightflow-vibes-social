@@ -1,9 +1,9 @@
 
+
 export class StreamingConfig {
-  // Use a known working RTMP server configuration
-  private static readonly RTMP_HOST = 'rtmp.nightflow.app';
+  // Use your actual Railway deployment URL
+  private static readonly RAILWAY_DOMAIN = 'nightflow-vibes-social-production.up.railway.app';
   private static readonly RTMP_PORT = 1935;
-  private static readonly BACKUP_HOST = 'live.nightflow.stream';
   
   static isProduction(): boolean {
     return window.location.hostname !== 'localhost';
@@ -11,22 +11,20 @@ export class StreamingConfig {
   
   static getApiBaseUrl(): string {
     return this.isProduction() 
-      ? 'https://nightflow-vibes-social-production.up.railway.app'
+      ? `https://${this.RAILWAY_DOMAIN}`
       : 'http://localhost:3001';
   }
   
-  // PRIMARY RTMP URL - This is what OBS needs
+  // ACTUAL WORKING RTMP URL - using your real Railway deployment
   static getOBSServerUrl(): string {
     return this.isProduction()
-      ? `rtmp://${this.RTMP_HOST}:${this.RTMP_PORT}/live`
+      ? `rtmp://${this.RAILWAY_DOMAIN}:${this.RTMP_PORT}/live`
       : 'rtmp://localhost:1935/live';
   }
 
-  // BACKUP RTMP URL if primary fails
+  // Backup URL (same as primary since Railway is our only server)
   static getOBSServerUrlBackup(): string {
-    return this.isProduction()
-      ? `rtmp://${this.BACKUP_HOST}:${this.RTMP_PORT}/live`
-      : 'rtmp://127.0.0.1:1935/live';
+    return this.getOBSServerUrl();
   }
   
   static getRtmpUrl(): string {
@@ -40,7 +38,7 @@ export class StreamingConfig {
   
   static getWebSocketUrl(streamKey: string): string {
     const protocol = this.isProduction() ? 'wss' : 'ws';
-    const domain = this.isProduction() ? 'nightflow-vibes-social-production.up.railway.app' : 'localhost:3001';
+    const domain = this.isProduction() ? this.RAILWAY_DOMAIN : 'localhost:3001';
     return `${protocol}://${domain}/ws/stream/${streamKey}`;
   }
   
@@ -80,15 +78,16 @@ export class StreamingConfig {
     backup_server: string;
     steps: string[];
   } {
+    const serverUrl = this.getOBSServerUrl();
     return {
       service: 'Custom...',
-      server: this.getOBSServerUrl(),
-      backup_server: this.getOBSServerUrlBackup(),
+      server: serverUrl,
+      backup_server: serverUrl, // Same server for now
       steps: [
         '1. Open OBS Studio',
         '2. Go to Settings → Stream',
         '3. Service: Select "Custom..."',
-        `4. Server: ${this.getOBSServerUrl()}`,
+        `4. Server: ${serverUrl}`,
         '5. Stream Key: Copy from app',
         '6. Click Apply → OK',
         '7. Click Start Streaming'
@@ -96,27 +95,22 @@ export class StreamingConfig {
     };
   }
 
-  // Test RTMP connectivity - Fixed fetch timeout issue
+  // Test RTMP connectivity - Fixed to use actual Railway server
   static async testRTMPConnection(): Promise<{
     primary: { success: boolean; url: string; error?: string };
     backup: { success: boolean; url: string; error?: string };
     recommendations: string[];
   }> {
-    const primaryUrl = this.getOBSServerUrl();
-    const backupUrl = this.getOBSServerUrlBackup();
+    const serverUrl = this.getOBSServerUrl();
     
-    const testUrl = async (url: string) => {
+    const testServer = async () => {
       try {
-        // Extract host from RTMP URL for HTTP health check
-        const match = url.match(/rtmp:\/\/([^:]+):/);
-        if (!match) throw new Error('Invalid RTMP URL format');
+        // Test the actual Railway server health endpoint
+        const healthUrl = `${this.getApiBaseUrl()}/api/health`;
         
-        const host = match[1];
-        const healthUrl = `https://${host}/health`;
-        
-        // Use AbortController instead of timeout property
+        // Use AbortController for timeout
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
         
         const response = await fetch(healthUrl, {
           method: 'GET',
@@ -124,50 +118,57 @@ export class StreamingConfig {
         });
         
         clearTimeout(timeoutId);
-        return { success: response.ok, url, error: undefined };
+        
+        if (response.ok) {
+          return { success: true, url: serverUrl, error: undefined };
+        } else {
+          return { 
+            success: false, 
+            url: serverUrl, 
+            error: `Server returned ${response.status}`
+          };
+        }
       } catch (error) {
         return { 
           success: false, 
-          url, 
+          url: serverUrl, 
           error: error instanceof Error ? error.message : 'Connection failed'
         };
       }
     };
 
-    const [primaryResult, backupResult] = await Promise.all([
-      testUrl(primaryUrl),
-      testUrl(backupUrl)
-    ]);
-
+    const result = await testServer();
     const recommendations = [];
     
-    if (!primaryResult.success && !backupResult.success) {
-      recommendations.push('Both RTMP servers unavailable - check internet connection');
-      recommendations.push('Try mobile hotspot to test if ISP blocks RTMP');
-      recommendations.push('Contact support for alternative streaming method');
-    } else if (!primaryResult.success) {
-      recommendations.push(`Use backup server: ${backupUrl}`);
-      recommendations.push('Primary RTMP server experiencing issues');
+    if (result.success) {
+      recommendations.push('✅ Railway server is responding!');
+      recommendations.push(`✅ Use this RTMP URL in OBS: ${serverUrl}`);
+      recommendations.push('✅ Copy your stream key from the app');
+      recommendations.push('✅ In OBS: Settings → Stream → Custom → Paste server URL');
     } else {
-      recommendations.push('RTMP connection ready - start streaming in OBS');
+      recommendations.push('❌ Railway server is not responding');
+      recommendations.push('⚠️ Check Railway deployment status');
+      recommendations.push('💡 Verify server is running and deployed');
+      recommendations.push('🔄 Try refreshing the page and testing again');
     }
 
     return {
-      primary: primaryResult,
-      backup: backupResult,
+      primary: result,
+      backup: result, // Same server for both
       recommendations
     };
   }
 
   static getTroubleshootingSteps(): string[] {
     return [
-      '✅ Use exact server URL in OBS Custom service',
+      `✅ Use exact server URL: ${this.getOBSServerUrl()}`,
       '✅ Ensure firewall allows port 1935 outbound',
-      '✅ Try backup server if primary fails',
-      '✅ Test from different network (mobile hotspot)',
       '✅ Restart OBS completely after configuration',
-      '✅ Check ISP doesn\'t block RTMP streaming',
-      '✅ Use generated stream key exactly as provided'
+      '✅ Test from different network (mobile hotspot)',
+      '✅ Check Railway deployment is running',
+      '✅ Use generated stream key exactly as provided',
+      '✅ In OBS: Service = Custom, not a preset service'
     ];
   }
 }
+
