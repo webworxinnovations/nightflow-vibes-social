@@ -1,6 +1,6 @@
 
 export class EnvironmentConfig {
-  private static readonly DROPLET_IP = 'YOUR_DROPLET_IP_HERE';
+  private static readonly DROPLET_IP = '67.205.179.77';
   private static readonly RAILWAY_DOMAIN = 'nightflow-vibes-social-production.up.railway.app';
   private static readonly RTMP_PORT = 1935;
 
