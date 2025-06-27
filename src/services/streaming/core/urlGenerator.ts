@@ -13,8 +13,8 @@ export class URLGenerator {
   }
 
   static getOBSServerUrl(): string {
-    // Always use droplet for RTMP - it's specifically configured for this
-    return `rtmp://${EnvironmentConfig.getDropletIP()}:${EnvironmentConfig.getRtmpPort()}/live`;
+    // Always use droplet domain for RTMP - this is where your server is running
+    return `rtmp://${EnvironmentConfig.getDropletDomain()}:${EnvironmentConfig.getRtmpPort()}/live`;
   }
 
   static getRtmpUrl(): string {
@@ -23,7 +23,7 @@ export class URLGenerator {
 
   static getHlsUrl(streamKey: string): string {
     const baseUrl = EnvironmentConfig.isProduction() 
-      ? `http://${EnvironmentConfig.getDropletIP()}:8080`
+      ? `http://${EnvironmentConfig.getDropletDomain()}:8888`
       : 'http://localhost:3001';
     return `${baseUrl}/live/${streamKey}/index.m3u8`;
   }

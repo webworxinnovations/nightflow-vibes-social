@@ -14,9 +14,8 @@ export class ConnectionTester {
       try {
         console.log('🔍 Testing DigitalOcean Droplet RTMP server...');
         
-        const healthUrl = EnvironmentConfig.isProduction() 
-          ? `http://${EnvironmentConfig.getDropletIP()}:3001/health`
-          : 'http://localhost:3001/health';
+        // Test the actual domain where your server is running
+        const healthUrl = `https://${EnvironmentConfig.getDropletDomain()}/health`;
         
         console.log('📡 Testing Droplet health endpoint:', healthUrl);
         
