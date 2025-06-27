@@ -12,12 +12,12 @@ export class ConnectionTester {
     
     const testServer = async () => {
       try {
-        console.log('🔍 Testing DigitalOcean Droplet RTMP server...');
+        console.log('🔍 Testing DigitalOcean App Platform server...');
         
-        // Test the correct HTTP endpoint based on your server logs
-        const healthUrl = `http://${EnvironmentConfig.getDropletDomain()}:3001/health`;
+        // DigitalOcean App Platform uses HTTPS by default
+        const healthUrl = `https://${EnvironmentConfig.getDropletDomain()}/health`;
         
-        console.log('📡 Testing Droplet health endpoint:', healthUrl);
+        console.log('📡 Testing DigitalOcean App Platform health endpoint:', healthUrl);
         
         const controller = new AbortController();
         const timeoutId = setTimeout(() => {
@@ -36,14 +36,14 @@ export class ConnectionTester {
         
         clearTimeout(timeoutId);
         
-        console.log('📊 Droplet health response:', response.status, response.statusText);
+        console.log('📊 DigitalOcean App Platform health response:', response.status, response.statusText);
         
         if (response.ok) {
           const data = await response.text();
-          console.log('✅ DigitalOcean Droplet responded successfully:', data);
+          console.log('✅ DigitalOcean App Platform responded successfully:', data);
           return { success: true, url: serverUrl, error: undefined };
         } else {
-          console.log('⚠️ Droplet returned error:', response.status);
+          console.log('⚠️ App Platform returned error:', response.status);
           return { 
             success: false, 
             url: serverUrl, 
@@ -51,7 +51,7 @@ export class ConnectionTester {
           };
         }
       } catch (error) {
-        console.error('❌ Droplet connectivity test failed:', error);
+        console.error('❌ App Platform connectivity test failed:', error);
         
         if (error instanceof Error) {
           if (error.name === 'AbortError') {
@@ -64,7 +64,7 @@ export class ConnectionTester {
             return { 
               success: false, 
               url: serverUrl, 
-              error: 'Network error - check internet connection'
+              error: 'Network error - check if server is deployed and running'
             };
           }
         }
@@ -81,16 +81,16 @@ export class ConnectionTester {
     const recommendations = [];
     
     if (result.success) {
-      recommendations.push('✅ DigitalOcean Droplet is online and responding!');
+      recommendations.push('✅ DigitalOcean App Platform is online and responding!');
       recommendations.push('✅ RTMP server should be accessible on port 1935');
       recommendations.push(`✅ Try OBS connection: ${serverUrl}`);
       recommendations.push('✅ Your stream key should work now');
     } else {
-      recommendations.push('❌ DigitalOcean Droplet health check failed');
-      recommendations.push('⚠️ Check if your Droplet is running');
-      recommendations.push('💡 Verify firewall allows port 1935');
-      recommendations.push('🔧 Ensure RTMP server is started on the Droplet');
-      recommendations.push('📞 Check Droplet status in DigitalOcean dashboard');
+      recommendations.push('❌ DigitalOcean App Platform health check failed');
+      recommendations.push('⚠️ Check if your app is deployed and running');
+      recommendations.push('💡 Verify your app build completed successfully');
+      recommendations.push('🔧 Check DigitalOcean App Platform logs for errors');
+      recommendations.push('📞 Check app status in DigitalOcean dashboard');
     }
 
     return {
