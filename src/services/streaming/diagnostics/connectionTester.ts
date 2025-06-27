@@ -8,21 +8,21 @@ export class ConnectionTester {
     backup: { success: boolean; url: string; error?: string };
     recommendations: string[];
   }> {
-    const railwayUrl = `https://${EnvironmentConfig.getRailwayDomain()}`;
+    const digitalOceanUrl = `https://${EnvironmentConfig.getDropletDomain()}`;
     const serverUrl = URLGenerator.getOBSServerUrl();
     
-    const testRailwayServer = async () => {
+    const testDigitalOceanServer = async () => {
       try {
-        console.log('🚄 Testing Railway deployment status...');
-        console.log('📡 Testing Railway server at:', railwayUrl);
+        console.log('🌊 Testing DigitalOcean App Platform deployment...');
+        console.log('📡 Testing DigitalOcean server at:', digitalOceanUrl);
         
         const controller = new AbortController();
         const timeoutId = setTimeout(() => {
-          console.log('⏰ Railway server request timed out after 15 seconds');
+          console.log('⏰ DigitalOcean server request timed out after 15 seconds');
           controller.abort();
         }, 15000);
         
-        const response = await fetch(`${railwayUrl}/health`, {
+        const response = await fetch(`${digitalOceanUrl}/health`, {
           method: 'GET',
           signal: controller.signal,
           headers: {
@@ -33,35 +33,35 @@ export class ConnectionTester {
         
         clearTimeout(timeoutId);
         
-        console.log('📊 Railway server response:', response.status, response.statusText);
+        console.log('📊 DigitalOcean server response:', response.status, response.statusText);
         
         if (response.ok) {
           const data = await response.text();
-          console.log('✅ Railway deployment is running:', data);
+          console.log('✅ DigitalOcean deployment is running:', data);
           return { success: true, url: serverUrl, error: undefined };
         } else {
-          console.log('⚠️ Railway server returned error:', response.status);
+          console.log('⚠️ DigitalOcean server returned error:', response.status);
           return { 
             success: false, 
             url: serverUrl, 
-            error: `Railway server error: ${response.status} ${response.statusText}`
+            error: `DigitalOcean server error: ${response.status} ${response.statusText}`
           };
         }
       } catch (error) {
-        console.error('❌ Railway server connectivity failed:', error);
+        console.error('❌ DigitalOcean server connectivity failed:', error);
         
         if (error instanceof Error) {
           if (error.name === 'AbortError') {
             return { 
               success: false, 
               url: serverUrl, 
-              error: 'Railway server timeout - deployment may be slow'
+              error: 'DigitalOcean server timeout - deployment may be slow'
             };
           } else if (error.message.includes('fetch') || error.message.includes('network')) {
             return { 
               success: false, 
               url: serverUrl, 
-              error: 'Railway server not accessible - deployment may have failed'
+              error: 'DigitalOcean server not accessible - may need port configuration'
             };
           }
         }
@@ -69,29 +69,29 @@ export class ConnectionTester {
         return { 
           success: false, 
           url: serverUrl, 
-          error: error instanceof Error ? error.message : 'Railway deployment issue'
+          error: error instanceof Error ? error.message : 'DigitalOcean deployment issue'
         };
       }
     };
 
-    const result = await testRailwayServer();
+    const result = await testDigitalOceanServer();
     const recommendations = [];
     
     if (result.success) {
-      recommendations.push('✅ Railway deployment is running successfully!');
+      recommendations.push('✅ DigitalOcean App Platform deployment is running successfully!');
       recommendations.push('✅ RTMP server should be accessible for OBS');
       recommendations.push(`✅ OBS Server URL: ${serverUrl}`);
       recommendations.push('✅ Generate a stream key and try OBS connection');
-      recommendations.push('🎯 Your streaming infrastructure is ready!');
-      recommendations.push('📋 Note: Using Railway deployment (more reliable than DigitalOcean App Platform)');
+      recommendations.push('🎯 Your DigitalOcean streaming infrastructure is ready!');
+      recommendations.push('📋 Note: Using DigitalOcean App Platform (as requested)');
     } else {
-      recommendations.push('❌ Railway deployment is not accessible');
-      recommendations.push('🔧 Your deployment may have failed or crashed');
-      recommendations.push('📋 Action needed: Check Railway dashboard');
-      recommendations.push('🔍 Look for build failures or runtime errors in logs');
-      recommendations.push('🔄 Try redeploying your application on Railway');
+      recommendations.push('❌ DigitalOcean App Platform deployment is not accessible');
+      recommendations.push('🔧 Your deployment may need port configuration for RTMP');
+      recommendations.push('📋 Action needed: Check DigitalOcean App Platform settings');
+      recommendations.push('🔍 Ensure port 1935 (RTMP) is exposed in app configuration');
+      recommendations.push('🔄 May need to upgrade DigitalOcean plan for custom ports');
       recommendations.push('💡 Alternative: Use Browser Streaming method instead');
-      recommendations.push('📞 Contact support if deployment keeps failing');
+      recommendations.push('📞 Contact DigitalOcean support about RTMP port access');
     }
 
     return {

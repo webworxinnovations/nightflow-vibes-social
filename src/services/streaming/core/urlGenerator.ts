@@ -3,15 +3,15 @@ import { EnvironmentConfig } from './environment';
 
 export class URLGenerator {
   static getApiBaseUrl(): string {
-    // Always use Railway for production since it's properly configured
+    // Use DigitalOcean App Platform deployment
     return EnvironmentConfig.isProduction() 
-      ? `https://${EnvironmentConfig.getRailwayDomain()}`
+      ? `https://${EnvironmentConfig.getDropletDomain()}`
       : 'http://localhost:3001';
   }
 
   static getOBSServerUrl(): string {
-    // Use Railway domain for RTMP - this is where your server is actually running
-    return `rtmp://${EnvironmentConfig.getRailwayDomain()}:${EnvironmentConfig.getRtmpPort()}/live`;
+    // Use DigitalOcean domain for RTMP - your actual deployed server
+    return `rtmp://${EnvironmentConfig.getDropletDomain()}:${EnvironmentConfig.getRtmpPort()}/live`;
   }
 
   static getRtmpUrl(): string {
@@ -20,7 +20,7 @@ export class URLGenerator {
 
   static getHlsUrl(streamKey: string): string {
     const baseUrl = EnvironmentConfig.isProduction() 
-      ? `https://${EnvironmentConfig.getRailwayDomain()}`
+      ? `https://${EnvironmentConfig.getDropletDomain()}`
       : 'http://localhost:3001';
     return `${baseUrl}/live/${streamKey}/index.m3u8`;
   }
@@ -28,7 +28,7 @@ export class URLGenerator {
   static getWebSocketUrl(streamKey: string): string {
     const protocol = EnvironmentConfig.isProduction() ? 'wss' : 'ws';
     const domain = EnvironmentConfig.isProduction() 
-        ? EnvironmentConfig.getRailwayDomain() 
+        ? EnvironmentConfig.getDropletDomain() 
         : 'localhost:3001';
     return `${protocol}://${domain}/ws/stream/${streamKey}`;
   }
