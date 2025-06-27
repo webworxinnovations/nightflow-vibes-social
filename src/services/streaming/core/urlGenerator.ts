@@ -3,15 +3,15 @@ import { EnvironmentConfig } from './environment';
 
 export class URLGenerator {
   static getApiBaseUrl(): string {
-    // Use DigitalOcean App Platform deployment
+    // Use Railway for API calls (frontend hosting)
     return EnvironmentConfig.isProduction() 
-      ? `https://${EnvironmentConfig.getDropletDomain()}`
+      ? `https://${EnvironmentConfig.getRailwayDomain()}`
       : 'http://localhost:3001';
   }
 
   static getOBSServerUrl(): string {
-    // Use DigitalOcean domain for RTMP - your actual deployed server
-    return `rtmp://${EnvironmentConfig.getDropletDomain()}:${EnvironmentConfig.getRtmpPort()}/live`;
+    // ALWAYS use droplet IP for RTMP - this is where OBS connects
+    return `rtmp://${EnvironmentConfig.getDropletIP()}:${EnvironmentConfig.getRtmpPort()}/live`;
   }
 
   static getRtmpUrl(): string {
@@ -19,16 +19,18 @@ export class URLGenerator {
   }
 
   static getHlsUrl(streamKey: string): string {
+    // Use droplet IP for HLS video playback
     const baseUrl = EnvironmentConfig.isProduction() 
-      ? `https://${EnvironmentConfig.getDropletDomain()}`
-      : 'http://localhost:3001';
+      ? `http://${EnvironmentConfig.getDropletIP()}:8080`
+      : 'http://localhost:8080';
     return `${baseUrl}/live/${streamKey}/index.m3u8`;
   }
 
   static getWebSocketUrl(streamKey: string): string {
-    const protocol = EnvironmentConfig.isProduction() ? 'wss' : 'ws';
+    // Use droplet IP for WebSocket connections
+    const protocol = EnvironmentConfig.isProduction() ? 'ws' : 'ws';
     const domain = EnvironmentConfig.isProduction() 
-        ? EnvironmentConfig.getDropletDomain() 
+        ? `${EnvironmentConfig.getDropletIP()}:3001`
         : 'localhost:3001';
     return `${protocol}://${domain}/ws/stream/${streamKey}`;
   }

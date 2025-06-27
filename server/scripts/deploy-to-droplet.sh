@@ -10,7 +10,7 @@ DROPLET_IP="67.205.179.77"
 DEPLOY_PATH="/var/www/nightflow-server"
 SERVER_PATH="./server"
 
-echo "🚀 Starting deployment to DigitalOcean Droplet..."
+echo "🚀 Starting deployment to DigitalOcean Droplet ($DROPLET_IP)..."
 
 # Check if server directory exists
 if [ ! -d "$SERVER_PATH" ]; then
@@ -43,7 +43,7 @@ ssh root@$DROPLET_IP << 'EOF'
     mkdir -p media
     
     # Set permissions
-    chown -R www-data:www-data /var/www/nightflow-server
+    chown -R www-data:www-data /var/www/nightflow-server || echo "www-data user not found, skipping permissions"
     
     # Restart service
     pm2 restart nightflow-rtmp || pm2 start streaming-server.js --name "nightflow-rtmp"
@@ -63,5 +63,6 @@ echo "🔗 API should be available at: http://$DROPLET_IP:3001"
 echo ""
 echo "Next steps:"
 echo "1. Test the health endpoint: curl http://$DROPLET_IP:3001/health"
-echo "2. Configure your frontend to use the droplet endpoints"
+echo "2. Generate a stream key in your Night Flow app"
 echo "3. Test OBS connection with: rtmp://$DROPLET_IP:1935/live"
+echo "4. Configure OBS with your generated stream key"

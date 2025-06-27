@@ -31,9 +31,7 @@ export class EnvironmentConfig {
   }
 
   static getCurrentDomain(): string {
-    if (this.isDropletEnvironment()) {
-      return this.DROPLET_DOMAIN;
-    }
-    return this.RAILWAY_DOMAIN;
+    // Always use droplet IP for RTMP streaming
+    return this.DROPLET_IP;
   }
 }
