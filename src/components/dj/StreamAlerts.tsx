@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, Settings } from "lucide-react";
+import { AlertTriangle, Settings, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
 interface StreamAlertsProps {
@@ -22,6 +22,24 @@ export const StreamAlerts = ({ hasMixedContentIssue }: StreamAlertsProps) => {
     );
   };
 
+  const handleAccessViaHttp = () => {
+    const currentUrl = window.location.href;
+    const httpUrl = currentUrl.replace('https://', 'http://');
+    toast.info(
+      `🔓 ACCESS VIA HTTP:\n\n` +
+      `Current (HTTPS): ${currentUrl}\n` +
+      `Try this instead: ${httpUrl}\n\n` +
+      `Click the button below to switch to HTTP version.`,
+      { 
+        duration: 10000,
+        action: {
+          label: 'Switch to HTTP',
+          onClick: () => window.open(httpUrl, '_blank')
+        }
+      }
+    );
+  };
+
   return (
     <div className="space-y-4">
       {/* MIXED CONTENT ALERT */}
@@ -32,12 +50,25 @@ export const StreamAlerts = ({ hasMixedContentIssue }: StreamAlertsProps) => {
             <p className="text-red-400 font-medium">🔒 MIXED CONTENT ISSUE DETECTED</p>
           </div>
           <p className="text-sm text-muted-foreground mb-3">
-            Your HTTPS page cannot load HTTP content from your droplet. This is a browser security restriction.
+            Your HTTPS page cannot load HTTP content from your droplet. This is a browser security restriction causing the network errors you're seeing.
           </p>
-          <div className="space-y-2 text-sm text-muted-foreground">
-            <p><strong>Solutions:</strong></p>
-            <p>• Access your app via HTTP: <code className="bg-slate-700 px-1 rounded">http://lovable.dev/your-project</code></p>
-            <p>• Or enable HTTPS on your DigitalOcean droplet server</p>
+          <div className="space-y-3">
+            <div className="space-y-2 text-sm text-muted-foreground">
+              <p><strong>Solutions:</strong></p>
+              <p>• Access your app via HTTP (recommended for development)</p>
+              <p>• Or enable HTTPS on your DigitalOcean droplet server</p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                onClick={handleAccessViaHttp}
+                variant="destructive"
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <ExternalLink className="h-4 w-4" />
+                Switch to HTTP Version
+              </Button>
+            </div>
           </div>
         </div>
       )}
@@ -62,21 +93,21 @@ export const StreamAlerts = ({ hasMixedContentIssue }: StreamAlertsProps) => {
         </Button>
       </div>
 
-      {/* Droplet Status Alert */}
+      {/* Network Status Alert */}
       <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
         <div className="flex items-center gap-2 mb-2">
           <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-          <p className="text-blue-400 font-medium">DigitalOcean Droplet Server Status</p>
+          <p className="text-blue-400 font-medium">Network Connection Status</p>
         </div>
         <p className="text-sm text-muted-foreground">
-          Server confirmed running via pm2, but firewall configuration needed.
+          Server confirmed running via pm2, but network access issues detected.
         </p>
         <p className="text-sm text-muted-foreground">
           SSH command: <code className="bg-slate-700 px-1 rounded">ssh root@67.205.179.77</code>
         </p>
         {hasMixedContentIssue && (
           <p className="text-sm text-red-400 mt-2">
-            🔒 Also resolve mixed content issue by using HTTP or enabling HTTPS on droplet.
+            🔒 Mixed content blocking is preventing HTTP requests from HTTPS page.
           </p>
         )}
       </div>

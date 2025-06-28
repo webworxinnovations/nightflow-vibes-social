@@ -172,44 +172,64 @@ class StreamingService {
       console.log('🔍 Testing DigitalOcean droplet server connectivity...');
       console.log(`📡 Testing server at: http://67.205.179.77:3001/health`);
       
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      // Handle mixed content gracefully - try different approaches
+      const testUrls = [
+        'http://67.205.179.77:3001/health',
+        'http://67.205.179.77:3001/',
+        'http://67.205.179.77:3001/api/server/stats'
+      ];
 
-      const response = await fetch(`http://67.205.179.77:3001/health`, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Cache-Control': 'no-cache'
-        },
-        signal: controller.signal
-      });
+      for (const testUrl of testUrls) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      clearTimeout(timeoutId);
+          const response = await fetch(testUrl, {
+            method: 'GET',
+            headers: {
+              'Accept': 'application/json',
+              'Cache-Control': 'no-cache'
+            },
+            signal: controller.signal,
+            mode: 'cors'
+          });
 
-      if (response.ok) {
-        const data = await response.json().catch(() => ({}));
-        console.log('✅ DigitalOcean droplet server is online and responding');
-        
-        return {
-          available: true,
-          url: 'http://67.205.179.77:3001',
-          version: data.version || 'unknown',
-          uptime: data.uptime || 0
-        };
-      } else {
-        console.warn('⚠️ DigitalOcean droplet responded but with error status:', response.status);
-        return { available: false, url: 'http://67.205.179.77:3001' };
+          clearTimeout(timeoutId);
+
+          if (response.ok) {
+            const data = await response.json().catch(() => ({}));
+            console.log('✅ DigitalOcean droplet server is online and responding');
+            
+            return {
+              available: true,
+              url: 'http://67.205.179.77:3001',
+              version: data.version || 'unknown',
+              uptime: data.uptime || 0
+            };
+          }
+        } catch (error) {
+          console.warn(`⚠️ Failed to test ${testUrl}:`, error);
+          continue;
+        }
       }
+
+      console.warn('⚠️ All server connectivity tests failed');
+      return { available: false, url: 'http://67.205.179.77:3001' };
+
     } catch (error) {
       console.error('❌ DigitalOcean droplet connectivity test failed:', error);
-      console.error('💡 This means your droplet server is not running or not accessible');
-      console.error('💡 Please check: ssh root@67.205.179.77 and run: pm2 status');
+      console.error('💡 This is likely due to mixed content (HTTPS->HTTP) restrictions');
+      console.error('💡 Please access your app via HTTP or enable HTTPS on your droplet');
       return { available: false, url: 'http://67.205.179.77:3001' };
     }
   }
 
   connectToStreamStatusWebSocket(streamKey: string): void {
-    this.wsManager.connectToStreamStatus(streamKey);
+    try {
+      this.wsManager.connectToStreamStatus(streamKey);
+    } catch (error) {
+      console.warn('WebSocket connection failed (likely due to mixed content):', error);
+    }
   }
 
   onStatusUpdate(callback: (status: StreamStatus) => void): () => void {
