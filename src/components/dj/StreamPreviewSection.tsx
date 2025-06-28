@@ -1,19 +1,20 @@
-
 import { useStreamKey } from "@/hooks/useStreamKey";
 import { RealVideoPlayer } from "./RealVideoPlayer";
 import { StreamDiagnostics } from "./StreamDiagnostics";
 import { GlassmorphicCard } from "@/components/ui/glassmorphic-card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Timer, Activity, Eye, RefreshCw, AlertCircle } from "lucide-react";
+import { Users, Timer, Activity, Eye, RefreshCw, AlertCircle, TestTube } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { EnvironmentConfig } from "@/services/streaming/core/environment";
+import { URLGenerator } from "@/services/streaming/core/urlGenerator";
 
 export const StreamPreviewSection = () => {
   const { streamData, isLive, viewerCount } = useStreamKey();
   const [streamDuration, setStreamDuration] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
   const [showDiagnostics, setShowDiagnostics] = useState(false);
+  const [serverTest, setServerTest] = useState<{ available: boolean; testedUrls: string[] } | null>(null);
 
   useEffect(() => {
     if (!isLive) {
@@ -42,6 +43,18 @@ export const StreamPreviewSection = () => {
   const handleRefreshStream = () => {
     console.log('🔄 Refreshing stream player...');
     setRefreshKey(prev => prev + 1);
+  };
+
+  const handleTestServer = async () => {
+    console.log('🔍 Testing server connectivity...');
+    try {
+      const result = await URLGenerator.testServerConnectivity();
+      setServerTest(result);
+      console.log('Server test results:', result);
+    } catch (error) {
+      console.error('Server test failed:', error);
+      setServerTest({ available: false, testedUrls: ['Test failed'] });
+    }
   };
 
   // Debug stream configuration
@@ -100,6 +113,16 @@ export const StreamPreviewSection = () => {
               </Button>
 
               <Button
+                onClick={handleTestServer}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <TestTube className="h-4 w-4" />
+                Test Server
+              </Button>
+
+              <Button
                 onClick={() => setShowDiagnostics(!showDiagnostics)}
                 variant="outline"
                 size="sm"
@@ -136,6 +159,23 @@ export const StreamPreviewSection = () => {
             </div>
           </div>
 
+          {/* Server Test Results */}
+          {serverTest && (
+            <div className={`p-3 rounded-lg border ${serverTest.available ? 'bg-green-500/10 border-green-500/20' : 'bg-red-500/10 border-red-500/20'}`}>
+              <div className="flex items-center gap-2 mb-2">
+                <TestTube className="h-4 w-4" />
+                <span className="font-medium">Server Connectivity Test</span>
+              </div>
+              <div className="text-sm space-y-1">
+                {serverTest.testedUrls.map((result, index) => (
+                  <p key={index} className={result.includes('Available') ? 'text-green-400' : 'text-red-400'}>
+                    {result}
+                  </p>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Video Player Preview */}
           <div className="aspect-video bg-black rounded-lg overflow-hidden relative">
             <RealVideoPlayer
@@ -166,6 +206,7 @@ export const StreamPreviewSection = () => {
                 <li>Make sure OBS is using: <code className="bg-black/20 px-1 rounded">rtmp://67.205.179.77:1935/live</code></li>
                 <li>Check that your stream key matches the one shown in diagnostics</li>
                 <li>Try clicking the "Refresh" button above</li>
+                <li>Use "Test Server" to check if the streaming server is available</li>
                 <li>If still not working, stop and restart OBS streaming</li>
               </ul>
             </div>
@@ -179,7 +220,7 @@ export const StreamPreviewSection = () => {
                 <p><strong>Stream URL:</strong> {streamData.streamUrl}</p>
                 <p><strong>Stream Key:</strong> {streamData.streamKey}</p>
                 <p><strong>RTMP URL:</strong> {streamData.rtmpUrl}</p>
-                <p><strong>Expected Format:</strong> http://67.205.179.77:8080/live/[streamKey]/index.m3u8</p>
+                <p><strong>Expected Format:</strong> http://67.205.179.77:8888/live/[streamKey]/index.m3u8</p>
                 <p><strong>Status:</strong> {isLive ? 'Live' : 'Connecting...'}</p>
                 <p><strong>Refresh Key:</strong> {refreshKey}</p>
               </div>

@@ -19,16 +19,17 @@ export class URLGenerator {
   }
 
   static getHlsUrl(streamKey: string): string {
-    // Try different port combinations based on what we've seen in the network requests
     const dropletIP = EnvironmentConfig.getDropletIP();
+    const hlsPort = EnvironmentConfig.getHlsPort();
     
     // Log all possible URLs for debugging
     console.log('🔍 HLS URL Generation Debug:');
     console.log('- Stream Key:', streamKey);
     console.log('- Droplet IP:', dropletIP);
-    console.log('- Attempting HLS on port 8888');
+    console.log('- HLS Port from config:', hlsPort);
     
-    const hlsUrl = `http://${dropletIP}:8888/live/${streamKey}/index.m3u8`;
+    // Try the primary HLS URL first
+    const hlsUrl = `http://${dropletIP}:${hlsPort}/live/${streamKey}/index.m3u8`;
     console.log('- Generated HLS URL:', hlsUrl);
     
     return hlsUrl;
@@ -47,7 +48,41 @@ export class URLGenerator {
     return [
       `http://${dropletIP}:8888/live/${streamKey}/index.m3u8`,
       `http://${dropletIP}:8080/live/${streamKey}/index.m3u8`,
-      `http://${dropletIP}:3001/hls/${streamKey}/index.m3u8`
+      `http://${dropletIP}:3001/hls/${streamKey}/index.m3u8`,
+      `http://${dropletIP}:1935/hls/${streamKey}/index.m3u8`
     ];
+  }
+
+  // Add method to test server connectivity
+  static async testServerConnectivity(): Promise<{ available: boolean; testedUrls: string[] }> {
+    const dropletIP = EnvironmentConfig.getDropletIP();
+    const testUrls = [
+      `http://${dropletIP}:8888`,
+      `http://${dropletIP}:8080`,
+      `http://${dropletIP}:3001`,
+      `http://${dropletIP}:1935`
+    ];
+
+    const results = [];
+    
+    for (const url of testUrls) {
+      try {
+        console.log(`🔍 Testing connectivity to: ${url}`);
+        const response = await fetch(url, { 
+          method: 'HEAD',
+          mode: 'no-cors'
+        });
+        results.push(`${url}: Available`);
+        console.log(`✅ ${url}: Available`);
+      } catch (error) {
+        results.push(`${url}: Not available - ${error}`);
+        console.log(`❌ ${url}: Not available -`, error);
+      }
+    }
+
+    return {
+      available: results.some(r => r.includes('Available')),
+      testedUrls: results
+    };
   }
 }

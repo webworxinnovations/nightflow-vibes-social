@@ -1,6 +1,6 @@
-
 import { useEffect, useRef, useState } from 'react';
 import Hls from 'hls.js';
+import { URLGenerator } from '@/services/streaming/core/urlGenerator';
 
 interface UseHlsPlayerProps {
   hlsUrl: string;
@@ -18,7 +18,8 @@ export const useHlsPlayer = ({ hlsUrl, isLive = false, autoplay = false, muted =
   const [isLoading, setIsLoading] = useState(true);
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const retryCountRef = useRef(0);
-  const maxRetries = 3; // Reduced for faster feedback
+  const currentUrlIndexRef = useRef(0);
+  const maxRetries = 2;
 
   useEffect(() => {
     const video = videoRef.current;
@@ -27,6 +28,7 @@ export const useHlsPlayer = ({ hlsUrl, isLive = false, autoplay = false, muted =
     setError(null);
     setIsLoading(true);
     retryCountRef.current = 0;
+    currentUrlIndexRef.current = 0;
 
     // Clear any existing retry timeout
     if (retryTimeoutRef.current) {
@@ -41,13 +43,21 @@ export const useHlsPlayer = ({ hlsUrl, isLive = false, autoplay = false, muted =
     }
 
     console.log('🎥 HLS Player Debug:');
-    console.log('- HLS URL:', hlsUrl);
+    console.log('- Primary HLS URL:', hlsUrl);
     console.log('- Is Live:', isLive);
     console.log('- Video element ready:', !!video);
 
-    const attemptLoad = () => {
+    // Get alternative URLs for fallback
+    const streamKey = hlsUrl.match(/live\/([^\/]+)\//)?.[1];
+    const alternativeUrls = streamKey ? URLGenerator.getAlternativeHlsUrls(streamKey) : [hlsUrl];
+    
+    console.log('- Alternative URLs available:', alternativeUrls);
+
+    const attemptLoad = (urlIndex = 0) => {
+      const currentUrl = urlIndex === 0 ? hlsUrl : alternativeUrls[urlIndex - 1];
+      
       console.log(`🔄 HLS Connection attempt ${retryCountRef.current + 1}/${maxRetries}`);
-      console.log('🎯 Attempting to load:', hlsUrl);
+      console.log(`🎯 Trying URL ${urlIndex + 1}:`, currentUrl);
       
       if (Hls.isSupported()) {
         const hls = new Hls({
@@ -59,16 +69,16 @@ export const useHlsPlayer = ({ hlsUrl, isLive = false, autoplay = false, muted =
           liveSyncDurationCount: isLive ? 1 : 3,
           liveMaxLatencyDurationCount: isLive ? 2 : 10,
           // More aggressive timeout settings
-          manifestLoadingTimeOut: 10000,
+          manifestLoadingTimeOut: 8000,
           manifestLoadingMaxRetry: 1,
-          manifestLoadingRetryDelay: 2000,
+          manifestLoadingRetryDelay: 1000,
           // Add debug logging
-          debug: true
+          debug: false
         });
 
         hlsRef.current = hls;
 
-        hls.loadSource(hlsUrl);
+        hls.loadSource(currentUrl);
         hls.attachMedia(video);
 
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
@@ -77,6 +87,7 @@ export const useHlsPlayer = ({ hlsUrl, isLive = false, autoplay = false, muted =
           setIsLoading(false);
           setError(null);
           retryCountRef.current = 0;
+          currentUrlIndexRef.current = 0;
           
           if (autoplay) {
             video.play().catch(err => {
@@ -101,19 +112,31 @@ export const useHlsPlayer = ({ hlsUrl, isLive = false, autoplay = false, muted =
                 console.error('- Status:', data.response?.code);
                 console.error('- URL that failed:', data.url);
                 
-                if (retryCountRef.current < maxRetries) {
-                  retryCountRef.current++;
-                  const retryDelay = 5000; // 5 second delay
+                // Try next URL if available
+                if (currentUrlIndexRef.current < alternativeUrls.length) {
+                  currentUrlIndexRef.current++;
+                  console.log(`🔄 Trying alternative URL ${currentUrlIndexRef.current + 1}...`);
+                  setError(`Trying alternative connection method ${currentUrlIndexRef.current + 1}...`);
                   
-                  setError(`Connection attempt ${retryCountRef.current}/${maxRetries} failed. Retrying...`);
+                  // Small delay before trying next URL
+                  retryTimeoutRef.current = setTimeout(() => {
+                    attemptLoad(currentUrlIndexRef.current);
+                  }, 2000);
+                  
+                } else if (retryCountRef.current < maxRetries) {
+                  retryCountRef.current++;
+                  currentUrlIndexRef.current = 0; // Reset to first URL
+                  const retryDelay = 3000;
+                  
+                  setError(`Connection failed. Retrying (${retryCountRef.current}/${maxRetries})...`);
                   
                   retryTimeoutRef.current = setTimeout(() => {
-                    console.log(`🔄 Retrying HLS connection (${retryCountRef.current}/${maxRetries})...`);
-                    attemptLoad();
+                    console.log(`🔄 Retrying all URLs (${retryCountRef.current}/${maxRetries})...`);
+                    attemptLoad(0);
                   }, retryDelay);
                 } else {
                   console.error('❌ All HLS connection attempts failed');
-                  setError('Stream not available. Make sure OBS is streaming and wait 60 seconds after starting.');
+                  setError('Stream not available. Please check: 1) OBS is streaming, 2) Wait 60 seconds after starting OBS, 3) Server is running on port 8888');
                   setIsLoading(false);
                 }
                 break;
@@ -154,13 +177,14 @@ export const useHlsPlayer = ({ hlsUrl, isLive = false, autoplay = false, muted =
       } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
         // Safari native HLS support
         console.log('🍎 Using Safari native HLS support');
-        video.src = hlsUrl;
+        video.src = currentUrl;
         
         video.addEventListener('loadedmetadata', () => {
           console.log('✅ Native HLS loaded successfully');
           setIsLoading(false);
           setError(null);
           retryCountRef.current = 0;
+          currentUrlIndexRef.current = 0;
           
           if (autoplay) {
             video.play().catch(err => {
@@ -175,13 +199,19 @@ export const useHlsPlayer = ({ hlsUrl, isLive = false, autoplay = false, muted =
           console.error('- Error code:', video.error?.code);
           console.error('- Error message:', video.error?.message);
           
-          if (retryCountRef.current < maxRetries) {
+          // Try alternative URLs for Safari too
+          if (currentUrlIndexRef.current < alternativeUrls.length) {
+            currentUrlIndexRef.current++;
+            setError(`Trying alternative connection ${currentUrlIndexRef.current + 1}...`);
+            attemptLoad(currentUrlIndexRef.current);
+          } else if (retryCountRef.current < maxRetries) {
             retryCountRef.current++;
+            currentUrlIndexRef.current = 0;
             setError(`Native HLS attempt ${retryCountRef.current}/${maxRetries} failed. Retrying...`);
             
             retryTimeoutRef.current = setTimeout(() => {
-              attemptLoad();
-            }, 5000);
+              attemptLoad(0);
+            }, 3000);
           } else {
             setError('Stream not available. Check OBS is streaming and server is running.');
             setIsLoading(false);
