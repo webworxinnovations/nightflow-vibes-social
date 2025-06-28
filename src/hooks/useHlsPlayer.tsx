@@ -69,12 +69,29 @@ export const useHlsPlayer = ({ hlsUrl, isLive = false, autoplay = false, muted =
     console.error('Fatal:', data.fatal);
     console.error('URL:', data.url);
     console.error('Response Code:', data.response?.code);
+    
+    // Check if this is a stream key validation error
+    if (data.response?.code === 404 || data.response?.code === 403) {
+      console.error('🔑 STREAM KEY ISSUE: Server rejected the stream key');
+      console.error('💡 This usually means:');
+      console.error('   1. Stream key format is incorrect (should start with "nf_")');
+      console.error('   2. OBS is not streaming yet');
+      console.error('   3. Stream key doesn\'t match what\'s in OBS');
+    }
+    
     console.groupEnd();
     
     if (data.fatal) {
       switch (data.type) {
         case Hls.ErrorTypes.NETWORK_ERROR:
           console.error('🌐 Network error detected');
+          
+          // Check if this is a stream key format issue
+          if (data.response?.code === 404) {
+            setError('❌ Stream not found. Check your stream key format and ensure OBS is streaming.');
+            setIsLoading(false);
+            return;
+          }
           
           // Only test network connectivity if we haven't recently
           if (Date.now() - lastNetworkTest > 30000) {
@@ -89,7 +106,7 @@ export const useHlsPlayer = ({ hlsUrl, isLive = false, autoplay = false, muted =
           if (canRetry) {
             setError(`Connection failed - retrying in 20 seconds (${getCurrentRetryCount()}/${maxRetries})`);
           } else {
-            setError('❌ Stream unavailable. Server may be offline or not streaming.');
+            setError('❌ Stream unavailable. Ensure OBS is streaming with the correct stream key format (nf_...)');
             setIsLoading(false);
           }
           break;
@@ -128,7 +145,21 @@ export const useHlsPlayer = ({ hlsUrl, isLive = false, autoplay = false, muted =
     console.group('🎬 HLS Connection Attempt');
     console.log('Attempt:', getCurrentRetryCount() + 1, '/', maxRetries + 1);
     console.log('HLS URL:', hlsUrl);
-    console.log('Expected HLS Format: http://67.205.179.77:8888/live/[streamKey]/index.m3u8');
+    console.log('Expected HLS Format: http://67.205.179.77:8888/live/nf_[streamKey]/index.m3u8');
+    
+    // Validate stream key format
+    const streamKeyMatch = hlsUrl.match(/\/live\/([^\/]+)\/index\.m3u8/);
+    if (streamKeyMatch) {
+      const streamKey = streamKeyMatch[1];
+      console.log('Extracted Stream Key:', streamKey);
+      if (!streamKey.startsWith('nf_')) {
+        console.error('❌ INVALID STREAM KEY FORMAT - Must start with "nf_"');
+        setError('❌ Invalid stream key format. Please generate a new stream key.');
+        setIsLoading(false);
+        return;
+      }
+    }
+    
     console.groupEnd();
 
     // Clean up existing HLS instance

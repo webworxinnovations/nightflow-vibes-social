@@ -4,10 +4,11 @@ import { URLGenerator } from './core/urlGenerator';
 
 export class StreamKeyGenerator {
   static generate(userId: string): string {
-    // Generate a unique stream key
+    // Generate a unique stream key with the required "nf_" prefix
     const timestamp = Date.now();
     const randomId = uuidv4().split('-')[0];
-    return `${userId.split('-')[0]}_${timestamp}_${randomId}`;
+    const userPrefix = userId.split('-')[0];
+    return `nf_${userPrefix}_${timestamp}_${randomId}`;
   }
 
   static generateUrls(streamKey: string) {
