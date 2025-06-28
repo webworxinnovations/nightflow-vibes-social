@@ -3,15 +3,15 @@ import { EnvironmentConfig } from './environment';
 
 export class URLGenerator {
   static getApiBaseUrl(): string {
-    // Use DigitalOcean domain for API calls
+    // Use droplet IP for API calls since that's where our server is running
     return EnvironmentConfig.isProduction() 
-      ? `https://${EnvironmentConfig.getDigitalOceanDomain()}`
+      ? `http://${EnvironmentConfig.getDropletIP()}:3001`
       : 'http://localhost:3001';
   }
 
   static getOBSServerUrl(): string {
-    // Use DigitalOcean domain for RTMP - your server logs show this is working
-    return `rtmp://${EnvironmentConfig.getDigitalOceanDomain()}:${EnvironmentConfig.getRtmpPort()}/live`;
+    // Use droplet IP for RTMP - this is what works with OBS
+    return `rtmp://${EnvironmentConfig.getDropletIP()}:${EnvironmentConfig.getRtmpPort()}/live`;
   }
 
   static getRtmpUrl(): string {
@@ -19,15 +19,15 @@ export class URLGenerator {
   }
 
   static getHlsUrl(streamKey: string): string {
-    // Use DigitalOcean domain for HLS video playback
-    const baseUrl = `https://${EnvironmentConfig.getDigitalOceanDomain()}`;
+    // Use droplet IP for HLS video playback
+    const baseUrl = `http://${EnvironmentConfig.getDropletIP()}:${EnvironmentConfig.getHlsPort()}`;
     return `${baseUrl}/live/${streamKey}/index.m3u8`;
   }
 
   static getWebSocketUrl(streamKey: string): string {
-    // Use DigitalOcean domain for WebSocket connections
-    const protocol = EnvironmentConfig.isProduction() ? 'wss' : 'ws';
-    const domain = EnvironmentConfig.getDigitalOceanDomain();
-    return `${protocol}://${domain}/ws/stream/${streamKey}`;
+    // Use droplet IP for WebSocket connections
+    const protocol = EnvironmentConfig.isProduction() ? 'ws' : 'ws';
+    const host = `${EnvironmentConfig.getDropletIP()}:3001`;
+    return `${protocol}://${host}/ws/stream/${streamKey}`;
   }
 }
