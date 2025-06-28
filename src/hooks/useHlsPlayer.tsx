@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from 'react';
 import Hls from 'hls.js';
 import { useHlsRetry } from './useHlsRetry';
@@ -108,12 +107,12 @@ export const useHlsPlayer = ({ hlsUrl, isLive = false, autoplay = false, muted =
         
         const canRetry = scheduleRetry(() => {
           attemptLoad();
-        }, 20000);
+        }, 15000);
 
         if (canRetry) {
-          setError(`Native playback error (${getCurrentRetryCount()}/${maxRetries}). Retrying in 20 seconds...`);
+          setError(`Native playback error (${getCurrentRetryCount()}/${maxRetries}). Retrying in 15 seconds...`);
         } else {
-          setError('Video playback not supported or stream unavailable');
+          setError('Video playback not supported or stream unavailable. Try generating a new stream key.');
           setIsLoading(false);
         }
       });
@@ -241,8 +240,26 @@ export const useHlsPlayer = ({ hlsUrl, isLive = false, autoplay = false, muted =
     isMuted,
     error,
     isLoading,
-    handlePlayPause,
-    handleMuteToggle,
-    handleFullscreen
+    handlePlayPause: () => {
+      const video = videoRef.current;
+      if (!video) return;
+      
+      try {
+        baseHandlePlayPause(video);
+      } catch (err) {
+        console.error('Play/pause error:', err);
+        setError('Failed to control video playback');
+      }
+    },
+    handleMuteToggle: () => {
+      const video = videoRef.current;
+      if (!video) return;
+      baseHandleMuteToggle(video);
+    },
+    handleFullscreen: () => {
+      const video = videoRef.current;
+      if (!video) return;
+      baseHandleFullscreen(video);
+    }
   };
 };

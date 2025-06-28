@@ -1,6 +1,5 @@
 
 import { useState, useEffect } from 'react';
-import { EnvironmentConfig } from '@/services/streaming/core/environment';
 
 export const useServerTest = () => {
   const [serverTest, setServerTest] = useState<{ available: boolean; details: string[] } | null>(null);
@@ -11,9 +10,10 @@ export const useServerTest = () => {
     
     const results = [];
     
-    // Simplified connectivity tests - don't spam the network
+    // Test streaming server endpoints
     const testUrls = [
-      { url: 'http://67.205.179.77:3001/health', name: 'API Server Health' },
+      { url: 'http://67.205.179.77:8888/health', name: 'HLS Server Health' },
+      { url: 'http://67.205.179.77:1935/health', name: 'RTMP Server Health' },
       { url: 'https://httpbin.org/get', name: 'Internet Connectivity' }
     ];
 
@@ -30,7 +30,7 @@ export const useServerTest = () => {
         });
         
         clearTimeout(timeoutId);
-        results.push(`✅ ${test.name}: Connected`);
+        results.push(`✅ ${test.name}: Connected (${response.status})`);
         console.log(`✅ ${test.name}: OK`);
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : 'Connection failed';
@@ -57,33 +57,38 @@ export const useServerTest = () => {
 
   const handleTestServer = async () => {
     setTestingServer(true);
-    console.log('🔍 Starting server connectivity test...');
+    console.log('🔍 Starting comprehensive server connectivity test...');
     
     try {
       const networkResults = await testNetworkConnectivity();
-      const envResult = await EnvironmentConfig.checkServerStatus();
+      
+      // Check if streaming servers are available
+      const hlsAvailable = networkResults.some(r => r.includes('HLS Server Health: Connected'));
+      const rtmpAvailable = networkResults.some(r => r.includes('RTMP Server Health: Connected'));
       
       const combinedDetails = [
-        ...envResult.details,
+        '🏥 Server Health Check Results:',
+        hlsAvailable ? '✅ HLS Streaming Server: Online' : '❌ HLS Streaming Server: Offline',
+        rtmpAvailable ? '✅ RTMP Streaming Server: Online' : '❌ RTMP Streaming Server: Offline',
         '',
         '🌐 Network Connectivity Tests:',
         ...networkResults
       ];
 
       setServerTest({ 
-        available: envResult.available, 
+        available: hlsAvailable && rtmpAvailable, 
         details: combinedDetails
       });
       
-      console.log('Server test completed:', envResult);
+      console.log('Server test completed:', { hlsAvailable, rtmpAvailable });
     } catch (error) {
       console.error('Server test failed:', error);
       setServerTest({ 
         available: false, 
         details: [
           '❌ Server connectivity test failed', 
-          'Network connectivity issues detected',
-          'Check your internet connection and firewall settings'
+          'Streaming servers are not responding',
+          'Check server deployment and firewall settings'
         ] 
       });
     } finally {
@@ -91,7 +96,7 @@ export const useServerTest = () => {
     }
   };
 
-  // Auto-test server on mount - but only once
+  // Auto-test server on mount
   useEffect(() => {
     handleTestServer();
   }, []);

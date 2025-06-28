@@ -46,7 +46,7 @@ export const useHlsErrorHandler = ({
       
       clearTimeout(timeoutId);
       console.log(`✅ ${description} - Response status:`, response.status);
-      return true;
+      return response.ok;
     } catch (error) {
       console.error(`❌ ${description} - Network Error:`, error instanceof Error ? error.message : 'Unknown error');
       return false;
@@ -77,11 +77,12 @@ export const useHlsErrorHandler = ({
           console.error('🌐 Network error detected');
           
           if (data.response?.code === 404) {
-            setError('❌ Stream not found. Check your stream key format and ensure OBS is streaming.');
+            setError('❌ Stream not found. Please generate a NEW stream key and start OBS streaming.');
             setIsLoading(false);
             return;
           }
           
+          // Test network connectivity but don't spam
           if (Date.now() - lastNetworkTest > 30000) {
             logNetworkRequest(hlsUrl, 'HLS Stream Endpoint');
           }
@@ -89,12 +90,12 @@ export const useHlsErrorHandler = ({
           const canRetry = scheduleRetry(() => {
             console.log(`🔄 Retry attempt ${getCurrentRetryCount()}/${maxRetries} for HLS connection`);
             attemptLoad();
-          }, 20000);
+          }, 15000);
 
           if (canRetry) {
-            setError(`Connection failed - retrying in 20 seconds (${getCurrentRetryCount()}/${maxRetries})`);
+            setError(`Connection failed - retrying in 15 seconds (${getCurrentRetryCount()}/${maxRetries})`);
           } else {
-            setError('❌ Stream unavailable. Ensure OBS is streaming with the correct stream key format (nf_...)');
+            setError('❌ Stream unavailable. Generate a NEW stream key and ensure OBS is streaming.');
             setIsLoading(false);
           }
           break;
@@ -102,12 +103,11 @@ export const useHlsErrorHandler = ({
         case Hls.ErrorTypes.MEDIA_ERROR:
           console.error('📺 Media error - attempting recovery');
           setError('Media format error - trying to recover...');
-          // Media recovery will be handled by the main hook
           break;
           
         default:
           console.error('❌ Fatal HLS error:', data.type, data.details);
-          setError(`Stream error: ${data.details}`);
+          setError(`Stream error: ${data.details}. Try generating a new stream key.`);
           setIsLoading(false);
           break;
       }
