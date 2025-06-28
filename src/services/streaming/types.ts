@@ -15,4 +15,5 @@ export interface ServerStatusResponse {
   url: string;
   version?: string;
   uptime?: number;
+  error?: string;
 }
