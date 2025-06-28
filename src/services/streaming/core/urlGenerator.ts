@@ -28,7 +28,7 @@ export class URLGenerator {
     console.log('- Droplet IP:', dropletIP);
     console.log('- HLS Port from config:', hlsPort);
     
-    // Use the correct port 8888 that we confirmed is listening
+    // FIXED: Use the correct port 8888 and correct path structure
     const hlsUrl = `http://${dropletIP}:${hlsPort}/live/${streamKey}/index.m3u8`;
     console.log('- Generated HLS URL:', hlsUrl);
     
@@ -42,14 +42,14 @@ export class URLGenerator {
     return `${protocol}://${host}/ws/stream/${streamKey}`;
   }
 
-  // Add method to test multiple HLS URLs if needed
+  // Updated alternative URLs to prioritize the correct HLS endpoint
   static getAlternativeHlsUrls(streamKey: string): string[] {
     const dropletIP = EnvironmentConfig.getDropletIP();
     return [
-      `http://${dropletIP}:8888/live/${streamKey}/index.m3u8`, // Primary - confirmed working
-      `http://${dropletIP}:8080/live/${streamKey}/index.m3u8`, // Alternative
-      `https://${EnvironmentConfig.getDigitalOceanDomain()}/hls/${streamKey}/index.m3u8`, // Via domain
-      `http://${dropletIP}:3001/hls/${streamKey}/index.m3u8` // Via API port
+      `http://${dropletIP}:8888/live/${streamKey}/index.m3u8`, // Primary - correct HLS server
+      `http://${dropletIP}:8080/live/${streamKey}/index.m3u8`, // Alternative HLS port
+      `https://${EnvironmentConfig.getDigitalOceanDomain()}/live/${streamKey}/index.m3u8`, // Via domain
+      `http://${dropletIP}:3001/live/${streamKey}/index.m3u8` // Via API port (less likely to work)
     ];
   }
 
