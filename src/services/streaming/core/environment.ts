@@ -1,6 +1,6 @@
 
 export class EnvironmentConfig {
-  private static readonly DIGITALOCEAN_APP_URL = 'https://nightflow-app-wijb2.ondigitalocean.app';
+  private static readonly DROPLET_IP = '67.205.179.77';
   private static readonly RTMP_PORT = 1935;
   private static readonly HLS_PORT = 8080;
 
@@ -8,12 +8,12 @@ export class EnvironmentConfig {
     return window.location.hostname !== 'localhost';
   }
 
-  static isDigitalOceanEnvironment(): boolean {
-    return window.location.hostname === 'nightflow-app-wijb2.ondigitalocean.app';
+  static isDropletEnvironment(): boolean {
+    return true; // Always use droplet
   }
 
-  static getDigitalOceanAppUrl(): string {
-    return this.DIGITALOCEAN_APP_URL;
+  static getDropletIP(): string {
+    return this.DROPLET_IP;
   }
 
   static getRtmpPort(): number {
@@ -25,19 +25,19 @@ export class EnvironmentConfig {
   }
 
   static getActualDeploymentUrl(): string {
-    return this.DIGITALOCEAN_APP_URL;
+    return `http://${this.DROPLET_IP}:3001`;
   }
 
   static debugUrls(streamKey: string) {
-    const rtmpUrl = `rtmp://nightflow-app-wijb2.ondigitalocean.app:${this.RTMP_PORT}/live`;
-    const hlsUrl = `${this.DIGITALOCEAN_APP_URL}/live/${streamKey}/index.m3u8`;
+    const rtmpUrl = `rtmp://${this.DROPLET_IP}:${this.RTMP_PORT}/live`;
+    const hlsUrl = `http://${this.DROPLET_IP}:3001/live/${streamKey}/index.m3u8`;
     
-    console.log('🔍 DigitalOcean App Configuration:');
+    console.log('🔍 DigitalOcean Droplet Configuration:');
     console.log('- RTMP URL (for OBS):', rtmpUrl);
     console.log('- HLS URL (for playback):', hlsUrl);
     console.log('- Stream Key:', streamKey);
-    console.log('- DigitalOcean App URL:', this.getActualDeploymentUrl());
-    console.log('- All URLs using HTTPS/secure protocols');
+    console.log('- Droplet IP:', this.DROPLET_IP);
+    console.log('- All URLs using Droplet IP directly');
     
     return { rtmpUrl, hlsUrl };
   }
@@ -46,13 +46,13 @@ export class EnvironmentConfig {
     const results: string[] = [];
     let serverAvailable = false;
 
-    console.log('🔍 Testing DigitalOcean app deployment...');
+    console.log('🔍 Testing DigitalOcean droplet deployment...');
     
     try {
       const deploymentUrl = this.getActualDeploymentUrl();
       const healthUrl = `${deploymentUrl}/health`;
       
-      console.log(`Testing DigitalOcean app health: ${healthUrl}`);
+      console.log(`Testing DigitalOcean droplet health: ${healthUrl}`);
       
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
@@ -69,30 +69,30 @@ export class EnvironmentConfig {
       clearTimeout(timeoutId);
       
       if (response.ok) {
-        results.push('✅ DigitalOcean App: Online and responding');
-        results.push('✅ HTTPS Protocol: Secure connection established');
+        results.push('✅ DigitalOcean Droplet: Online and responding');
+        results.push('✅ HTTP Protocol: Direct connection established');
         results.push('✅ Health Check: Passing');
         results.push('✅ RTMP Server: Ready for OBS connections');
-        results.push('✅ HLS Streaming: Ready for HTTPS playback');
+        results.push('✅ HLS Streaming: Ready for HTTP playback');
         results.push('✅ WebSocket: Available for real-time updates');
         results.push('');
         results.push('🎯 STREAMING READY:');
-        results.push(`• OBS Server: rtmp://nightflow-app-wijb2.ondigitalocean.app:1935/live`);
-        results.push(`• Web Streaming: ${deploymentUrl}/live/[streamKey]/index.m3u8`);
-        results.push('• All services using secure HTTPS/WSS protocols');
+        results.push(`• OBS Server: rtmp://${this.DROPLET_IP}:1935/live`);
+        results.push(`• Web Streaming: http://${this.DROPLET_IP}:3001/live/[streamKey]/index.m3u8`);
+        results.push('• All services using DigitalOcean Droplet IP');
         serverAvailable = true;
-        console.log('✅ DigitalOcean app deployment confirmed operational');
+        console.log('✅ DigitalOcean droplet deployment confirmed operational');
       } else {
-        results.push(`⚠️ App responded with status: ${response.status}`);
+        results.push(`⚠️ Droplet responded with status: ${response.status}`);
         results.push('• Server may be starting up or experiencing issues');
       }
       
     } catch (error) {
-      console.error('❌ DigitalOcean app deployment test failed:', error);
-      results.push('❌ Cannot reach DigitalOcean app deployment');
-      results.push('• Check if the app is running');
+      console.error('❌ DigitalOcean droplet deployment test failed:', error);
+      results.push('❌ Cannot reach DigitalOcean droplet deployment');
+      results.push('• Check if the droplet is running');
       results.push('• Verify network connectivity');
-      results.push('• Ensure HTTPS is properly configured');
+      results.push('• Ensure HTTP is properly configured');
     }
 
     return {

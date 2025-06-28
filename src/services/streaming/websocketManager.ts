@@ -10,16 +10,15 @@ export class WebSocketManager {
   private reconnectAttempts = 0;
 
   connectToStreamStatus(streamKey: string): void {
-    console.log('🔌 Connecting to DigitalOcean WebSocket for stream status...');
+    console.log('🔌 Connecting to DigitalOcean Droplet WebSocket for stream status...');
     
-    // Try to connect to the actual WebSocket server
-    const wsUrl = `wss://nightflow-app-wijb2.ondigitalocean.app/ws/stream/${streamKey}`;
+    const wsUrl = `ws://67.205.179.77:3001/ws/stream/${streamKey}`;
     
     try {
       this.websocket = new WebSocket(wsUrl);
       
       this.websocket.onopen = () => {
-        console.log('✅ Connected to DigitalOcean WebSocket');
+        console.log('✅ Connected to DigitalOcean Droplet WebSocket');
         this.reconnectAttempts = 0;
       };
       
@@ -66,20 +65,17 @@ export class WebSocketManager {
   private fallbackToPolling(streamKey: string): void {
     console.log('📡 Using polling fallback for stream status');
     
-    // Clear any existing interval
     if (this.statusInterval) {
       clearInterval(this.statusInterval);
     }
     
-    // Poll the stream status every 10 seconds
     this.statusInterval = setInterval(async () => {
       try {
-        const response = await fetch(`https://nightflow-app-wijb2.ondigitalocean.app/api/stream/${streamKey}/status`);
+        const response = await fetch(`http://67.205.179.77:3001/api/stream/${streamKey}/status`);
         if (response.ok) {
           const status = await response.json() as StreamStatus;
           this.statusCallbacks.forEach(callback => callback(status));
         } else {
-          // Stream not found, emit offline status
           const offlineStatus: StreamStatus = {
             isLive: false,
             viewerCount: 0,
@@ -92,7 +88,6 @@ export class WebSocketManager {
         }
       } catch (error) {
         console.error('❌ Failed to poll stream status:', error);
-        // Emit offline status on error
         const offlineStatus: StreamStatus = {
           isLive: false,
           viewerCount: 0,
@@ -105,7 +100,6 @@ export class WebSocketManager {
       }
     }, 10000);
     
-    // Initial status check
     setTimeout(() => {
       const initialStatus: StreamStatus = {
         isLive: false,

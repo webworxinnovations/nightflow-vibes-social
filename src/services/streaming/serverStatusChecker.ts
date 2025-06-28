@@ -5,8 +5,8 @@ import { EnvironmentConfig } from './core/environment';
 export class ServerStatusChecker {
   static async checkStatus(): Promise<ServerStatusResponse> {
     try {
-      console.log('🔍 Testing DigitalOcean app server connectivity...');
-      const deploymentUrl = EnvironmentConfig.getActualDeploymentUrl();
+      console.log('🔍 Testing DigitalOcean droplet server connectivity...');
+      const deploymentUrl = 'http://67.205.179.77:3001';
       const healthUrl = `${deploymentUrl}/health`;
       
       console.log('📡 Testing server at:', healthUrl);
@@ -30,7 +30,7 @@ export class ServerStatusChecker {
       
       if (response.ok) {
         const data = await response.json().catch(() => ({ status: 'ok' }));
-        console.log('✅ DigitalOcean app is operational:', data);
+        console.log('✅ DigitalOcean droplet is operational:', data);
         
         return {
           available: true,
@@ -39,7 +39,7 @@ export class ServerStatusChecker {
           uptime: data.uptime || 0
         };
       } else {
-        console.log('⚠️ App responded with error:', response.status);
+        console.log('⚠️ Droplet responded with error:', response.status);
         return {
           available: false,
           url: deploymentUrl,
@@ -47,11 +47,11 @@ export class ServerStatusChecker {
         };
       }
     } catch (error) {
-      console.error('❌ DigitalOcean app connectivity test failed:', error);
+      console.error('❌ DigitalOcean droplet connectivity test failed:', error);
       
       return {
         available: false,
-        url: EnvironmentConfig.getActualDeploymentUrl(),
+        url: 'http://67.205.179.77:3001',
         error: error instanceof Error ? error.message : 'Connection failed'
       };
     }

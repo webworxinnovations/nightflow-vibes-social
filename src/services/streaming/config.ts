@@ -1,11 +1,11 @@
 
 export class StreamingConfig {
   static getOBSServerUrl(): string {
-    return 'rtmp://nightflow-app-wijb2.ondigitalocean.app:1935';
+    return 'rtmp://67.205.179.77:1935';
   }
 
   static getApiBaseUrl(): string {
-    return 'https://nightflow-app-wijb2.ondigitalocean.app';
+    return 'http://67.205.179.77:3001';
   }
 
   static getRtmpUrl(): string {
@@ -17,7 +17,7 @@ export class StreamingConfig {
   }
 
   static getWebSocketUrl(streamKey: string): string {
-    return `wss://nightflow-app-wijb2.ondigitalocean.app/ws/stream/${streamKey}`;
+    return `ws://67.205.179.77:3001/ws/stream/${streamKey}`;
   }
 
   static isProduction(): boolean {
@@ -49,20 +49,20 @@ export class StreamingConfig {
   static getTroubleshootingSteps(): string[] {
     return [
       `✅ Use exact server URL: ${this.getOBSServerUrl()}`,
-      '✅ Ensure DigitalOcean app is running',
+      '✅ Ensure DigitalOcean droplet is running',
       '✅ Restart OBS completely after configuration',
       '✅ Test from different network (mobile hotspot)',
-      '✅ Check DigitalOcean app deployment status',
+      '✅ Check DigitalOcean droplet deployment status',
       '✅ Use generated stream key exactly as provided',
       '✅ In OBS: Service = Custom, not a preset service',
-      '⚠️ If fails: Check DigitalOcean app logs'
+      '⚠️ If fails: Check DigitalOcean droplet logs'
     ];
   }
 
   static getOBSSetupInstructions() {
     return {
       server: this.getOBSServerUrl(),
-      backup_server: this.getOBSServerUrl(), // Same server for now
+      backup_server: this.getOBSServerUrl(),
       steps: [
         'Open OBS Studio',
         'Go to Settings → Stream',
@@ -81,7 +81,6 @@ export class StreamingConfig {
     console.log('🧪 Testing RTMP server connectivity...');
     console.log('Server URL:', serverUrl);
     
-    // Since we can't directly test RTMP from browser, we test the HTTP equivalent
     const testUrl = `${this.getApiBaseUrl()}/health`;
     
     try {
@@ -107,7 +106,7 @@ export class StreamingConfig {
           'Ensure your stream key is correct',
           'Start streaming from OBS'
         ] : [
-          'Check if DigitalOcean app is running',
+          'Check if DigitalOcean droplet is running',
           'Verify server deployment status',
           'Try again in a few moments'
         ]
@@ -132,7 +131,7 @@ export class StreamingConfig {
         },
         recommendations: [
           'Check internet connection',
-          'Verify DigitalOcean app is deployed',
+          'Verify DigitalOcean droplet is deployed',
           'Try again later'
         ]
       };

@@ -4,10 +4,9 @@ import { StreamingConfig } from './config';
 export class StreamingAPI {
   static async getServerStatus(): Promise<{ available: boolean; url: string; version?: string; uptime?: number }> {
     try {
-      console.log('🔍 Checking DigitalOcean server status...');
-      const baseUrl = StreamingConfig.getApiBaseUrl();
+      console.log('🔍 Checking DigitalOcean droplet server status...');
+      const baseUrl = 'http://67.205.179.77:3001';
       
-      // Test if the API server is responding
       const response = await fetch(`${baseUrl}/api/health`, {
         method: 'GET',
         signal: AbortSignal.timeout(10000)
@@ -15,7 +14,7 @@ export class StreamingAPI {
       
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ DigitalOcean server is online and ready');
+        console.log('✅ DigitalOcean droplet server is online and ready');
         
         return {
           available: true,
@@ -24,21 +23,21 @@ export class StreamingAPI {
           uptime: data.uptime || 0
         };
       } else {
-        console.error('❌ DigitalOcean server not responding:', response.status);
+        console.error('❌ DigitalOcean droplet server not responding:', response.status);
         return { available: false, url: baseUrl };
       }
     } catch (error) {
-      console.error('❌ DigitalOcean server status check failed:', error);
+      console.error('❌ DigitalOcean droplet server status check failed:', error);
       return {
         available: false,
-        url: StreamingConfig.getApiBaseUrl()
+        url: 'http://67.205.179.77:3001'
       };
     }
   }
 
   static async getStreamStatus(streamKey: string) {
     try {
-      const baseUrl = StreamingConfig.getApiBaseUrl();
+      const baseUrl = 'http://67.205.179.77:3001';
       const response = await fetch(`${baseUrl}/api/stream/${streamKey}/status`, {
         method: 'GET',
         signal: AbortSignal.timeout(10000)
@@ -81,7 +80,7 @@ export class StreamingAPI {
 
   static async testRtmpConnection(streamKey: string): Promise<{ success: boolean; message: string }> {
     try {
-      const baseUrl = StreamingConfig.getApiBaseUrl();
+      const baseUrl = 'http://67.205.179.77:3001';
       const response = await fetch(`${baseUrl}/api/rtmp/test`, {
         method: 'POST',
         headers: {
