@@ -1,74 +1,28 @@
+
 import { useStreamKey } from "@/hooks/useStreamKey";
+import { useStreamDuration } from "@/hooks/useStreamDuration";
+import { useServerTest } from "@/hooks/useServerTest";
 import { RealVideoPlayer } from "./RealVideoPlayer";
 import { StreamDiagnostics } from "./StreamDiagnostics";
+import { StreamStatusHeader } from "./StreamStatusHeader";
+import { ServerTestResults } from "./ServerTestResults";
+import { StreamStatsGrid } from "./StreamStatsGrid";
+import { StreamTroubleshootingAlerts } from "./StreamTroubleshootingAlerts";
 import { GlassmorphicCard } from "@/components/ui/glassmorphic-card";
-import { Badge } from "@/components/ui/badge";
-import { Users, Timer, Activity, Eye, RefreshCw, AlertCircle, TestTube, Server } from "lucide-react";
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
 import { EnvironmentConfig } from "@/services/streaming/core/environment";
-import { URLGenerator } from "@/services/streaming/core/urlGenerator";
 
 export const StreamPreviewSection = () => {
   const { streamData, isLive, viewerCount } = useStreamKey();
-  const [streamDuration, setStreamDuration] = useState(0);
+  const { streamDuration, formatDuration } = useStreamDuration(isLive);
+  const { serverTest, testingServer, handleTestServer } = useServerTest();
   const [refreshKey, setRefreshKey] = useState(0);
   const [showDiagnostics, setShowDiagnostics] = useState(false);
-  const [serverTest, setServerTest] = useState<{ available: boolean; details: string[] } | null>(null);
-  const [testingServer, setTestingServer] = useState(false);
-
-  useEffect(() => {
-    if (!isLive) {
-      setStreamDuration(0);
-      return;
-    }
-
-    const interval = setInterval(() => {
-      setStreamDuration(prev => prev + 1);
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [isLive]);
-
-  const formatDuration = (seconds: number) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    
-    if (hours > 0) {
-      return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    }
-    return `${minutes}:${secs.toString().padStart(2, '0')}`;
-  };
 
   const handleRefreshStream = () => {
     console.log('🔄 Refreshing stream player...');
     setRefreshKey(prev => prev + 1);
   };
-
-  const handleTestServer = async () => {
-    setTestingServer(true);
-    console.log('🔍 Testing DigitalOcean server connectivity...');
-    
-    try {
-      const result = await EnvironmentConfig.checkServerStatus();
-      setServerTest(result);
-      console.log('Server test results:', result);
-    } catch (error) {
-      console.error('Server test failed:', error);
-      setServerTest({ 
-        available: false, 
-        details: ['❌ Server connectivity test failed', 'Check your internet connection and try again'] 
-      });
-    } finally {
-      setTestingServer(false);
-    }
-  };
-
-  // Auto-test server on component mount
-  useEffect(() => {
-    handleTestServer();
-  }, []);
 
   // Debug stream configuration
   useEffect(() => {
@@ -107,109 +61,19 @@ export const StreamPreviewSection = () => {
     <div className="space-y-6">
       <GlassmorphicCard>
         <div className="space-y-4">
-          {/* Stream Status Header */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Eye className="h-5 w-5 text-primary" />
-              <h3 className="text-lg font-semibold">Your Live Stream</h3>
-            </div>
-            
-            <div className="flex items-center gap-4">
-              <Button
-                onClick={handleRefreshStream}
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-2"
-              >
-                <RefreshCw className="h-4 w-4" />
-                Refresh
-              </Button>
+          <StreamStatusHeader
+            isLive={isLive}
+            viewerCount={viewerCount}
+            streamDuration={streamDuration}
+            streamUrl={streamData.streamUrl}
+            onRefresh={handleRefreshStream}
+            onTestServer={handleTestServer}
+            onShowDiagnostics={() => setShowDiagnostics(!showDiagnostics)}
+            testingServer={testingServer}
+            formatDuration={formatDuration}
+          />
 
-              <Button
-                onClick={handleTestServer}
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-2"
-                disabled={testingServer}
-              >
-                <TestTube className="h-4 w-4" />
-                {testingServer ? 'Testing...' : 'Test Server'}
-              </Button>
-
-              <Button
-                onClick={() => setShowDiagnostics(!showDiagnostics)}
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-2"
-              >
-                🔍 Diagnostics
-              </Button>
-              
-              {isLive ? (
-                <Badge variant="destructive" className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-                  LIVE
-                </Badge>
-              ) : (
-                <Badge variant="secondary">CONNECTING...</Badge>
-              )}
-              
-              {streamData.streamUrl && (
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <Users className="h-4 w-4" />
-                    {viewerCount}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Timer className="h-4 w-4" />
-                    {formatDuration(streamDuration)}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Activity className="h-4 w-4" />
-                    Broadcasting
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Server Test Results */}
-          {serverTest && (
-            <div className={`p-4 rounded-lg border ${
-              serverTest.available 
-                ? 'bg-green-500/10 border-green-500/20' 
-                : 'bg-red-500/10 border-red-500/20'
-            }`}>
-              <div className="flex items-center gap-2 mb-3">
-                <Server className="h-5 w-5" />
-                <span className="font-medium">
-                  {serverTest.available ? '✅ Server Status: Online' : '❌ Server Status: Offline'}
-                </span>
-              </div>
-              <div className="text-sm space-y-1">
-                {serverTest.details.map((detail, index) => (
-                  <p key={index} className={
-                    detail.includes('✅') ? 'text-green-400' : 
-                    detail.includes('❌') ? 'text-red-400' : 
-                    detail.includes('🚨') || detail.includes('💡') ? 'font-medium text-yellow-400' :
-                    'text-muted-foreground'
-                  }>
-                    {detail}
-                  </p>
-                ))}
-              </div>
-              
-              {!serverTest.available && (
-                <div className="mt-3 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded">
-                  <p className="text-yellow-400 font-medium mb-2">⚠️ Action Required:</p>
-                  <p className="text-sm text-yellow-300">
-                    Your DigitalOcean streaming server appears to be offline. Please check your droplet status 
-                    and restart the streaming services if needed.
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
+          <ServerTestResults serverTest={serverTest} />
 
           {/* Video Player Preview */}
           <div className="aspect-video bg-black rounded-lg overflow-hidden relative">
@@ -228,50 +92,7 @@ export const StreamPreviewSection = () => {
             </div>
           </div>
 
-          {/* Server Status Alert */}
-          {serverTest && !serverTest.available && (
-            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <AlertCircle className="h-4 w-4 text-red-500" />
-                <span className="font-medium text-red-400">Critical: Streaming Server Offline</span>
-              </div>
-              <div className="text-sm text-red-300 space-y-2">
-                <p>Your DigitalOcean streaming server is not responding. This means:</p>
-                <ul className="list-disc list-inside space-y-1 ml-4">
-                  <li>OBS cannot connect to stream</li>
-                  <li>No video will be available for viewers</li>
-                  <li>Stream preview will not work</li>
-                </ul>
-                <p className="font-medium mt-3">To fix this issue:</p>
-                <ul className="list-disc list-inside space-y-1 ml-4">
-                  <li>Check if your DigitalOcean droplet is running</li>
-                  <li>SSH into the droplet and restart streaming services</li>
-                  <li>Verify firewall allows ports 1935, 8080, 8888</li>
-                  <li>Check droplet resource usage (CPU/Memory)</li>
-                </ul>
-              </div>
-            </div>
-          )}
-
-          {/* Normal troubleshooting for when server is online */}
-          {serverTest && serverTest.available && (
-            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <AlertCircle className="h-4 w-4 text-yellow-500" />
-                <span className="font-medium text-yellow-400">Stream Troubleshooting</span>
-              </div>
-              <div className="text-sm text-yellow-300 space-y-1">
-                <p>Server is online! If your stream isn't appearing:</p>
-                <ul className="list-disc list-inside space-y-1 ml-4">
-                  <li>Wait 30-60 seconds after clicking "Start Streaming" in OBS</li>
-                  <li>Make sure OBS is using: <code className="bg-black/20 px-1 rounded">rtmp://67.205.179.77:1935/live</code></li>
-                  <li>Check that your stream key matches the one shown in diagnostics</li>
-                  <li>Try clicking the "Refresh" button above</li>
-                  <li>If still not working, stop and restart OBS streaming</li>
-                </ul>
-              </div>
-            </div>
-          )}
+          <StreamTroubleshootingAlerts serverTest={serverTest} />
 
           {/* Debug Information */}
           <div className="text-xs text-muted-foreground bg-muted/30 p-3 rounded-lg">
@@ -288,32 +109,12 @@ export const StreamPreviewSection = () => {
             </details>
           </div>
 
-          {/* Stream Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-            <div className="text-center p-3 bg-muted/50 rounded-lg">
-              <div className="text-muted-foreground">Status</div>
-              <div className="font-medium">
-                {isLive ? '🔴 LIVE' : '🔄 Connecting...'}
-              </div>
-            </div>
-            
-            <div className="text-center p-3 bg-muted/50 rounded-lg">
-              <div className="text-muted-foreground">Viewers</div>
-              <div className="font-medium">{viewerCount}</div>
-            </div>
-            
-            <div className="text-center p-3 bg-muted/50 rounded-lg">
-              <div className="text-muted-foreground">Duration</div>
-              <div className="font-medium">{formatDuration(streamDuration)}</div>
-            </div>
-            
-            <div className="text-center p-3 bg-muted/50 rounded-lg">
-              <div className="text-muted-foreground">Quality</div>
-              <div className="font-medium">
-                {isLive ? 'HD' : 'Connecting...'}
-              </div>
-            </div>
-          </div>
+          <StreamStatsGrid
+            isLive={isLive}
+            viewerCount={viewerCount}
+            streamDuration={streamDuration}
+            formatDuration={formatDuration}
+          />
 
           {/* Instructions */}
           <div className="text-center p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
