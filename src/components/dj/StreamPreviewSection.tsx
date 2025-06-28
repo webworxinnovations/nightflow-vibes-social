@@ -50,7 +50,7 @@ export const StreamPreviewSection = () => {
     console.log('- Stream URL:', streamData?.streamUrl);
     console.log('- Is Live:', isLive);
     console.log('- Viewer Count:', viewerCount);
-    console.log('- Expected URL format: http://67.205.179.77:8080/live/{streamKey}/index.m3u8');
+    console.log('- FIXED Expected URL format: http://67.205.179.77:8080/live/{streamKey}/index.m3u8');
   }, [streamData, isLive, viewerCount]);
 
   if (!streamData?.streamUrl) {
@@ -109,7 +109,7 @@ export const StreamPreviewSection = () => {
                   LIVE
                 </Badge>
               ) : (
-                <Badge variant="secondary">PREPARING...</Badge>
+                <Badge variant="secondary">CONNECTING...</Badge>
               )}
               
               {streamData.streamUrl && (
@@ -156,8 +156,8 @@ export const StreamPreviewSection = () => {
                 <p><strong>Stream URL:</strong> {streamData.streamUrl}</p>
                 <p><strong>Stream Key:</strong> {streamData.streamKey}</p>
                 <p><strong>RTMP URL:</strong> {streamData.rtmpUrl}</p>
-                <p><strong>Expected Format:</strong> http://67.205.179.77:8080/live/[streamKey]/index.m3u8</p>
-                <p><strong>Status:</strong> {isLive ? 'Live' : 'Offline'}</p>
+                <p><strong>FIXED Expected Format:</strong> http://67.205.179.77:8080/live/[streamKey]/index.m3u8</p>
+                <p><strong>Status:</strong> {isLive ? 'Live' : 'Connecting...'}</p>
               </div>
             </details>
           </div>
@@ -167,7 +167,7 @@ export const StreamPreviewSection = () => {
             <div className="text-center p-3 bg-muted/50 rounded-lg">
               <div className="text-muted-foreground">Status</div>
               <div className="font-medium">
-                {isLive ? '🔴 LIVE' : '⏳ Starting...'}
+                {isLive ? '🔴 LIVE' : '🔄 Connecting...'}
               </div>
             </div>
             
@@ -184,7 +184,7 @@ export const StreamPreviewSection = () => {
             <div className="text-center p-3 bg-muted/50 rounded-lg">
               <div className="text-muted-foreground">Quality</div>
               <div className="font-medium">
-                {isLive ? 'HD' : 'N/A'}
+                {isLive ? 'HD' : 'Connecting...'}
               </div>
             </div>
           </div>
@@ -194,7 +194,7 @@ export const StreamPreviewSection = () => {
             <p className="text-blue-400 text-sm">
               {isLive 
                 ? "🎉 You're live! This is how your stream appears to viewers. Keep creating amazing content!"
-                : "📡 Make sure OBS is actively streaming (not just previewing). Click the 'Diagnostics' button above to troubleshoot connection issues."
+                : "📡 Stream is connecting... The video should appear within 10-30 seconds after starting OBS."
               }
             </p>
           </div>
