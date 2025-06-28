@@ -3,7 +3,7 @@ import { RealVideoPlayer } from "./RealVideoPlayer";
 import { StreamDiagnostics } from "./StreamDiagnostics";
 import { GlassmorphicCard } from "@/components/ui/glassmorphic-card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Timer, Activity, Eye, RefreshCw, AlertCircle, TestTube } from "lucide-react";
+import { Users, Timer, Activity, Eye, RefreshCw, AlertCircle, TestTube, Server } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { EnvironmentConfig } from "@/services/streaming/core/environment";
@@ -14,7 +14,8 @@ export const StreamPreviewSection = () => {
   const [streamDuration, setStreamDuration] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
   const [showDiagnostics, setShowDiagnostics] = useState(false);
-  const [serverTest, setServerTest] = useState<{ available: boolean; testedUrls: string[] } | null>(null);
+  const [serverTest, setServerTest] = useState<{ available: boolean; details: string[] } | null>(null);
+  const [testingServer, setTestingServer] = useState(false);
 
   useEffect(() => {
     if (!isLive) {
@@ -46,16 +47,28 @@ export const StreamPreviewSection = () => {
   };
 
   const handleTestServer = async () => {
-    console.log('🔍 Testing server connectivity...');
+    setTestingServer(true);
+    console.log('🔍 Testing DigitalOcean server connectivity...');
+    
     try {
-      const result = await URLGenerator.testServerConnectivity();
+      const result = await EnvironmentConfig.checkServerStatus();
       setServerTest(result);
       console.log('Server test results:', result);
     } catch (error) {
       console.error('Server test failed:', error);
-      setServerTest({ available: false, testedUrls: ['Test failed'] });
+      setServerTest({ 
+        available: false, 
+        details: ['❌ Server connectivity test failed', 'Check your internet connection and try again'] 
+      });
+    } finally {
+      setTestingServer(false);
     }
   };
+
+  // Auto-test server on component mount
+  useEffect(() => {
+    handleTestServer();
+  }, []);
 
   // Debug stream configuration
   useEffect(() => {
@@ -117,9 +130,10 @@ export const StreamPreviewSection = () => {
                 variant="outline"
                 size="sm"
                 className="flex items-center gap-2"
+                disabled={testingServer}
               >
                 <TestTube className="h-4 w-4" />
-                Test Server
+                {testingServer ? 'Testing...' : 'Test Server'}
               </Button>
 
               <Button
@@ -161,18 +175,39 @@ export const StreamPreviewSection = () => {
 
           {/* Server Test Results */}
           {serverTest && (
-            <div className={`p-3 rounded-lg border ${serverTest.available ? 'bg-green-500/10 border-green-500/20' : 'bg-red-500/10 border-red-500/20'}`}>
-              <div className="flex items-center gap-2 mb-2">
-                <TestTube className="h-4 w-4" />
-                <span className="font-medium">Server Connectivity Test</span>
+            <div className={`p-4 rounded-lg border ${
+              serverTest.available 
+                ? 'bg-green-500/10 border-green-500/20' 
+                : 'bg-red-500/10 border-red-500/20'
+            }`}>
+              <div className="flex items-center gap-2 mb-3">
+                <Server className="h-5 w-5" />
+                <span className="font-medium">
+                  {serverTest.available ? '✅ Server Status: Online' : '❌ Server Status: Offline'}
+                </span>
               </div>
               <div className="text-sm space-y-1">
-                {serverTest.testedUrls.map((result, index) => (
-                  <p key={index} className={result.includes('Available') ? 'text-green-400' : 'text-red-400'}>
-                    {result}
+                {serverTest.details.map((detail, index) => (
+                  <p key={index} className={
+                    detail.includes('✅') ? 'text-green-400' : 
+                    detail.includes('❌') ? 'text-red-400' : 
+                    detail.includes('🚨') || detail.includes('💡') ? 'font-medium text-yellow-400' :
+                    'text-muted-foreground'
+                  }>
+                    {detail}
                   </p>
                 ))}
               </div>
+              
+              {!serverTest.available && (
+                <div className="mt-3 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded">
+                  <p className="text-yellow-400 font-medium mb-2">⚠️ Action Required:</p>
+                  <p className="text-sm text-yellow-300">
+                    Your DigitalOcean streaming server appears to be offline. Please check your droplet status 
+                    and restart the streaming services if needed.
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
@@ -193,24 +228,50 @@ export const StreamPreviewSection = () => {
             </div>
           </div>
 
-          {/* Troubleshooting Alert */}
-          <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <AlertCircle className="h-4 w-4 text-yellow-500" />
-              <span className="font-medium text-yellow-400">Stream Troubleshooting</span>
+          {/* Server Status Alert */}
+          {serverTest && !serverTest.available && (
+            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertCircle className="h-4 w-4 text-red-500" />
+                <span className="font-medium text-red-400">Critical: Streaming Server Offline</span>
+              </div>
+              <div className="text-sm text-red-300 space-y-2">
+                <p>Your DigitalOcean streaming server is not responding. This means:</p>
+                <ul className="list-disc list-inside space-y-1 ml-4">
+                  <li>OBS cannot connect to stream</li>
+                  <li>No video will be available for viewers</li>
+                  <li>Stream preview will not work</li>
+                </ul>
+                <p className="font-medium mt-3">To fix this issue:</p>
+                <ul className="list-disc list-inside space-y-1 ml-4">
+                  <li>Check if your DigitalOcean droplet is running</li>
+                  <li>SSH into the droplet and restart streaming services</li>
+                  <li>Verify firewall allows ports 1935, 8080, 8888</li>
+                  <li>Check droplet resource usage (CPU/Memory)</li>
+                </ul>
+              </div>
             </div>
-            <div className="text-sm text-yellow-300 space-y-1">
-              <p>If your stream isn't appearing after starting OBS:</p>
-              <ul className="list-disc list-inside space-y-1 ml-4">
-                <li>Wait 30-60 seconds after clicking "Start Streaming" in OBS</li>
-                <li>Make sure OBS is using: <code className="bg-black/20 px-1 rounded">rtmp://67.205.179.77:1935/live</code></li>
-                <li>Check that your stream key matches the one shown in diagnostics</li>
-                <li>Try clicking the "Refresh" button above</li>
-                <li>Use "Test Server" to check if the streaming server is available</li>
-                <li>If still not working, stop and restart OBS streaming</li>
-              </ul>
+          )}
+
+          {/* Normal troubleshooting for when server is online */}
+          {serverTest && serverTest.available && (
+            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertCircle className="h-4 w-4 text-yellow-500" />
+                <span className="font-medium text-yellow-400">Stream Troubleshooting</span>
+              </div>
+              <div className="text-sm text-yellow-300 space-y-1">
+                <p>Server is online! If your stream isn't appearing:</p>
+                <ul className="list-disc list-inside space-y-1 ml-4">
+                  <li>Wait 30-60 seconds after clicking "Start Streaming" in OBS</li>
+                  <li>Make sure OBS is using: <code className="bg-black/20 px-1 rounded">rtmp://67.205.179.77:1935/live</code></li>
+                  <li>Check that your stream key matches the one shown in diagnostics</li>
+                  <li>Try clicking the "Refresh" button above</li>
+                  <li>If still not working, stop and restart OBS streaming</li>
+                </ul>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Debug Information */}
           <div className="text-xs text-muted-foreground bg-muted/30 p-3 rounded-lg">
