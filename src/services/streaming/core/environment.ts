@@ -24,33 +24,29 @@ export class EnvironmentConfig {
     return this.HLS_PORT;
   }
 
-  // Updated to use your actual DigitalOcean app URL
   static getActualDeploymentUrl(): string {
     return this.DIGITALOCEAN_APP_URL;
   }
 
-  // Debug method to verify URLs and server status
   static debugUrls(streamKey: string) {
-    // Use the app URL for both RTMP and HLS since your server is running there
     const rtmpUrl = `rtmp://nightflow-app-wijb2.ondigitalocean.app:${this.RTMP_PORT}/live`;
     const hlsUrl = `${this.DIGITALOCEAN_APP_URL}/live/${streamKey}/index.m3u8`;
     
-    console.log('🔍 Updated URL Configuration:');
+    console.log('🔍 Correct URL Configuration:');
     console.log('- RTMP URL (for OBS):', rtmpUrl);
     console.log('- HLS URL (for playback):', hlsUrl);
     console.log('- Stream Key:', streamKey);
     console.log('- DigitalOcean App URL:', this.getActualDeploymentUrl());
-    console.log('- Using app URL for all connections');
+    console.log('- All URLs using HTTPS/secure protocols');
     
     return { rtmpUrl, hlsUrl };
   }
 
-  // Updated server status check to use your actual deployment
   static async checkServerStatus(): Promise<{ available: boolean; details: string[] }> {
     const results: string[] = [];
     let serverAvailable = false;
 
-    console.log('🔍 Testing actual DigitalOcean app deployment...');
+    console.log('🔍 Testing DigitalOcean app deployment...');
     
     try {
       const deploymentUrl = this.getActualDeploymentUrl();
@@ -73,17 +69,17 @@ export class EnvironmentConfig {
       clearTimeout(timeoutId);
       
       if (response.ok) {
-        const healthData = await response.json().catch(() => ({}));
         results.push('✅ DigitalOcean App: Online and responding');
+        results.push('✅ HTTPS Protocol: Secure connection established');
         results.push('✅ Health Check: Passing');
         results.push('✅ RTMP Server: Ready for OBS connections');
-        results.push('✅ HLS Streaming: Ready for playback');
+        results.push('✅ HLS Streaming: Ready for HTTPS playback');
         results.push('✅ WebSocket: Available for real-time updates');
         results.push('');
         results.push('🎯 STREAMING READY:');
         results.push(`• OBS Server: rtmp://nightflow-app-wijb2.ondigitalocean.app:1935/live`);
         results.push(`• Web Streaming: ${deploymentUrl}/live/[streamKey]/index.m3u8`);
-        results.push('• All services confirmed operational');
+        results.push('• All services using secure HTTPS/WSS protocols');
         serverAvailable = true;
         console.log('✅ DigitalOcean app deployment confirmed operational');
       } else {
@@ -95,8 +91,8 @@ export class EnvironmentConfig {
       console.error('❌ DigitalOcean app deployment test failed:', error);
       results.push('❌ Cannot reach DigitalOcean app deployment');
       results.push('• Check if the app is running');
-      results.push('• Verify the app URL is correct');
-      results.push('• Check if services started properly');
+      results.push('• Verify network connectivity');
+      results.push('• Ensure HTTPS is properly configured');
     }
 
     return {

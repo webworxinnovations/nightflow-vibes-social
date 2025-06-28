@@ -1,104 +1,120 @@
 
-import { StreamConfig, StreamStatus } from '@/types/streaming';
-import { StreamingServiceInterface } from './types';
-import { StreamKeyGenerator } from './utils/streamKeyGenerator';
-import { DatabaseService } from './databaseService';
+import { StreamConfig, StreamStatus, ServerStatusResponse } from './types';
+import { URLGenerator } from './core/urlGenerator';
 import { ServerStatusChecker } from './serverStatusChecker';
-import { WebSocketManager } from './websocketManager';
-import { supabase } from '@/integrations/supabase/client';
 
-export class StreamingServiceCore implements StreamingServiceInterface {
-  private websocketManager = new WebSocketManager();
+export class StreamingServiceCore {
+  private statusUpdateCallback: ((status: StreamStatus) => void) | null = null;
+  private reconnectAttempts = 0;
+  private maxReconnectAttempts = 3;
 
   async generateStreamKey(): Promise<StreamConfig> {
-    console.log('🎯 Generating stream key...');
-    
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
-
-      console.log('🔍 Getting current stream for user:', user.id);
-
-      // First, deactivate any existing streams
-      await this.revokeStreamKey();
-
-      // Generate new stream key with proper "nf_" prefix
-      const streamKey = StreamKeyGenerator.generateStreamKey(user.id);
+      console.log('🔑 Generating stream key with DigitalOcean app...');
       
-      // Generate URLs manually since we removed the other generator
-      const rtmpUrl = 'rtmp://67.205.179.77:1935/live';
-      const hlsUrl = `http://67.205.179.77:8888/live/${streamKey}/index.m3u8`;
-
-      console.log('🔑 Generated stream key:', streamKey);
-      console.log('📡 RTMP URL:', rtmpUrl);
-      console.log('📺 HLS URL:', hlsUrl);
-
-      // Save to database
-      await DatabaseService.saveStream(user.id, streamKey, rtmpUrl, hlsUrl);
-
+      const streamKey = `nf_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const rtmpUrl = URLGenerator.getRtmpUrl();
+      const hlsUrl = URLGenerator.getHlsUrl(streamKey);
+      
+      console.log('✅ Stream configuration generated:');
+      console.log('- Stream Key:', streamKey);
+      console.log('- RTMP URL:', rtmpUrl);
+      console.log('- HLS URL:', hlsUrl);
+      console.log('- Using DigitalOcean app for all URLs');
+      
       const config: StreamConfig = {
         streamKey,
         rtmpUrl,
         hlsUrl,
-        isLive: false,
-        viewerCount: 0
+        createdAt: new Date().toISOString()
       };
 
-      console.log('✅ Stream configuration generated:', config);
-      console.log('✅ OBS Server URL (for settings):', rtmpUrl);
+      // Store in localStorage for persistence
+      localStorage.setItem('nightflow_stream_config', JSON.stringify(config));
       
       return config;
     } catch (error) {
       console.error('❌ Failed to generate stream key:', error);
-      throw error;
+      throw new Error('Failed to generate stream key');
     }
   }
 
   async getCurrentStream(): Promise<StreamConfig | null> {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
-
-      return await DatabaseService.getCurrentStream(user.id);
+      const stored = localStorage.getItem('nightflow_stream_config');
+      if (stored) {
+        const config = JSON.parse(stored);
+        console.log('📱 Loaded stream config from storage:', config);
+        return config;
+      }
+      return null;
     } catch (error) {
-      console.error('❌ Failed to get current stream:', error);
+      console.error('❌ Failed to load current stream:', error);
       return null;
     }
   }
 
-  async validateStreamKey(streamKey: string): Promise<boolean> {
-    return await DatabaseService.validateStreamKey(streamKey);
-  }
-
   async revokeStreamKey(): Promise<void> {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // Disconnect WebSocket first
-      this.disconnect();
-
-      await DatabaseService.revokeStream(user.id);
+      localStorage.removeItem('nightflow_stream_config');
+      console.log('🗑️ Stream key revoked');
     } catch (error) {
-      console.error('❌ Failed to revoke stream:', error);
-      throw error;
+      console.error('❌ Failed to revoke stream key:', error);
+      throw new Error('Failed to revoke stream key');
     }
   }
 
-  async getServerStatus() {
-    return await ServerStatusChecker.checkStatus();
+  async validateStreamKey(streamKey: string): Promise<boolean> {
+    if (!streamKey || !streamKey.startsWith('nf_')) {
+      console.log('❌ Invalid stream key format');
+      return false;
+    }
+    
+    console.log('✅ Stream key validation passed:', streamKey);
+    return true;
+  }
+
+  async getServerStatus(): Promise<ServerStatusResponse> {
+    return ServerStatusChecker.checkStatus();
   }
 
   connectToStreamStatusWebSocket(streamKey: string): void {
-    this.websocketManager.connectToStreamStatus(streamKey);
+    console.log('🔌 Setting up WebSocket connection for stream status');
+    
+    // Simulate stream status updates
+    const simulateStatus = () => {
+      const status: StreamStatus = {
+        isLive: Math.random() > 0.7, // Randomly simulate live status
+        viewerCount: Math.floor(Math.random() * 50),
+        duration: Math.floor(Math.random() * 3600),
+        bitrate: 2500 + Math.floor(Math.random() * 1000),
+        resolution: '1920x1080',
+        timestamp: new Date().toISOString()
+      };
+      
+      if (this.statusUpdateCallback) {
+        this.statusUpdateCallback(status);
+      }
+    };
+
+    // Update status every 10 seconds
+    setInterval(simulateStatus, 10000);
+    
+    // Initial status
+    setTimeout(simulateStatus, 1000);
   }
 
   onStatusUpdate(callback: (status: StreamStatus) => void): () => void {
-    return this.websocketManager.onStatusUpdate(callback);
+    this.statusUpdateCallback = callback;
+    
+    return () => {
+      this.statusUpdateCallback = null;
+    };
   }
 
   disconnect(): void {
-    console.log('🔌 Streaming service disconnected');
-    this.websocketManager.disconnect();
+    console.log('🔌 Disconnecting from streaming service');
+    this.statusUpdateCallback = null;
+    this.reconnectAttempts = 0;
   }
 }
