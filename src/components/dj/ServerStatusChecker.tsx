@@ -23,48 +23,48 @@ export const ServerStatusChecker = ({ onStatusUpdate }: ServerStatusCheckerProps
 
   const checkDigitalOceanStatus = async () => {
     setChecking(true);
-    console.log('🔍 Testing DigitalOcean droplet RTMP server at 67.205.179.77...');
+    console.log('🔍 Testing DigitalOcean streaming server at nightflow-app-wijb2.ondigitalocean.app...');
     
     onStatusUpdate({
       status: 'checking',
-      details: 'Testing DigitalOcean droplet connectivity...',
+      details: 'Testing DigitalOcean streaming server connectivity...',
       nextSteps: []
     });
 
     const debugResults: any = {
       timestamp: new Date().toISOString(),
       tests: {},
-      dropletIP: '67.205.179.77'
+      serverDomain: 'nightflow-app-wijb2.ondigitalocean.app'
     };
 
     try {
-      // Test 1: Check if the droplet web server is responding
-      console.log('🧪 Test 1: DigitalOcean droplet web server...');
+      // Test 1: Check if the DigitalOcean app is responding
+      console.log('🧪 Test 1: DigitalOcean app health check...');
       try {
-        const webResponse = await fetch('http://67.205.179.77:3001/health', {
+        const healthResponse = await fetch('https://nightflow-app-wijb2.ondigitalocean.app/health', {
           method: 'GET',
           signal: AbortSignal.timeout(8000)
         });
-        debugResults.tests.webServer = {
-          status: webResponse.status,
-          success: webResponse.ok,
-          statusText: webResponse.statusText,
-          url: 'http://67.205.179.77:3001/health'
+        debugResults.tests.healthCheck = {
+          status: healthResponse.status,
+          success: healthResponse.ok,
+          statusText: healthResponse.statusText,
+          url: 'https://nightflow-app-wijb2.ondigitalocean.app/health'
         };
-        console.log('✅ Droplet web server test:', debugResults.tests.webServer);
+        console.log('✅ DigitalOcean health check:', debugResults.tests.healthCheck);
       } catch (error) {
-        debugResults.tests.webServer = {
+        debugResults.tests.healthCheck = {
           error: error instanceof Error ? error.message : 'Connection failed',
           success: false,
-          url: 'http://67.205.179.77:3001/health'
+          url: 'https://nightflow-app-wijb2.ondigitalocean.app/health'
         };
-        console.log('❌ Droplet web server failed:', debugResults.tests.webServer);
+        console.log('❌ DigitalOcean health check failed:', debugResults.tests.healthCheck);
       }
 
       // Test 2: Check RTMP server status endpoint
       console.log('🧪 Test 2: RTMP server status...');
       try {
-        const rtmpResponse = await fetch('http://67.205.179.77:3001/api/rtmp/stats', {
+        const rtmpResponse = await fetch('https://nightflow-app-wijb2.ondigitalocean.app/api/rtmp/stats', {
           method: 'GET',
           signal: AbortSignal.timeout(8000)
         });
@@ -72,89 +72,85 @@ export const ServerStatusChecker = ({ onStatusUpdate }: ServerStatusCheckerProps
         debugResults.tests.rtmpServer = {
           success: rtmpResponse.ok,
           data: rtmpData,
-          url: 'http://67.205.179.77:3001/api/rtmp/stats'
+          url: 'https://nightflow-app-wijb2.ondigitalocean.app/api/rtmp/stats'
         };
         console.log('📡 RTMP server test:', debugResults.tests.rtmpServer);
       } catch (error) {
         debugResults.tests.rtmpServer = {
           error: error instanceof Error ? error.message : 'RTMP status check failed',
           success: false,
-          url: 'http://67.205.179.77:3001/api/rtmp/stats'
+          url: 'https://nightflow-app-wijb2.ondigitalocean.app/api/rtmp/stats'
         };
         console.log('❌ RTMP server test failed:', debugResults.tests.rtmpServer);
       }
 
       // Analyze results and provide status
-      const webServerWorking = debugResults.tests.webServer.success;
+      const healthCheckWorking = debugResults.tests.healthCheck.success;
       const rtmpServerWorking = debugResults.tests.rtmpServer.success;
 
-      if (webServerWorking && rtmpServerWorking) {
-        console.log('✅ DigitalOcean droplet is fully operational');
+      if (healthCheckWorking && rtmpServerWorking) {
+        console.log('✅ DigitalOcean streaming server is fully operational');
         onStatusUpdate({
           status: 'online',
-          details: 'DigitalOcean droplet is running and RTMP server is operational',
+          details: 'DigitalOcean streaming server is running and RTMP server is operational',
           nextSteps: [
-            '✅ Droplet web server: Online',
+            '✅ DigitalOcean app: Online',
             '✅ RTMP server: Running',
-            '🎯 OBS should be able to connect to: rtmp://67.205.179.77:1935/live',
-            '💡 If OBS still can\'t connect, check your stream key',
-            '💡 Make sure OBS is set to "Start Streaming" not "Stop Streaming"'
+            '🎯 OBS should connect to: rtmp://nightflow-app-wijb2.ondigitalocean.app:1935/live',
+            '💡 Update your OBS server URL if you were using the old IP address',
+            '💡 Make sure OBS is set to "Start Streaming"'
           ],
           debugInfo: debugResults
         });
         toast.success('✅ DigitalOcean streaming server is online!');
         
-      } else if (webServerWorking && !rtmpServerWorking) {
-        console.log('⚠️ Droplet web server online but RTMP server may have issues');
+      } else if (healthCheckWorking && !rtmpServerWorking) {
+        console.log('⚠️ DigitalOcean app online but RTMP server needs attention');
         onStatusUpdate({
           status: 'needs-deployment',
-          details: 'DigitalOcean droplet is online but RTMP server is not responding properly',
+          details: 'DigitalOcean app is online but RTMP server is not responding properly',
           nextSteps: [
-            '✅ Droplet web server: Online',
+            '✅ DigitalOcean app: Online',
             '❌ RTMP server: Not responding',
-            '🔧 The RTMP streaming service may have crashed',
-            '🔄 Try restarting the RTMP service on the droplet',
-            '💡 SSH into droplet and check: sudo systemctl status rtmp-server',
-            '🔄 Restart with: sudo systemctl restart rtmp-server'
+            '🔧 The RTMP streaming service may need restart',
+            '🔄 Check DigitalOcean deployment logs for RTMP errors',
+            '💡 RTMP service might be running on different port'
           ],
           debugInfo: debugResults
         });
         toast.warning('⚠️ RTMP server needs attention');
         
       } else {
-        console.log('❌ DigitalOcean droplet is not responding');
+        console.log('❌ DigitalOcean streaming server is not responding');
         onStatusUpdate({
           status: 'offline',
-          details: 'DigitalOcean droplet is not responding at 67.205.179.77',
+          details: 'DigitalOcean streaming server is not responding',
           nextSteps: [
-            '❌ Droplet web server: Offline',
+            '❌ DigitalOcean app: Offline',
             '❌ RTMP server: Offline',
-            '⚠️ The entire droplet may be down or misconfigured',
-            '🔍 Check DigitalOcean dashboard for droplet status',
-            '💡 Verify droplet is powered on and running',
-            '🔄 Try restarting the droplet from DigitalOcean dashboard',
-            '🌐 Check if IP address 67.205.179.77 is correct'
+            '⚠️ Check DigitalOcean dashboard for deployment status',
+            '🔍 Verify app is running at nightflow-app-wijb2.ondigitalocean.app',
+            '🔄 Try redeploying from DigitalOcean dashboard'
           ],
           debugInfo: debugResults
         });
-        toast.error('❌ DigitalOcean droplet appears to be offline');
+        toast.error('❌ DigitalOcean streaming server appears to be offline');
       }
 
     } catch (error) {
       console.error('❌ Comprehensive server check failed:', error);
       onStatusUpdate({
         status: 'offline',
-        details: 'Unable to test DigitalOcean droplet connectivity',
+        details: 'Unable to test DigitalOcean streaming server connectivity',
         nextSteps: [
           '❌ Connection test completely failed',
           '🌐 Check your internet connection',
-          '💡 DigitalOcean droplet may be completely unreachable',
-          '🔍 Verify droplet status in DigitalOcean dashboard',
-          '📋 Confirm droplet IP is 67.205.179.77'
+          '💡 DigitalOcean app may be unreachable',
+          '🔍 Verify app status in DigitalOcean dashboard'
         ],
         debugInfo: debugResults
       });
-      toast.error('❌ Could not test droplet connectivity');
+      toast.error('❌ Could not test server connectivity');
     } finally {
       setChecking(false);
     }
@@ -173,12 +169,12 @@ export const ServerStatusChecker = ({ onStatusUpdate }: ServerStatusCheckerProps
         ) : (
           <Zap className="h-4 w-4 mr-2" />
         )}
-        {checking ? 'Testing Droplet...' : 'Test DigitalOcean Droplet'}
+        {checking ? 'Testing Server...' : 'Test DigitalOcean Server'}
       </Button>
       
       {!checking && (
         <div className="text-xs text-muted-foreground">
-          Target: 67.205.179.77:1935
+          Target: nightflow-app-wijb2.ondigitalocean.app:1935
         </div>
       )}
     </div>
