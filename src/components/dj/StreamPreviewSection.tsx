@@ -1,22 +1,19 @@
 
 import { useStreamKey } from "@/hooks/useStreamKey";
 import { useStreamDuration } from "@/hooks/useStreamDuration";
-import { useServerTest } from "@/hooks/useServerTest";
 import { RealVideoPlayer } from "./RealVideoPlayer";
-import { StreamDiagnostics } from "./StreamDiagnostics";
-import { StreamStatusHeader } from "./StreamStatusHeader";
 import { StreamStatsGrid } from "./StreamStatsGrid";
-import { StreamTroubleshootingAlerts } from "./StreamTroubleshootingAlerts";
 import { GlassmorphicCard } from "@/components/ui/glassmorphic-card";
 import { useState, useEffect, useMemo } from "react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle, CheckCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Copy, Key, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
 
 export const StreamPreviewSection = () => {
-  const { streamData, isLive, viewerCount } = useStreamKey();
+  const { streamData, isLive, viewerCount, generateStreamKey } = useStreamKey();
   const { streamDuration, formatDuration } = useStreamDuration(isLive);
-  const { serverTest, testingServer, handleTestServer } = useServerTest();
-  const [showDiagnostics, setShowDiagnostics] = useState(false);
 
   // Use useMemo to prevent infinite loops - only recalculate when streamData changes
   const debugInfo = useMemo(() => {
@@ -32,80 +29,106 @@ export const StreamPreviewSection = () => {
     return null;
   }, [streamData?.streamKey, isLive]);
 
-  // Only log when debugInfo actually changes
-  useEffect(() => {
-    if (debugInfo) {
-      console.log('🎯 Droplet Debug Info:', debugInfo);
-    }
-  }, [debugInfo]);
-
-  const handleRefresh = () => {
-    // Force a refresh by triggering the server test
-    handleTestServer();
+  const copyToClipboard = (text: string, type: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success(`${type} copied to clipboard!`);
   };
-
-  // More lenient server detection - assume server is working unless we have clear evidence it's not
-  const isServerOffline = serverTest && serverTest.available === false && serverTest.details.some(detail => 
-    detail.includes('Connection failed') || detail.includes('timeout') || detail.includes('Network error')
-  );
 
   return (
     <GlassmorphicCard>
-      {/* Only show server offline alert if we have concrete evidence the server is down */}
-      {isServerOffline && (
-        <Alert className="mb-4 border-red-500/50 bg-red-500/10">
-          <AlertTriangle className="h-4 w-4 text-red-400" />
-          <AlertDescription className="text-red-400">
-            <strong>Server Connection Issue:</strong> Cannot connect to your streaming server at 67.205.179.77. 
-            This may be a temporary network issue or firewall blocking the connection.
-          </AlertDescription>
-        </Alert>
-      )}
+      <div className="space-y-6">
+        {/* Stream Configuration */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <Key className="h-5 w-5" />
+              Stream Configuration
+            </h3>
+            {isLive && (
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                <span className="text-red-400 font-medium">LIVE</span>
+                <span className="text-muted-foreground">
+                  {viewerCount} viewers • {formatDuration(streamDuration)}
+                </span>
+              </div>
+            )}
+          </div>
 
-      {/* Show ready status when server is available or when we can't determine status */}
-      {(!isServerOffline && debugInfo) && (
-        <Alert className="mb-4 border-green-500/50 bg-green-500/10">
-          <CheckCircle className="h-4 w-4 text-green-400" />
-          <AlertDescription className="text-green-400">
-            <strong>Ready for OBS:</strong> Configure OBS with rtmp://67.205.179.77:1935/live and your stream key.
-          </AlertDescription>
-        </Alert>
-      )}
+          {debugInfo ? (
+            <div className="space-y-4">
+              {/* RTMP Server URL */}
+              <div className="space-y-2">
+                <Label className="text-blue-400">OBS Server URL</Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={debugInfo.rtmpUrl}
+                    readOnly
+                    className="font-mono text-sm bg-blue-500/10 border-blue-500/20"
+                  />
+                  <Button
+                    onClick={() => copyToClipboard(debugInfo.rtmpUrl, 'Server URL')}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
 
-      <StreamStatusHeader
-        isLive={isLive}
-        viewerCount={viewerCount}
-        streamDuration={streamDuration}
-        streamUrl={debugInfo?.streamUrl}
-        onRefresh={handleRefresh}
-        onTestServer={handleTestServer}
-        onShowDiagnostics={() => setShowDiagnostics(!showDiagnostics)}
-        testingServer={testingServer}
-        formatDuration={formatDuration}
-      />
+              {/* Stream Key */}
+              <div className="space-y-2">
+                <Label className="text-green-400">Stream Key</Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={debugInfo.streamKey}
+                    readOnly
+                    type="password"
+                    className="font-mono text-sm bg-green-500/10 border-green-500/20"
+                  />
+                  <Button
+                    onClick={() => copyToClipboard(debugInfo.streamKey, 'Stream key')}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
 
-      <div className="mt-4 space-y-4">
+              <Button
+                onClick={generateStreamKey}
+                variant="outline"
+                size="sm"
+                className="w-full"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Generate New Stream Key
+              </Button>
+            </div>
+          ) : (
+            <div className="text-center py-6">
+              <Button onClick={generateStreamKey} className="bg-blue-600 hover:bg-blue-700">
+                <Key className="mr-2 h-4 w-4" />
+                Generate Stream Key
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Video Player */}
         <RealVideoPlayer 
           hlsUrl={debugInfo?.streamUrl || ''}
           isLive={isLive}
         />
 
+        {/* Stream Stats */}
         <StreamStatsGrid
           isLive={isLive}
           viewerCount={viewerCount}
           streamDuration={streamDuration}
           formatDuration={formatDuration}
         />
-
-        <StreamTroubleshootingAlerts serverTest={serverTest} />
-
-        {showDiagnostics && debugInfo && (
-          <StreamDiagnostics 
-            streamKey={debugInfo.streamKey}
-            rtmpUrl={debugInfo.rtmpUrl}
-            hlsUrl={debugInfo.streamUrl}
-          />
-        )}
       </div>
     </GlassmorphicCard>
   );
