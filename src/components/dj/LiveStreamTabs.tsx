@@ -4,6 +4,7 @@ import { StreamConfigurationPanel } from "./StreamConfigurationPanel";
 import { BrowserStreamingPanel } from "./BrowserStreamingPanel";
 import { LiveStreamViewer } from "./LiveStreamViewer";
 import { ServerStatusPanel } from "./ServerStatusPanel";
+import { StreamPreviewSection } from "./StreamPreviewSection";
 import { useRealTimeStream } from "@/hooks/useRealTimeStream";
 import { useState } from "react";
 
@@ -19,13 +20,18 @@ export const LiveStreamTabs = ({ isLive, viewerCount }: { isLive: boolean; viewe
   const [serverStatus, setServerStatus] = useState<{ available: boolean; url: string } | null>(null);
 
   return (
-    <Tabs defaultValue="browser" className="w-full">
-      <TabsList className="grid w-full grid-cols-4">
+    <Tabs defaultValue="preview" className="w-full">
+      <TabsList className="grid w-full grid-cols-5">
+        <TabsTrigger value="preview">📺 Live Preview</TabsTrigger>
         <TabsTrigger value="browser">🌐 Browser Stream</TabsTrigger>
         <TabsTrigger value="obs">📹 OBS Setup</TabsTrigger>
-        <TabsTrigger value="viewer">👀 Stream View</TabsTrigger>
+        <TabsTrigger value="viewer">👀 Viewer Mode</TabsTrigger>
         <TabsTrigger value="server">🖥️ Server Status</TabsTrigger>
       </TabsList>
+
+      <TabsContent value="preview" className="mt-6">
+        <StreamPreviewSection />
+      </TabsContent>
 
       <TabsContent value="browser" className="mt-6">
         {streamConfig ? (
