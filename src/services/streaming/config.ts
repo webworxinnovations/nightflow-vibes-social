@@ -1,5 +1,8 @@
 
 import { URLGenerator } from './core/urlGenerator';
+import { EnvironmentConfig } from './core/environment';
+import { OBSSetup } from './obs/obsSetup';
+import { ConnectionTester } from './diagnostics/connectionTester';
 
 export class StreamingConfig {
   private static readonly STREAM_KEY_PREFIX = 'nf_';
@@ -28,5 +31,34 @@ export class StreamingConfig {
 
   static validateStreamKey(streamKey: string): boolean {
     return streamKey.startsWith(this.STREAM_KEY_PREFIX) && streamKey.length > 20;
+  }
+
+  // Add missing methods that components are trying to use
+  static getPortInfo() {
+    return OBSSetup.getPortInfo();
+  }
+
+  static getProtocolInfo() {
+    return OBSSetup.getProtocolInfo();
+  }
+
+  static isProduction(): boolean {
+    return EnvironmentConfig.isProduction();
+  }
+
+  static getOBSSetupInstructions() {
+    return OBSSetup.getOBSSetupInstructions();
+  }
+
+  static getOBSServerUrl(): string {
+    return URLGenerator.getOBSServerUrl();
+  }
+
+  static getTroubleshootingSteps(): string[] {
+    return OBSSetup.getTroubleshootingSteps();
+  }
+
+  static async testRTMPConnection() {
+    return ConnectionTester.testRTMPConnection();
   }
 }
