@@ -1,7 +1,7 @@
 
 import { StreamConfig, StreamStatus } from '@/types/streaming';
 import { StreamingServiceInterface } from './types';
-import { StreamKeyGenerator } from './streamKeyGenerator';
+import { StreamKeyGenerator } from './utils/streamKeyGenerator';
 import { DatabaseService } from './databaseService';
 import { ServerStatusChecker } from './serverStatusChecker';
 import { WebSocketManager } from './websocketManager';
@@ -22,9 +22,16 @@ export class StreamingServiceCore implements StreamingServiceInterface {
       // First, deactivate any existing streams
       await this.revokeStreamKey();
 
-      // Generate new stream key
-      const streamKey = StreamKeyGenerator.generate(user.id);
-      const { rtmpUrl, hlsUrl } = StreamKeyGenerator.generateUrls(streamKey);
+      // Generate new stream key with proper "nf_" prefix
+      const streamKey = StreamKeyGenerator.generateStreamKey(user.id);
+      
+      // Generate URLs manually since we removed the other generator
+      const rtmpUrl = 'rtmp://67.205.179.77:1935/live';
+      const hlsUrl = `http://67.205.179.77:8888/live/${streamKey}/index.m3u8`;
+
+      console.log('🔑 Generated stream key:', streamKey);
+      console.log('📡 RTMP URL:', rtmpUrl);
+      console.log('📺 HLS URL:', hlsUrl);
 
       // Save to database
       await DatabaseService.saveStream(user.id, streamKey, rtmpUrl, hlsUrl);
