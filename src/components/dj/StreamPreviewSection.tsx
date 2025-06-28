@@ -10,6 +10,8 @@ import { StreamStatsGrid } from "./StreamStatsGrid";
 import { StreamTroubleshootingAlerts } from "./StreamTroubleshootingAlerts";
 import { GlassmorphicCard } from "@/components/ui/glassmorphic-card";
 import { useState, useEffect, useMemo } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertTriangle, CheckCircle } from "lucide-react";
 
 export const StreamPreviewSection = () => {
   const { streamData, isLive, viewerCount } = useStreamKey();
@@ -24,8 +26,8 @@ export const StreamPreviewSection = () => {
         streamUrl: `http://67.205.179.77:3001/live/${streamData.streamKey}/index.m3u8`,
         streamKey: streamData.streamKey,
         rtmpUrl: `rtmp://67.205.179.77:1935/live`,
-        expectedFormat: `http://67.205.179.77:8888/live/${streamData.streamKey}/index.m3u8`,
-        status: isLive ? 'Live' : 'Connecting...'
+        expectedFormat: `http://67.205.179.77:3001/live/${streamData.streamKey}/index.m3u8`,
+        status: isLive ? 'Live' : 'Ready for OBS'
       };
     }
     return null;
@@ -43,8 +45,31 @@ export const StreamPreviewSection = () => {
     handleTestServer();
   };
 
+  const isServerOffline = serverTest && !serverTest.available;
+
   return (
     <GlassmorphicCard>
+      {/* Server Status Alert */}
+      {isServerOffline && (
+        <Alert className="mb-4 border-red-500/50 bg-red-500/10">
+          <AlertTriangle className="h-4 w-4 text-red-400" />
+          <AlertDescription className="text-red-400">
+            <strong>DigitalOcean Droplet Offline:</strong> Your streaming server at 67.205.179.77 is not responding. 
+            Please check your droplet status and ensure the streaming service is running.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Ready Status */}
+      {!isServerOffline && debugInfo && (
+        <Alert className="mb-4 border-green-500/50 bg-green-500/10">
+          <CheckCircle className="h-4 w-4 text-green-400" />
+          <AlertDescription className="text-green-400">
+            <strong>Ready for OBS:</strong> Your droplet is configured. Use rtmp://67.205.179.77:1935/live with your stream key.
+          </AlertDescription>
+        </Alert>
+      )}
+
       <StreamStatusHeader
         isLive={isLive}
         viewerCount={viewerCount}

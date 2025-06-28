@@ -6,11 +6,13 @@ export class WebSocketManager {
   private websocket: WebSocket | null = null;
   private reconnectInterval: NodeJS.Timeout | null = null;
   private statusInterval: NodeJS.Timeout | null = null;
-  private maxReconnectAttempts = 3;
+  private maxReconnectAttempts = 2; // Reduced attempts
   private reconnectAttempts = 0;
+  private currentStreamKey: string | null = null;
 
   connectToStreamStatus(streamKey: string): void {
-    console.log('🔌 Connecting to DigitalOcean Droplet WebSocket for stream status...');
+    console.log('🔌 Attempting WebSocket connection to DigitalOcean Droplet...');
+    this.currentStreamKey = streamKey;
     
     const wsUrl = `ws://67.205.179.77:3001/ws/stream/${streamKey}`;
     
@@ -34,83 +36,75 @@ export class WebSocketManager {
       
       this.websocket.onclose = () => {
         console.log('🔌 WebSocket connection closed');
-        this.handleReconnect(streamKey);
+        this.handleReconnect();
       };
       
       this.websocket.onerror = (error) => {
         console.error('❌ WebSocket error:', error);
-        this.handleReconnect(streamKey);
+        this.handleReconnect();
       };
       
     } catch (error) {
       console.error('❌ Failed to create WebSocket connection:', error);
-      this.fallbackToPolling(streamKey);
+      this.fallbackToPolling();
     }
   }
 
-  private handleReconnect(streamKey: string): void {
+  private handleReconnect(): void {
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
-      console.log(`🔄 Attempting to reconnect... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+      console.log(`🔄 WebSocket reconnect attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts}`);
       
       setTimeout(() => {
-        this.connectToStreamStatus(streamKey);
-      }, 3000 * this.reconnectAttempts);
+        if (this.currentStreamKey) {
+          this.connectToStreamStatus(this.currentStreamKey);
+        }
+      }, 5000 * this.reconnectAttempts);
     } else {
-      console.log('❌ Max reconnection attempts reached, falling back to polling');
-      this.fallbackToPolling(streamKey);
+      console.log('❌ Max WebSocket reconnection attempts reached, using polling fallback');
+      this.fallbackToPolling();
     }
   }
 
-  private fallbackToPolling(streamKey: string): void {
-    console.log('📡 Using polling fallback for stream status');
+  private fallbackToPolling(): void {
+    console.log('📡 Using polling fallback for stream status (server may be offline)');
     
     if (this.statusInterval) {
       clearInterval(this.statusInterval);
     }
     
+    // Send offline status immediately
+    const offlineStatus: StreamStatus = {
+      isLive: false,
+      viewerCount: 0,
+      duration: 0,
+      bitrate: 0,
+      resolution: '',
+      timestamp: new Date().toISOString()
+    };
+    
+    this.statusCallbacks.forEach(callback => callback(offlineStatus));
+    
+    // Poll less frequently to avoid spam
     this.statusInterval = setInterval(async () => {
+      if (!this.currentStreamKey) return;
+      
       try {
-        const response = await fetch(`http://67.205.179.77:3001/api/stream/${streamKey}/status`);
+        const response = await fetch(`http://67.205.179.77:3001/api/stream/${this.currentStreamKey}/status`, {
+          signal: AbortSignal.timeout(5000)
+        });
+        
         if (response.ok) {
           const status = await response.json() as StreamStatus;
           this.statusCallbacks.forEach(callback => callback(status));
         } else {
-          const offlineStatus: StreamStatus = {
-            isLive: false,
-            viewerCount: 0,
-            duration: 0,
-            bitrate: 0,
-            resolution: '',
-            timestamp: new Date().toISOString()
-          };
           this.statusCallbacks.forEach(callback => callback(offlineStatus));
         }
       } catch (error) {
-        console.error('❌ Failed to poll stream status:', error);
-        const offlineStatus: StreamStatus = {
-          isLive: false,
-          viewerCount: 0,
-          duration: 0,
-          bitrate: 0,
-          resolution: '',
-          timestamp: new Date().toISOString()
-        };
+        // Server is offline, send offline status
         this.statusCallbacks.forEach(callback => callback(offlineStatus));
       }
-    }, 10000);
-    
-    setTimeout(() => {
-      const initialStatus: StreamStatus = {
-        isLive: false,
-        viewerCount: 0,
-        duration: 0,
-        bitrate: 0,
-        resolution: '',
-        timestamp: new Date().toISOString()
-      };
-      this.statusCallbacks.forEach(callback => callback(initialStatus));
-    }, 1000);
+    }, 15000); // Poll every 15 seconds instead of 10
   }
 
   onStatusUpdate(callback: (status: StreamStatus) => void): () => void {
@@ -139,6 +133,7 @@ export class WebSocketManager {
     }
     
     this.reconnectAttempts = 0;
+    this.currentStreamKey = null;
     this.statusCallbacks = [];
   }
 }

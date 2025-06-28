@@ -6,7 +6,7 @@ export const useServerTest = () => {
   const [testingServer, setTestingServer] = useState(false);
 
   const testNetworkConnectivity = async () => {
-    console.group('🔍 Network Connectivity Analysis - DigitalOcean Droplet');
+    console.group('🔍 DigitalOcean Droplet Connectivity Test');
     
     const results = [];
     
@@ -14,8 +14,10 @@ export const useServerTest = () => {
     const testUrls = [
       { url: 'http://67.205.179.77:3001/health', name: 'Droplet Health Check' },
       { url: 'http://67.205.179.77:3001/api/server/stats', name: 'Droplet Server Stats API' },
-      { url: 'https://httpbin.org/get', name: 'Internet Connectivity' }
+      { url: 'https://httpbin.org/get', name: 'Internet Connectivity Test' }
     ];
+
+    let dropletOnline = false;
 
     for (const test of testUrls) {
       try {
@@ -30,6 +32,11 @@ export const useServerTest = () => {
         });
         
         clearTimeout(timeoutId);
+        
+        if (test.name.includes('Droplet')) {
+          dropletOnline = true;
+        }
+        
         results.push(`✅ ${test.name}: Connected (${response.status})`);
         console.log(`✅ ${test.name}: OK`);
       } catch (error) {
@@ -37,6 +44,29 @@ export const useServerTest = () => {
         results.push(`❌ ${test.name}: ${errorMsg}`);
         console.error(`❌ ${test.name}:`, error);
       }
+    }
+
+    // Droplet specific diagnostics
+    results.push('');
+    results.push('🎯 DigitalOcean Droplet Configuration:');
+    results.push(`• Droplet IP: 67.205.179.77`);
+    results.push(`• RTMP Server: rtmp://67.205.179.77:1935/live`);
+    results.push(`• HLS Streaming: http://67.205.179.77:3001/live/[streamKey]/index.m3u8`);
+    results.push(`• API Endpoint: http://67.205.179.77:3001/api`);
+    
+    if (!dropletOnline) {
+      results.push('');
+      results.push('⚠️ DROPLET APPEARS OFFLINE:');
+      results.push('• SSH to droplet: ssh root@67.205.179.77');
+      results.push('• Check if streaming service is running');
+      results.push('• Verify ports 1935, 3001, 8888 are open');
+      results.push('• Restart streaming server if needed');
+    } else {
+      results.push('');
+      results.push('✅ DROPLET ONLINE - READY FOR OBS:');
+      results.push('• Configure OBS with: rtmp://67.205.179.77:1935/live');
+      results.push('• Use your generated stream key');
+      results.push('• Click "Start Streaming" in OBS');
     }
 
     // Browser info
@@ -52,7 +82,7 @@ export const useServerTest = () => {
     }
 
     console.groupEnd();
-    return results;
+    return { results, dropletOnline };
   };
 
   const handleTestServer = async () => {
@@ -60,45 +90,27 @@ export const useServerTest = () => {
     console.log('🔍 Starting comprehensive droplet connectivity test...');
     
     try {
-      const networkResults = await testNetworkConnectivity();
+      const { results, dropletOnline } = await testNetworkConnectivity();
       
-      // Check if droplet servers are available
-      const dropletAvailable = networkResults.some(r => r.includes('Droplet Health Check: Connected'));
-      const apiAvailable = networkResults.some(r => r.includes('Droplet Server Stats API: Connected'));
-      
-      const combinedDetails = [
-        '🏥 DigitalOcean Droplet Health Check Results:',
-        dropletAvailable ? '✅ DigitalOcean Droplet: Online' : '❌ DigitalOcean Droplet: Offline',
-        apiAvailable ? '✅ Streaming API: Online' : '❌ Streaming API: Offline',
-        '',
-        '🌐 Network Connectivity Tests:',
-        ...networkResults,
-        '',
-        '🎯 Droplet Configuration:',
-        '• RTMP Server: rtmp://67.205.179.77:1935/live',
-        '• HLS Streaming: http://67.205.179.77:3001/live/[streamKey]/index.m3u8',
-        '• WebSocket: ws://67.205.179.77:3001/ws/stream/[streamKey]',
-        '• All services using droplet IP directly'
-      ];
-
       setServerTest({ 
-        available: dropletAvailable, 
-        details: combinedDetails
+        available: dropletOnline, 
+        details: results
       });
       
-      console.log('Droplet test completed:', { dropletAvailable, apiAvailable });
+      console.log('Droplet test completed:', { dropletOnline });
     } catch (error) {
       console.error('Droplet test failed:', error);
       setServerTest({ 
         available: false, 
         details: [
-          '❌ DigitalOcean droplet connectivity test failed', 
-          'Droplet is not responding',
-          'Check droplet deployment status',
+          '❌ DigitalOcean droplet connectivity test failed',
+          'Cannot reach your streaming server',
           '',
-          '💡 Droplet Configuration Should Be:',
-          '• RTMP Server: rtmp://67.205.179.77:1935/live',
-          '• HLS Streaming: http://67.205.179.77:3001/live/[streamKey]/index.m3u8'
+          '🔧 Next Steps:',
+          '• Check if your droplet is running',
+          '• SSH to droplet: ssh root@67.205.179.77',
+          '• Restart streaming services if needed',
+          '• Verify firewall allows ports 1935, 3001, 8888'
         ] 
       });
     } finally {

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { CleanLiveStreamManager } from "@/components/dj/CleanLiveStreamManager";
@@ -8,6 +7,7 @@ import { RequestsHeader } from "@/components/dashboard/RequestsHeader";
 import { RequestsTabsContent } from "@/components/dashboard/RequestsTabsContent";
 import { DjSidebar } from "@/components/dashboard/DjSidebar";
 import { songRequests, events } from "@/lib/mock-data";
+import { ServerStartupGuide } from "@/components/dj/ServerStartupGuide";
 
 export default function DjDashboard() {
   const [requests, setRequests] = useState(songRequests);
@@ -58,6 +58,11 @@ export default function DjDashboard() {
             acceptedRequests={requests.filter(r => r.status === 'accepted').length}
             upcomingEvents={djEvents}
           />
+          
+          {/* Server Startup Guide - Show when server is offline */}
+          <div className="mt-6 mb-6">
+            <ServerStartupGuide />
+          </div>
           
           {/* Live Stream Preview Section */}
           <div className="mt-6 mb-6">
