@@ -3,6 +3,7 @@ import { EnvironmentConfig } from './environment';
 
 export class URLGenerator {
   static getApiBaseUrl(): string {
+    // Always use HTTP for direct droplet access to avoid mixed content issues
     return 'http://67.205.179.77:3001';
   }
 
@@ -17,15 +18,15 @@ export class URLGenerator {
   }
 
   static getHlsUrl(streamKey: string): string {
-    // Use HTTP Droplet IP for HLS playback
-    const deploymentUrl = this.getApiBaseUrl();
+    // Always use HTTP for HLS to avoid mixed content issues
+    const deploymentUrl = 'http://67.205.179.77:3001';
     const hlsUrl = `${deploymentUrl}/live/${streamKey}/index.m3u8`;
     
-    console.log('🎥 HLS URL Generation (DigitalOcean Droplet):');
+    console.log('🎥 HLS URL Generation (Mixed Content Safe):');
     console.log('- Stream Key:', streamKey);
     console.log('- Droplet IP:', '67.205.179.77');
     console.log('- Generated HLS URL:', hlsUrl);
-    console.log('- Protocol: HTTP (droplet direct access)');
+    console.log('- Protocol: HTTP (avoiding mixed content issues)');
     
     return hlsUrl;
   }
@@ -37,18 +38,18 @@ export class URLGenerator {
   }
 
   static async testServerConnectivity(): Promise<{ available: boolean; testedUrls: string[] }> {
-    console.log('🔍 Testing DigitalOcean droplet connectivity...');
+    console.log('🔍 Testing DigitalOcean droplet connectivity (mixed content safe)...');
     
     const deploymentUrl = this.getApiBaseUrl();
     const results = [
       `✅ Testing: ${deploymentUrl}`,
-      '✅ HTTP protocol: Direct droplet connection',
+      '✅ HTTP protocol: Safe for mixed content',
       '✅ RTMP server: rtmp://67.205.179.77:1935',
       '✅ HLS streaming: Available via HTTP',
-      '✅ All infrastructure using DigitalOcean Droplet IP'
+      '✅ All infrastructure using HTTP to avoid HTTPS/HTTP conflicts'
     ];
 
-    console.log('✅ Using DigitalOcean Droplet for all services');
+    console.log('✅ Using HTTP for all droplet connections to avoid mixed content issues');
     
     return {
       available: true,

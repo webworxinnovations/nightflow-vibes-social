@@ -1,4 +1,3 @@
-
 import { useStreamKey } from "@/hooks/useStreamKey";
 import { useStreamDuration } from "@/hooks/useStreamDuration";
 import { RealVideoPlayer } from "./RealVideoPlayer";
@@ -26,6 +25,13 @@ export const StreamPreviewSection = () => {
     }
     return null;
   }, [streamData?.streamKey, streamData?.hlsUrl, streamData?.rtmpUrl, isLive]);
+
+  // Check for mixed content issues
+  const hasMixedContentIssue = useMemo(() => {
+    return window.location.protocol === 'https:' && 
+           debugInfo?.streamUrl && 
+           debugInfo.streamUrl.startsWith('http://');
+  }, [debugInfo?.streamUrl]);
 
   const copyToClipboard = (text: string, type: string) => {
     navigator.clipboard.writeText(text);
@@ -88,6 +94,24 @@ export const StreamPreviewSection = () => {
               </div>
             )}
           </div>
+
+          {/* MIXED CONTENT ALERT */}
+          {hasMixedContentIssue && (
+            <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertTriangle className="h-5 w-5 text-red-400" />
+                <p className="text-red-400 font-medium">🔒 MIXED CONTENT ISSUE DETECTED</p>
+              </div>
+              <p className="text-sm text-muted-foreground mb-3">
+                Your HTTPS page cannot load HTTP content from your droplet. This is a browser security restriction.
+              </p>
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <p><strong>Solutions:</strong></p>
+                <p>• Access your app via HTTP: <code className="bg-slate-700 px-1 rounded">http://lovable.dev/your-project</code></p>
+                <p>• Or enable HTTPS on your DigitalOcean droplet server</p>
+              </div>
+            </div>
+          )}
 
           {/* CRITICAL FIREWALL ALERT */}
           <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
@@ -188,6 +212,9 @@ export const StreamPreviewSection = () => {
                 <p>🎥 HLS Port: 3001 (for web playback)</p>
                 <p>🔗 HLS URL: {debugInfo.streamUrl}</p>
                 <p>📊 Status: {debugInfo.status}</p>
+                {hasMixedContentIssue && (
+                  <p className="text-red-400 mt-2">🔒 Mixed content issue detected!</p>
+                )}
                 <p className="text-red-400 mt-2">⚠️ Firewall ports need to be opened!</p>
               </div>
             </div>
@@ -222,6 +249,11 @@ export const StreamPreviewSection = () => {
           <p className="text-sm text-muted-foreground">
             SSH command: <code className="bg-slate-700 px-1 rounded">ssh root@67.205.179.77</code>
           </p>
+          {hasMixedContentIssue && (
+            <p className="text-sm text-red-400 mt-2">
+              🔒 Also resolve mixed content issue by using HTTP or enabling HTTPS on droplet.
+            </p>
+          )}
         </div>
 
         {/* Video Player */}

@@ -41,14 +41,22 @@ export const useHlsErrorHandler = ({
       const response = await fetch(url, { 
         method: 'HEAD',
         signal: controller.signal,
-        cache: 'no-cache'
+        cache: 'no-cache',
+        mode: 'cors'
       });
       
       clearTimeout(timeoutId);
       console.log(`✅ ${description} - Response status:`, response.status);
       return response.ok;
     } catch (error) {
-      console.error(`❌ ${description} - Network Error:`, error instanceof Error ? error.message : 'Unknown error');
+      console.error(`❌ ${description} - Network Error:`, error);
+      
+      // Check for mixed content issues
+      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        console.error('🔒 MIXED CONTENT DETECTED: HTTPS page trying to access HTTP resource');
+        console.error('💡 SOLUTION: Access your app via HTTP or enable HTTPS on your droplet');
+      }
+      
       return false;
     }
   };
@@ -61,13 +69,23 @@ export const useHlsErrorHandler = ({
     console.error('URL:', data.url);
     console.error('Response Code:', data.response?.code);
     
+    // Check for mixed content issues
+    if (data.url && data.url.startsWith('http://') && window.location.protocol === 'https:') {
+      console.error('🔒 MIXED CONTENT ISSUE DETECTED!');
+      console.error('💡 Your HTTPS page is trying to load HTTP content');
+      console.error('🔧 SOLUTIONS:');
+      console.error('   1. Access your app via HTTP instead of HTTPS');
+      console.error('   2. Enable HTTPS on your DigitalOcean droplet');
+      console.error('   3. Use a proxy to serve HTTPS content');
+    }
+    
     if (data.response?.code === 404 || data.response?.code === 403) {
       console.error('🔑 STREAM KEY ISSUE: DigitalOcean droplet server rejected the stream key');
       console.error('💡 This usually means:');
-      console.error('   1. DigitalOcean droplet server is not running (check: ssh root@67.205.179.77)');
+      console.error('   1. DigitalOcean droplet server is not running');
       console.error('   2. OBS is not streaming to the droplet yet');
       console.error('   3. Stream key doesn\'t match what\'s in OBS');
-      console.error('   4. Droplet firewall is blocking connections');
+      console.error('   4. Mixed content blocking the request');
     }
     
     console.groupEnd();
@@ -76,6 +94,13 @@ export const useHlsErrorHandler = ({
       switch (data.type) {
         case Hls.ErrorTypes.NETWORK_ERROR:
           console.error('🌐 Network error connecting to DigitalOcean droplet');
+          
+          // Check for mixed content
+          if (window.location.protocol === 'https:' && hlsUrl.startsWith('http://')) {
+            setError('🔒 Mixed Content Error: HTTPS page cannot load HTTP stream. Try accessing your app via HTTP instead of HTTPS.');
+            setIsLoading(false);
+            return;
+          }
           
           if (data.response?.code === 404) {
             setError('❌ Stream not found on DigitalOcean droplet. Please ensure your droplet server is running and OBS is streaming.');
@@ -96,7 +121,7 @@ export const useHlsErrorHandler = ({
           if (canRetry) {
             setError(`Cannot connect to DigitalOcean droplet - retrying in 15 seconds (${getCurrentRetryCount()}/${maxRetries})`);
           } else {
-            setError('❌ Cannot connect to your DigitalOcean droplet server. Check if it\'s running: ssh root@67.205.179.77');
+            setError('❌ Cannot connect to your DigitalOcean droplet server. Check mixed content issues or if server is running.');
             setIsLoading(false);
           }
           break;
@@ -108,7 +133,7 @@ export const useHlsErrorHandler = ({
           
         default:
           console.error('❌ Fatal HLS error:', data.type, data.details);
-          setError(`Stream error: ${data.details}. Check your DigitalOcean droplet server status.`);
+          setError(`Stream error: ${data.details}. Check your DigitalOcean droplet server status and mixed content issues.`);
           setIsLoading(false);
           break;
       }
