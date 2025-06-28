@@ -59,7 +59,7 @@ export default function DjDashboard() {
             upcomingEvents={djEvents}
           />
           
-          {/* Live Stream Preview Section */}
+          {/* Live Stream Preview Section - Single source of truth */}
           <div className="mt-6 mb-6">
             <StreamPreviewSection />
           </div>
@@ -75,10 +75,6 @@ export default function DjDashboard() {
               onAccept={handleAccept}
               onDecline={handleDecline}
             />
-            
-            <TabsContent value="stream" className="mt-4">
-              <CleanLiveStreamManager />
-            </TabsContent>
           </Tabs>
         </div>
         

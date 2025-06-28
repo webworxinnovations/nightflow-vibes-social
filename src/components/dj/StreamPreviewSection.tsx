@@ -4,7 +4,7 @@ import { useStreamDuration } from "@/hooks/useStreamDuration";
 import { RealVideoPlayer } from "./RealVideoPlayer";
 import { StreamStatsGrid } from "./StreamStatsGrid";
 import { GlassmorphicCard } from "@/components/ui/glassmorphic-card";
-import { useState, useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,19 +15,18 @@ export const StreamPreviewSection = () => {
   const { streamData, isLive, viewerCount, generateStreamKey } = useStreamKey();
   const { streamDuration, formatDuration } = useStreamDuration(isLive);
 
-  // Use useMemo to prevent infinite loops - only recalculate when streamData changes
+  // Use the correct HLS URL from database, not hardcoded
   const debugInfo = useMemo(() => {
     if (streamData?.streamKey) {
       return {
-        streamUrl: `http://67.205.179.77:3001/live/${streamData.streamKey}/index.m3u8`,
+        streamUrl: streamData.hlsUrl, // Use the HLS URL from database
         streamKey: streamData.streamKey,
-        rtmpUrl: `rtmp://67.205.179.77:1935/live`,
-        expectedFormat: `http://67.205.179.77:3001/live/${streamData.streamKey}/index.m3u8`,
+        rtmpUrl: streamData.rtmpUrl,
         status: isLive ? 'Live' : 'Ready for OBS'
       };
     }
     return null;
-  }, [streamData?.streamKey, isLive]);
+  }, [streamData?.streamKey, streamData?.hlsUrl, streamData?.rtmpUrl, isLive]);
 
   const copyToClipboard = (text: string, type: string) => {
     navigator.clipboard.writeText(text);
@@ -57,7 +56,7 @@ export const StreamPreviewSection = () => {
 
           {debugInfo ? (
             <div className="space-y-4">
-              {/* RTMP Server URL */}
+              {/* OBS Server URL */}
               <div className="space-y-2">
                 <Label className="text-blue-400">OBS Server URL</Label>
                 <div className="flex gap-2">
@@ -105,6 +104,12 @@ export const StreamPreviewSection = () => {
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Generate New Stream Key
               </Button>
+
+              {/* Debug Info */}
+              <div className="text-xs text-muted-foreground bg-slate-800/50 p-2 rounded">
+                <p>HLS URL: {debugInfo.streamUrl}</p>
+                <p>Status: {debugInfo.status}</p>
+              </div>
             </div>
           ) : (
             <div className="text-center py-6">
