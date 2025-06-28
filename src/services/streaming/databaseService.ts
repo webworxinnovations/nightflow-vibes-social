@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { StreamConfig } from '@/types/streaming';
+import { StreamingConfig } from './config';
 
 export class DatabaseService {
   static async saveStream(userId: string, streamKey: string, rtmpUrl: string, hlsUrl: string): Promise<void> {
@@ -46,8 +47,8 @@ export class DatabaseService {
     const stream = streams[0];
     console.log('✅ Current stream found:', stream.stream_key);
 
-    // Fix the HLS URL to use the correct droplet IP
-    const correctedHlsUrl = `http://67.205.179.77:8080/live/${stream.stream_key}/index.m3u8`;
+    // Use the correct HLS URL from the streaming config
+    const correctedHlsUrl = StreamingConfig.getHlsUrl(stream.stream_key);
     console.log('🔧 Using corrected HLS URL:', correctedHlsUrl);
 
     return {

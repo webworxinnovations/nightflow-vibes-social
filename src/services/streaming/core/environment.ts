@@ -3,7 +3,7 @@ export class EnvironmentConfig {
   private static readonly DROPLET_IP = '67.205.179.77';
   private static readonly DIGITALOCEAN_DOMAIN = 'nightflow-app-wijb2.ondigitalocean.app';
   private static readonly RTMP_PORT = 1935;
-  private static readonly HLS_PORT = 8080;
+  private static readonly HLS_PORT = 8888; // Updated to match your actual server config
 
   static isProduction(): boolean {
     return window.location.hostname !== 'localhost';
@@ -30,7 +30,7 @@ export class EnvironmentConfig {
   }
 
   static getCurrentDomain(): string {
-    // Use droplet IP for streaming since that's what works
-    return this.DROPLET_IP;
+    // Use DigitalOcean domain for consistency
+    return this.DIGITALOCEAN_DOMAIN;
   }
 }

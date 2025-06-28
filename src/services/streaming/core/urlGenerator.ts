@@ -10,8 +10,8 @@ export class URLGenerator {
   }
 
   static getOBSServerUrl(): string {
-    // Use droplet IP for RTMP - this is where OBS connects
-    return `rtmp://${EnvironmentConfig.getDropletIP()}:${EnvironmentConfig.getRtmpPort()}/live`;
+    // Use DigitalOcean domain for RTMP - this is where OBS connects
+    return `rtmp://${EnvironmentConfig.getDigitalOceanDomain()}:${EnvironmentConfig.getRtmpPort()}/live`;
   }
 
   static getRtmpUrl(): string {
@@ -19,8 +19,8 @@ export class URLGenerator {
   }
 
   static getHlsUrl(streamKey: string): string {
-    // Use droplet IP for HLS video playback
-    const baseUrl = `http://${EnvironmentConfig.getDropletIP()}:${EnvironmentConfig.getHlsPort()}`;
+    // Use DigitalOcean domain for HLS video playback - matching your server config
+    const baseUrl = `https://${EnvironmentConfig.getDigitalOceanDomain()}`;
     return `${baseUrl}/live/${streamKey}/index.m3u8`;
   }
 
