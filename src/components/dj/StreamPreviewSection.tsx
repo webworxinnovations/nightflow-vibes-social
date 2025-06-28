@@ -59,9 +59,8 @@ export const StreamPreviewSection = () => {
 
       <div className="mt-4 space-y-4">
         <RealVideoPlayer 
-          streamUrl={debugInfo?.streamUrl || ''}
+          hlsUrl={debugInfo?.streamUrl || ''}
           isLive={isLive}
-          refreshKey={debugInfo?.refreshKey || 0}
         />
 
         <StreamStatsGrid
@@ -76,7 +75,11 @@ export const StreamPreviewSection = () => {
         <ServerTestResults serverTest={serverTest} />
 
         {showDiagnostics && debugInfo && (
-          <StreamDiagnostics debugInfo={debugInfo} />
+          <StreamDiagnostics 
+            streamKey={debugInfo.streamKey}
+            rtmpUrl={debugInfo.rtmpUrl}
+            hlsUrl={debugInfo.streamUrl}
+          />
         )}
       </div>
     </GlassmorphicCard>
