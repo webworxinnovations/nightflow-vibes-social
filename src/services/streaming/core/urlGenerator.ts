@@ -19,8 +19,8 @@ export class URLGenerator {
   }
 
   static getHlsUrl(streamKey: string): string {
-    // FIXED: Use consistent port 8080 for HLS video playback
-    const baseUrl = `http://${EnvironmentConfig.getDropletIP()}:8080`;
+    // FIXED: Use port 8888 to match what the server is actually providing
+    const baseUrl = `http://${EnvironmentConfig.getDropletIP()}:8888`;
     return `${baseUrl}/live/${streamKey}/index.m3u8`;
   }
 
