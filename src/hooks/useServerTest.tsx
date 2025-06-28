@@ -10,10 +10,10 @@ export const useServerTest = () => {
     
     const results = [];
     
-    // Test streaming server endpoints
+    // Test DigitalOcean app endpoints
     const testUrls = [
-      { url: 'http://67.205.179.77:8888/health', name: 'HLS Server Health' },
-      { url: 'http://67.205.179.77:1935/health', name: 'RTMP Server Health' },
+      { url: 'https://nightflow-app-wijb2.ondigitalocean.app/health', name: 'App Health Check' },
+      { url: 'https://nightflow-app-wijb2.ondigitalocean.app/api/server/stats', name: 'Server Stats API' },
       { url: 'https://httpbin.org/get', name: 'Internet Connectivity' }
     ];
 
@@ -63,32 +63,32 @@ export const useServerTest = () => {
       const networkResults = await testNetworkConnectivity();
       
       // Check if streaming servers are available
-      const hlsAvailable = networkResults.some(r => r.includes('HLS Server Health: Connected'));
-      const rtmpAvailable = networkResults.some(r => r.includes('RTMP Server Health: Connected'));
+      const appAvailable = networkResults.some(r => r.includes('App Health Check: Connected'));
+      const apiAvailable = networkResults.some(r => r.includes('Server Stats API: Connected'));
       
       const combinedDetails = [
         '🏥 Server Health Check Results:',
-        hlsAvailable ? '✅ HLS Streaming Server: Online' : '❌ HLS Streaming Server: Offline',
-        rtmpAvailable ? '✅ RTMP Streaming Server: Online' : '❌ RTMP Streaming Server: Offline',
+        appAvailable ? '✅ DigitalOcean App: Online' : '❌ DigitalOcean App: Offline',
+        apiAvailable ? '✅ Streaming API: Online' : '❌ Streaming API: Offline',
         '',
         '🌐 Network Connectivity Tests:',
         ...networkResults
       ];
 
       setServerTest({ 
-        available: hlsAvailable && rtmpAvailable, 
+        available: appAvailable, 
         details: combinedDetails
       });
       
-      console.log('Server test completed:', { hlsAvailable, rtmpAvailable });
+      console.log('Server test completed:', { appAvailable, apiAvailable });
     } catch (error) {
       console.error('Server test failed:', error);
       setServerTest({ 
         available: false, 
         details: [
           '❌ Server connectivity test failed', 
-          'Streaming servers are not responding',
-          'Check server deployment and firewall settings'
+          'DigitalOcean app is not responding',
+          'Check app deployment status'
         ] 
       });
     } finally {

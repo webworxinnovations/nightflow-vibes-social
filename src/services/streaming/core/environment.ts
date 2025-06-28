@@ -1,24 +1,19 @@
 
 export class EnvironmentConfig {
-  private static readonly DROPLET_IP = '67.205.179.77';
-  private static readonly DIGITALOCEAN_DOMAIN = 'nightflow-app-wijb2.ondigitalocean.app';
+  private static readonly DIGITALOCEAN_APP_URL = 'https://nightflow-app-wijb2.ondigitalocean.app';
   private static readonly RTMP_PORT = 1935;
-  private static readonly HLS_PORT = 8888;
+  private static readonly HLS_PORT = 8080;
 
   static isProduction(): boolean {
     return window.location.hostname !== 'localhost';
   }
 
   static isDropletEnvironment(): boolean {
-    return window.location.hostname === this.DIGITALOCEAN_DOMAIN;
+    return window.location.hostname === 'nightflow-app-wijb2.ondigitalocean.app';
   }
 
-  static getDropletIP(): string {
-    return this.DROPLET_IP;
-  }
-
-  static getDigitalOceanDomain(): string {
-    return this.DIGITALOCEAN_DOMAIN;
+  static getDigitalOceanAppUrl(): string {
+    return this.DIGITALOCEAN_APP_URL;
   }
 
   static getRtmpPort(): number {
@@ -29,27 +24,23 @@ export class EnvironmentConfig {
     return this.HLS_PORT;
   }
 
-  static getCurrentDomain(): string {
-    return this.DIGITALOCEAN_DOMAIN;
-  }
-
   // Updated to use your actual DigitalOcean app URL
   static getActualDeploymentUrl(): string {
-    // This should be your actual DigitalOcean app URL where the server is running
-    return 'https://nightflow-app-wijb2.ondigitalocean.app';
+    return this.DIGITALOCEAN_APP_URL;
   }
 
   // Debug method to verify URLs and server status
   static debugUrls(streamKey: string) {
-    const rtmpUrl = `rtmp://${this.DROPLET_IP}:${this.RTMP_PORT}/live`;
-    const hlsUrl = `https://${this.DIGITALOCEAN_DOMAIN}/live/${streamKey}/index.m3u8`; // Use HTTPS via domain
+    // Use the app URL for both RTMP and HLS since your server is running there
+    const rtmpUrl = `rtmp://nightflow-app-wijb2.ondigitalocean.app:${this.RTMP_PORT}/live`;
+    const hlsUrl = `${this.DIGITALOCEAN_APP_URL}/live/${streamKey}/index.m3u8`;
     
     console.log('🔍 Updated URL Configuration:');
     console.log('- RTMP URL (for OBS):', rtmpUrl);
     console.log('- HLS URL (for playback):', hlsUrl);
     console.log('- Stream Key:', streamKey);
     console.log('- DigitalOcean App URL:', this.getActualDeploymentUrl());
-    console.log('- Using HTTPS for HLS to avoid mixed content issues');
+    console.log('- Using app URL for all connections');
     
     return { rtmpUrl, hlsUrl };
   }
@@ -59,7 +50,7 @@ export class EnvironmentConfig {
     const results: string[] = [];
     let serverAvailable = false;
 
-    console.log('🔍 Testing actual DigitalOcean deployment...');
+    console.log('🔍 Testing actual DigitalOcean app deployment...');
     
     try {
       const deploymentUrl = this.getActualDeploymentUrl();
@@ -83,27 +74,27 @@ export class EnvironmentConfig {
       
       if (response.ok) {
         const healthData = await response.json().catch(() => ({}));
-        results.push('✅ DigitalOcean Deployment: Online and responding');
+        results.push('✅ DigitalOcean App: Online and responding');
         results.push('✅ Health Check: Passing');
         results.push('✅ RTMP Server: Ready for OBS connections');
         results.push('✅ HLS Streaming: Ready for playback');
         results.push('✅ WebSocket: Available for real-time updates');
         results.push('');
         results.push('🎯 STREAMING READY:');
-        results.push(`• OBS Server: rtmp://${this.DROPLET_IP}:1935/live`);
+        results.push(`• OBS Server: rtmp://nightflow-app-wijb2.ondigitalocean.app:1935/live`);
         results.push(`• Web Streaming: ${deploymentUrl}/live/[streamKey]/index.m3u8`);
         results.push('• All services confirmed operational');
         serverAvailable = true;
-        console.log('✅ DigitalOcean deployment confirmed operational');
+        console.log('✅ DigitalOcean app deployment confirmed operational');
       } else {
-        results.push(`⚠️ Deployment responded with status: ${response.status}`);
+        results.push(`⚠️ App responded with status: ${response.status}`);
         results.push('• Server may be starting up or experiencing issues');
       }
       
     } catch (error) {
-      console.error('❌ DigitalOcean deployment test failed:', error);
-      results.push('❌ Cannot reach DigitalOcean deployment');
-      results.push('• Check if the droplet is running');
+      console.error('❌ DigitalOcean app deployment test failed:', error);
+      results.push('❌ Cannot reach DigitalOcean app deployment');
+      results.push('• Check if the app is running');
       results.push('• Verify the app URL is correct');
       results.push('• Check if services started properly');
     }

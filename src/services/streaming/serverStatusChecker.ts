@@ -5,7 +5,7 @@ import { EnvironmentConfig } from './core/environment';
 export class ServerStatusChecker {
   static async checkStatus(): Promise<ServerStatusResponse> {
     try {
-      console.log('🔍 Testing DigitalOcean deployment server connectivity...');
+      console.log('🔍 Testing DigitalOcean app server connectivity...');
       const deploymentUrl = EnvironmentConfig.getActualDeploymentUrl();
       const healthUrl = `${deploymentUrl}/health`;
       
@@ -30,7 +30,7 @@ export class ServerStatusChecker {
       
       if (response.ok) {
         const data = await response.json().catch(() => ({ status: 'ok' }));
-        console.log('✅ DigitalOcean deployment is operational:', data);
+        console.log('✅ DigitalOcean app is operational:', data);
         
         return {
           available: true,
@@ -39,19 +39,20 @@ export class ServerStatusChecker {
           uptime: data.uptime || 0
         };
       } else {
-        console.log('⚠️ Deployment responded with error:', response.status);
+        console.log('⚠️ App responded with error:', response.status);
         return {
           available: false,
-          url: deploymentUrl
+          url: deploymentUrl,
+          error: `HTTP ${response.status}`
         };
       }
     } catch (error) {
-      console.error('❌ DigitalOcean deployment connectivity test failed:', error);
+      console.error('❌ DigitalOcean app connectivity test failed:', error);
       
-      // Return false since we can't reach the actual deployment
       return {
         available: false,
-        url: EnvironmentConfig.getActualDeploymentUrl()
+        url: EnvironmentConfig.getActualDeploymentUrl(),
+        error: error instanceof Error ? error.message : 'Connection failed'
       };
     }
   }
