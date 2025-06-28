@@ -4,6 +4,8 @@ import Hls from 'hls.js';
 import { useHlsRetry } from './useHlsRetry';
 import { useHlsConfig } from './useHlsConfig';
 import { useVideoControls } from './useVideoControls';
+import { useHlsErrorHandler } from './useHlsErrorHandler';
+import { useStreamValidation } from './useStreamValidation';
 
 interface UseHlsPlayerProps {
   hlsUrl: string;
@@ -17,7 +19,6 @@ export const useHlsPlayer = ({ hlsUrl, isLive = false, autoplay = false, muted =
   const hlsRef = useRef<Hls | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [lastNetworkTest, setLastNetworkTest] = useState<number>(0);
   
   const hlsConfig = useHlsConfig({ isLive });
   const { clearRetryTimeout, scheduleRetry, resetRetryCount, getCurrentRetryCount, maxRetries } = useHlsRetry();
@@ -31,108 +32,7 @@ export const useHlsPlayer = ({ hlsUrl, isLive = false, autoplay = false, muted =
     handleFullscreen: baseHandleFullscreen 
   } = useVideoControls(muted);
 
-  // Throttled network test - only run once every 30 seconds
-  const logNetworkRequest = async (url: string, description: string) => {
-    const now = Date.now();
-    if (now - lastNetworkTest < 30000) { // 30 second throttle
-      console.log(`⏸️ Network test throttled for ${description}`);
-      return false;
-    }
-    
-    setLastNetworkTest(now);
-    console.log(`🌐 Network Test: ${description}`);
-    console.log(`🎯 Testing URL: ${url}`);
-    
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-      
-      const response = await fetch(url, { 
-        method: 'HEAD',
-        signal: controller.signal,
-        cache: 'no-cache'
-      });
-      
-      clearTimeout(timeoutId);
-      console.log(`✅ ${description} - Response status:`, response.status);
-      return true;
-    } catch (error) {
-      console.error(`❌ ${description} - Network Error:`, error instanceof Error ? error.message : 'Unknown error');
-      return false;
-    }
-  };
-
-  const handleHlsError = (event: any, data: any) => {
-    console.group('🚨 HLS Error Analysis');
-    console.error('Error Type:', data.type);
-    console.error('Error Details:', data.details);
-    console.error('Fatal:', data.fatal);
-    console.error('URL:', data.url);
-    console.error('Response Code:', data.response?.code);
-    
-    // Check if this is a stream key validation error
-    if (data.response?.code === 404 || data.response?.code === 403) {
-      console.error('🔑 STREAM KEY ISSUE: Server rejected the stream key');
-      console.error('💡 This usually means:');
-      console.error('   1. Stream key format is incorrect (should start with "nf_")');
-      console.error('   2. OBS is not streaming yet');
-      console.error('   3. Stream key doesn\'t match what\'s in OBS');
-    }
-    
-    console.groupEnd();
-    
-    if (data.fatal) {
-      switch (data.type) {
-        case Hls.ErrorTypes.NETWORK_ERROR:
-          console.error('🌐 Network error detected');
-          
-          // Check if this is a stream key format issue
-          if (data.response?.code === 404) {
-            setError('❌ Stream not found. Check your stream key format and ensure OBS is streaming.');
-            setIsLoading(false);
-            return;
-          }
-          
-          // Only test network connectivity if we haven't recently
-          if (Date.now() - lastNetworkTest > 30000) {
-            logNetworkRequest(hlsUrl, 'HLS Stream Endpoint');
-          }
-          
-          const canRetry = scheduleRetry(() => {
-            console.log(`🔄 Retry attempt ${getCurrentRetryCount()}/${maxRetries} for HLS connection`);
-            attemptLoad();
-          }, 20000); // 20 second delay between retries
-
-          if (canRetry) {
-            setError(`Connection failed - retrying in 20 seconds (${getCurrentRetryCount()}/${maxRetries})`);
-          } else {
-            setError('❌ Stream unavailable. Ensure OBS is streaming with the correct stream key format (nf_...)');
-            setIsLoading(false);
-          }
-          break;
-          
-        case Hls.ErrorTypes.MEDIA_ERROR:
-          console.error('📺 Media error - attempting recovery');
-          setError('Media format error - trying to recover...');
-          try {
-            hlsRef.current?.recoverMediaError();
-          } catch (err) {
-            console.error('Media recovery failed:', err);
-            setError('Failed to recover from media error');
-            setIsLoading(false);
-          }
-          break;
-          
-        default:
-          console.error('❌ Fatal HLS error:', data.type, data.details);
-          setError(`Stream error: ${data.details}`);
-          setIsLoading(false);
-          break;
-      }
-    } else {
-      console.warn('⚠️ Non-fatal HLS error:', data.type, data.details);
-    }
-  };
+  const { validateStreamKey, logConnectionAttempt } = useStreamValidation();
 
   const attemptLoad = async () => {
     const video = videoRef.current;
@@ -142,25 +42,14 @@ export const useHlsPlayer = ({ hlsUrl, isLive = false, autoplay = false, muted =
       return;
     }
 
-    console.group('🎬 HLS Connection Attempt');
-    console.log('Attempt:', getCurrentRetryCount() + 1, '/', maxRetries + 1);
-    console.log('HLS URL:', hlsUrl);
-    console.log('Expected HLS Format: http://67.205.179.77:8888/live/nf_[streamKey]/index.m3u8');
+    logConnectionAttempt(getCurrentRetryCount, maxRetries);
     
-    // Validate stream key format
-    const streamKeyMatch = hlsUrl.match(/\/live\/([^\/]+)\/index\.m3u8/);
-    if (streamKeyMatch) {
-      const streamKey = streamKeyMatch[1];
-      console.log('Extracted Stream Key:', streamKey);
-      if (!streamKey.startsWith('nf_')) {
-        console.error('❌ INVALID STREAM KEY FORMAT - Must start with "nf_"');
-        setError('❌ Invalid stream key format. Please generate a new stream key.');
-        setIsLoading(false);
-        return;
-      }
+    const validation = validateStreamKey(hlsUrl);
+    if (!validation.isValid) {
+      setError(validation.error);
+      setIsLoading(false);
+      return;
     }
-    
-    console.groupEnd();
 
     // Clean up existing HLS instance
     if (hlsRef.current) {
@@ -234,6 +123,16 @@ export const useHlsPlayer = ({ hlsUrl, isLive = false, autoplay = false, muted =
       setIsLoading(false);
     }
   };
+
+  const { handleHlsError } = useHlsErrorHandler({
+    hlsUrl,
+    scheduleRetry,
+    getCurrentRetryCount,
+    maxRetries,
+    setError,
+    setIsLoading,
+    attemptLoad
+  });
 
   useEffect(() => {
     const video = videoRef.current;
@@ -314,6 +213,27 @@ export const useHlsPlayer = ({ hlsUrl, isLive = false, autoplay = false, muted =
     if (!video) return;
     baseHandleFullscreen(video);
   };
+
+  // Handle media error recovery
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const handleMediaError = () => {
+      if (hlsRef.current) {
+        try {
+          hlsRef.current.recoverMediaError();
+        } catch (err) {
+          console.error('Media recovery failed:', err);
+          setError('Failed to recover from media error');
+          setIsLoading(false);
+        }
+      }
+    };
+
+    video.addEventListener('error', handleMediaError);
+    return () => video.removeEventListener('error', handleMediaError);
+  }, []);
 
   return {
     videoRef,
