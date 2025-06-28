@@ -3,12 +3,14 @@ import { useStreamKey } from "@/hooks/useStreamKey";
 import { RealVideoPlayer } from "./RealVideoPlayer";
 import { GlassmorphicCard } from "@/components/ui/glassmorphic-card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Timer, Activity, Eye } from "lucide-react";
+import { Users, Timer, Activity, Eye, RefreshCw } from "lucide-react";
 import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 
 export const StreamPreviewSection = () => {
   const { streamData, isLive, viewerCount } = useStreamKey();
   const [streamDuration, setStreamDuration] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     if (!isLive) {
@@ -34,15 +36,35 @@ export const StreamPreviewSection = () => {
     return `${minutes}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const handleRefreshStream = () => {
+    console.log('🔄 Refreshing stream player...');
+    setRefreshKey(prev => prev + 1);
+  };
+
+  // Log stream data for debugging
+  useEffect(() => {
+    console.log('🎬 StreamPreviewSection Debug Info:');
+    console.log('- Stream Data:', streamData);
+    console.log('- Stream URL:', streamData?.streamUrl);
+    console.log('- Is Live:', isLive);
+    console.log('- Viewer Count:', viewerCount);
+    console.log('- Expected URL format: http://67.205.179.77:8080/live/{streamKey}/index.m3u8');
+  }, [streamData, isLive, viewerCount]);
+
   if (!streamData?.streamUrl) {
     return (
       <GlassmorphicCard>
         <div className="text-center py-8">
           <div className="text-4xl mb-4">📺</div>
           <h3 className="text-lg font-semibold mb-2">No Active Stream</h3>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground mb-4">
             Your stream preview will appear here when you start broadcasting from OBS.
           </p>
+          <div className="text-xs text-muted-foreground space-y-1">
+            <p>Debug Info:</p>
+            <p>Stream Key: {streamData?.streamKey || 'Not generated'}</p>
+            <p>RTMP URL: {streamData?.rtmpUrl || 'Not configured'}</p>
+          </div>
         </div>
       </GlassmorphicCard>
     );
@@ -59,6 +81,16 @@ export const StreamPreviewSection = () => {
           </div>
           
           <div className="flex items-center gap-4">
+            <Button
+              onClick={handleRefreshStream}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Refresh
+            </Button>
+            
             {isLive ? (
               <Badge variant="destructive" className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
@@ -90,6 +122,7 @@ export const StreamPreviewSection = () => {
         {/* Video Player Preview */}
         <div className="aspect-video bg-black rounded-lg overflow-hidden relative">
           <RealVideoPlayer
+            key={refreshKey}
             hlsUrl={streamData.streamUrl}
             isLive={isLive}
             autoplay={false}
@@ -101,6 +134,20 @@ export const StreamPreviewSection = () => {
           <div className="absolute top-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs">
             DJ Preview
           </div>
+        </div>
+
+        {/* Debug Information */}
+        <div className="text-xs text-muted-foreground bg-muted/30 p-3 rounded-lg">
+          <details>
+            <summary className="cursor-pointer font-medium mb-2">Debug Information</summary>
+            <div className="space-y-1">
+              <p><strong>Stream URL:</strong> {streamData.streamUrl}</p>
+              <p><strong>Stream Key:</strong> {streamData.streamKey}</p>
+              <p><strong>RTMP URL:</strong> {streamData.rtmpUrl}</p>
+              <p><strong>Expected Format:</strong> http://67.205.179.77:8080/live/[streamKey]/index.m3u8</p>
+              <p><strong>Status:</strong> {isLive ? 'Live' : 'Offline'}</p>
+            </div>
+          </details>
         </div>
 
         {/* Stream Stats */}
@@ -135,7 +182,7 @@ export const StreamPreviewSection = () => {
           <p className="text-blue-400 text-sm">
             {isLive 
               ? "🎉 You're live! This is how your stream appears to viewers. Keep creating amazing content!"
-              : "📡 Stream detected from OBS! Your preview will appear shortly as the stream initializes."
+              : "📡 Make sure OBS is actively streaming (not just previewing). It can take 10-30 seconds for the stream to appear after clicking 'Start Streaming' in OBS."
             }
           </p>
         </div>

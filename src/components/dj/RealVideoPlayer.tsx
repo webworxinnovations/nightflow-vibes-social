@@ -42,6 +42,9 @@ export const RealVideoPlayer = ({
     }
 
     console.log('🎥 Loading HLS stream:', hlsUrl);
+    console.log('🔍 Stream URL breakdown:');
+    console.log('- Full URL:', hlsUrl);
+    console.log('- Expected format: http://67.205.179.77:8080/live/{streamKey}/index.m3u8');
 
     if (Hls.isSupported()) {
       const hls = new Hls({
@@ -60,7 +63,7 @@ export const RealVideoPlayer = ({
       hls.attachMedia(video);
 
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        console.log('✅ HLS manifest loaded successfully');
+        console.log('✅ HLS manifest loaded successfully for:', hlsUrl);
         setIsLoading(false);
         setError(null);
         
@@ -73,15 +76,18 @@ export const RealVideoPlayer = ({
       });
 
       hls.on(Hls.Events.ERROR, (event, data) => {
-        console.error('❌ HLS Error:', data);
+        console.error('❌ HLS Error for URL:', hlsUrl);
+        console.error('❌ Error details:', data);
         setIsLoading(false);
         
         if (data.fatal) {
           switch (data.type) {
             case Hls.ErrorTypes.NETWORK_ERROR:
-              setError('Network error - stream may be offline');
+              console.error('🌐 Network error - checking if stream exists on server');
+              setError('Stream not ready yet - OBS may still be connecting to server');
               break;
             case Hls.ErrorTypes.MEDIA_ERROR:
+              console.error('📺 Media error - attempting recovery');
               setError('Media error - trying to recover...');
               try {
                 hls.recoverMediaError();
@@ -90,23 +96,23 @@ export const RealVideoPlayer = ({
               }
               break;
             default:
-              setError('Failed to load stream');
+              setError('Failed to load stream - check if OBS is actively streaming');
               break;
           }
         }
       });
 
       hls.on(Hls.Events.MEDIA_ATTACHED, () => {
-        console.log('📺 Media attached to video element');
+        console.log('📺 Media attached to video element for URL:', hlsUrl);
       });
 
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
       // Safari native HLS support
-      console.log('🍎 Using Safari native HLS support');
+      console.log('🍎 Using Safari native HLS support for:', hlsUrl);
       video.src = hlsUrl;
       
       video.addEventListener('loadedmetadata', () => {
-        console.log('✅ Native HLS loaded successfully');
+        console.log('✅ Native HLS loaded successfully for:', hlsUrl);
         setIsLoading(false);
         setError(null);
         
@@ -119,9 +125,9 @@ export const RealVideoPlayer = ({
       });
 
       video.addEventListener('error', (e) => {
-        console.error('❌ Native HLS Error:', e);
+        console.error('❌ Native HLS Error for URL:', hlsUrl, e);
         setIsLoading(false);
-        setError('Failed to load stream');
+        setError('Stream not available - check if OBS is streaming');
       });
     } else {
       setError('HLS not supported in this browser');
@@ -218,7 +224,8 @@ export const RealVideoPlayer = ({
         <div className="absolute inset-0 flex items-center justify-center text-white bg-black/50">
           <div className="text-center">
             <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-            <p className="text-sm">Loading stream...</p>
+            <p className="text-sm">Connecting to stream...</p>
+            <p className="text-xs opacity-70 mt-1">Waiting for OBS stream data</p>
           </div>
         </div>
       )}
@@ -239,6 +246,11 @@ export const RealVideoPlayer = ({
                 <Play className="h-4 w-4 mr-1" />
                 Play
               </Button>
+            )}
+            {error.includes('Stream not ready') && (
+              <p className="text-xs opacity-70 mt-2">
+                Wait 10-30 seconds after starting OBS stream
+              </p>
             )}
           </div>
         </div>
