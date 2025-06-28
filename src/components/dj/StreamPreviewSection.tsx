@@ -9,38 +9,38 @@ import { ServerTestResults } from "./ServerTestResults";
 import { StreamStatsGrid } from "./StreamStatsGrid";
 import { StreamTroubleshootingAlerts } from "./StreamTroubleshootingAlerts";
 import { GlassmorphicCard } from "@/components/ui/glassmorphic-card";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 
 export const StreamPreviewSection = () => {
   const { streamData, isLive, viewerCount } = useStreamKey();
   const { streamDuration, formatDuration } = useStreamDuration(isLive);
   const { serverTest, testingServer, handleTestServer } = useServerTest();
   const [showDiagnostics, setShowDiagnostics] = useState(false);
-  const [debugInfo, setDebugInfo] = useState<any>(null);
 
-  // Debug info using droplet IP
-  useEffect(() => {
+  // Use useMemo to prevent infinite loops - only recalculate when streamData changes
+  const debugInfo = useMemo(() => {
     if (streamData?.streamKey) {
-      const dropletDebugInfo = {
+      return {
         streamUrl: `http://67.205.179.77:3001/live/${streamData.streamKey}/index.m3u8`,
         streamKey: streamData.streamKey,
         rtmpUrl: `rtmp://67.205.179.77:1935/live`,
         expectedFormat: `http://67.205.179.77:8888/live/${streamData.streamKey}/index.m3u8`,
-        status: isLive ? 'Live' : 'Connecting...',
-        refreshKey: Date.now()
+        status: isLive ? 'Live' : 'Connecting...'
       };
-      setDebugInfo(dropletDebugInfo);
-      console.log('🎯 Droplet Debug Info:', dropletDebugInfo);
     }
-  }, [streamData, isLive]);
+    return null;
+  }, [streamData?.streamKey, isLive]);
+
+  // Only log when debugInfo actually changes
+  useEffect(() => {
+    if (debugInfo) {
+      console.log('🎯 Droplet Debug Info:', debugInfo);
+    }
+  }, [debugInfo]);
 
   const handleRefresh = () => {
-    if (debugInfo) {
-      setDebugInfo({
-        ...debugInfo,
-        refreshKey: Date.now()
-      });
-    }
+    // Force a refresh by triggering the server test
+    handleTestServer();
   };
 
   return (
@@ -49,7 +49,7 @@ export const StreamPreviewSection = () => {
         isLive={isLive}
         viewerCount={viewerCount}
         streamDuration={streamDuration}
-        streamUrl={streamData?.hlsUrl}
+        streamUrl={debugInfo?.streamUrl}
         onRefresh={handleRefresh}
         onTestServer={handleTestServer}
         onShowDiagnostics={() => setShowDiagnostics(!showDiagnostics)}
