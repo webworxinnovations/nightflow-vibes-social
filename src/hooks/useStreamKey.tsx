@@ -14,10 +14,22 @@ export const useStreamKey = () => {
     setViewerCount(streamViewerCount || 0);
   }, [streamIsLive, streamViewerCount]);
 
-  // Create streamData object for backward compatibility
+  // Debug logging
+  useEffect(() => {
+    if (streamConfig) {
+      console.log('🎯 useStreamKey - Stream config updated:');
+      console.log('- Stream Key:', streamConfig.streamKey);
+      console.log('- RTMP URL:', streamConfig.rtmpUrl);
+      console.log('- HLS URL:', streamConfig.hlsUrl);
+      console.log('- Is Live:', isLive);
+      console.log('- Viewer Count:', viewerCount);
+    }
+  }, [streamConfig, isLive, viewerCount]);
+
+  // Create streamData object for backward compatibility - use the correct hlsUrl
   const streamData = {
     streamKey: streamConfig?.streamKey || '',
-    streamUrl: streamConfig?.hlsUrl || '',
+    streamUrl: streamConfig?.hlsUrl || '', // This should be the HLS URL from database
     rtmpUrl: streamConfig?.rtmpUrl || '',
     hlsUrl: streamConfig?.hlsUrl || ''
   };

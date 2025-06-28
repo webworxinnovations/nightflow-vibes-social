@@ -5,6 +5,12 @@ import { URLGenerator } from './core/urlGenerator';
 
 export class DatabaseService {
   static async saveStream(userId: string, streamKey: string, rtmpUrl: string, hlsUrl: string): Promise<void> {
+    console.log('💾 DatabaseService - Saving stream with URLs:');
+    console.log('- User ID:', userId);
+    console.log('- Stream Key:', streamKey);
+    console.log('- RTMP URL:', rtmpUrl);
+    console.log('- HLS URL:', hlsUrl);
+
     // First, deactivate any existing streams for this user
     await supabase
       .from('streams')
@@ -12,7 +18,7 @@ export class DatabaseService {
       .eq('user_id', userId)
       .eq('is_active', true);
 
-    // Create new stream record
+    // Create new stream record with correct URLs
     const { error } = await supabase
       .from('streams')
       .insert({
@@ -27,14 +33,16 @@ export class DatabaseService {
       });
 
     if (error) {
-      console.error('Failed to save stream to database:', error);
+      console.error('❌ Failed to save stream to database:', error);
       throw new Error('Failed to save stream configuration');
     }
 
-    console.log('✅ Stream configuration saved to database');
+    console.log('✅ Stream configuration saved to database successfully');
   }
 
   static async getCurrentStream(userId: string): Promise<StreamConfig | null> {
+    console.log('🔍 DatabaseService - Getting current stream for user:', userId);
+    
     const { data, error } = await supabase
       .from('streams')
       .select('*')
@@ -45,11 +53,20 @@ export class DatabaseService {
       .single();
 
     if (error) {
-      console.log('No active stream found:', error);
+      console.log('ℹ️ No active stream found:', error.message);
       return null;
     }
 
-    if (!data) return null;
+    if (!data) {
+      console.log('ℹ️ No stream data returned');
+      return null;
+    }
+
+    console.log('✅ Current stream found:');
+    console.log('- Stream Key:', data.stream_key);
+    console.log('- RTMP URL:', data.rtmp_url);
+    console.log('- HLS URL:', data.hls_url);
+    console.log('- Status:', data.status);
 
     return {
       streamKey: data.stream_key,
