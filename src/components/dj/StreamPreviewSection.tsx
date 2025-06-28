@@ -4,9 +4,10 @@ import { RealVideoPlayer } from "./RealVideoPlayer";
 import { StreamDiagnostics } from "./StreamDiagnostics";
 import { GlassmorphicCard } from "@/components/ui/glassmorphic-card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Timer, Activity, Eye, RefreshCw } from "lucide-react";
+import { Users, Timer, Activity, Eye, RefreshCw, AlertCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { EnvironmentConfig } from "@/services/streaming/core/environment";
 
 export const StreamPreviewSection = () => {
   const { streamData, isLive, viewerCount } = useStreamKey();
@@ -43,14 +44,18 @@ export const StreamPreviewSection = () => {
     setRefreshKey(prev => prev + 1);
   };
 
-  // Log stream data for debugging
+  // Debug stream configuration
   useEffect(() => {
-    console.log('🎬 StreamPreviewSection Debug Info:');
-    console.log('- Stream Data:', streamData);
-    console.log('- Stream URL:', streamData?.streamUrl);
-    console.log('- Is Live:', isLive);
-    console.log('- Viewer Count:', viewerCount);
-    console.log('- FIXED Expected URL format: http://67.205.179.77:8080/live/{streamKey}/index.m3u8');
+    if (streamData?.streamKey) {
+      console.log('🎬 StreamPreviewSection Debug Info:');
+      console.log('- Stream Data:', streamData);
+      console.log('- Stream URL:', streamData?.streamUrl);
+      console.log('- Is Live:', isLive);
+      console.log('- Viewer Count:', viewerCount);
+      
+      // Use the debug method to verify URLs
+      EnvironmentConfig.debugUrls(streamData.streamKey);
+    }
   }, [streamData, isLive, viewerCount]);
 
   if (!streamData?.streamUrl) {
@@ -148,6 +153,24 @@ export const StreamPreviewSection = () => {
             </div>
           </div>
 
+          {/* Troubleshooting Alert */}
+          <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertCircle className="h-4 w-4 text-yellow-500" />
+              <span className="font-medium text-yellow-400">Stream Troubleshooting</span>
+            </div>
+            <div className="text-sm text-yellow-300 space-y-1">
+              <p>If your stream isn't appearing after starting OBS:</p>
+              <ul className="list-disc list-inside space-y-1 ml-4">
+                <li>Wait 30-60 seconds after clicking "Start Streaming" in OBS</li>
+                <li>Make sure OBS is using: <code className="bg-black/20 px-1 rounded">rtmp://67.205.179.77:1935/live</code></li>
+                <li>Check that your stream key matches the one shown in diagnostics</li>
+                <li>Try clicking the "Refresh" button above</li>
+                <li>If still not working, stop and restart OBS streaming</li>
+              </ul>
+            </div>
+          </div>
+
           {/* Debug Information */}
           <div className="text-xs text-muted-foreground bg-muted/30 p-3 rounded-lg">
             <details>
@@ -156,8 +179,9 @@ export const StreamPreviewSection = () => {
                 <p><strong>Stream URL:</strong> {streamData.streamUrl}</p>
                 <p><strong>Stream Key:</strong> {streamData.streamKey}</p>
                 <p><strong>RTMP URL:</strong> {streamData.rtmpUrl}</p>
-                <p><strong>FIXED Expected Format:</strong> http://67.205.179.77:8080/live/[streamKey]/index.m3u8</p>
+                <p><strong>Expected Format:</strong> http://67.205.179.77:8080/live/[streamKey]/index.m3u8</p>
                 <p><strong>Status:</strong> {isLive ? 'Live' : 'Connecting...'}</p>
+                <p><strong>Refresh Key:</strong> {refreshKey}</p>
               </div>
             </details>
           </div>
@@ -194,7 +218,7 @@ export const StreamPreviewSection = () => {
             <p className="text-blue-400 text-sm">
               {isLive 
                 ? "🎉 You're live! This is how your stream appears to viewers. Keep creating amazing content!"
-                : "📡 Stream is connecting... The video should appear within 10-30 seconds after starting OBS."
+                : "📡 Stream is connecting... The video should appear within 30-60 seconds after starting OBS. If not, check the troubleshooting tips above."
               }
             </p>
           </div>

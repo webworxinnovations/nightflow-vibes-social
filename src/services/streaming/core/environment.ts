@@ -3,7 +3,7 @@ export class EnvironmentConfig {
   private static readonly DROPLET_IP = '67.205.179.77';
   private static readonly DIGITALOCEAN_DOMAIN = 'nightflow-app-wijb2.ondigitalocean.app';
   private static readonly RTMP_PORT = 1935;
-  private static readonly HLS_PORT = 8080; // Changed from 8888 to 8080
+  private static readonly HLS_PORT = 8080; // Confirmed correct port
 
   static isProduction(): boolean {
     return window.location.hostname !== 'localhost';
@@ -31,5 +31,18 @@ export class EnvironmentConfig {
 
   static getCurrentDomain(): string {
     return this.DIGITALOCEAN_DOMAIN;
+  }
+
+  // Debug method to verify URLs
+  static debugUrls(streamKey: string) {
+    const rtmpUrl = `rtmp://${this.DROPLET_IP}:${this.RTMP_PORT}/live`;
+    const hlsUrl = `http://${this.DROPLET_IP}:${this.HLS_PORT}/live/${streamKey}/index.m3u8`;
+    
+    console.log('🔍 URL Configuration Debug:');
+    console.log('- RTMP URL (for OBS):', rtmpUrl);
+    console.log('- HLS URL (for playback):', hlsUrl);
+    console.log('- Stream Key:', streamKey);
+    
+    return { rtmpUrl, hlsUrl };
   }
 }
