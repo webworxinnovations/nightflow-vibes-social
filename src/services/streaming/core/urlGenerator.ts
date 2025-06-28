@@ -10,8 +10,8 @@ export class URLGenerator {
   }
 
   static getOBSServerUrl(): string {
-    // Use DigitalOcean domain for RTMP - this is where OBS connects
-    return `rtmp://${EnvironmentConfig.getDigitalOceanDomain()}:${EnvironmentConfig.getRtmpPort()}/live`;
+    // CRITICAL: Use direct IP for RTMP - DigitalOcean App Platform doesn't expose TCP ports on domains
+    return `rtmp://${EnvironmentConfig.getDropletIP()}:${EnvironmentConfig.getRtmpPort()}/live`;
   }
 
   static getRtmpUrl(): string {
@@ -19,7 +19,7 @@ export class URLGenerator {
   }
 
   static getHlsUrl(streamKey: string): string {
-    // Use DigitalOcean domain for HLS video playback - matching your server config
+    // Use DigitalOcean domain for HLS video playback via HTTP
     const baseUrl = `https://${EnvironmentConfig.getDigitalOceanDomain()}`;
     return `${baseUrl}/live/${streamKey}/index.m3u8`;
   }
