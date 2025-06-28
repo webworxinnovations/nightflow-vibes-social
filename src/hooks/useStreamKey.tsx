@@ -26,13 +26,13 @@ export const useStreamKey = () => {
     }
   }, [streamConfig, isLive, viewerCount]);
 
-  // Create streamData object for backward compatibility - use the correct hlsUrl
-  const streamData = {
-    streamKey: streamConfig?.streamKey || '',
-    streamUrl: streamConfig?.hlsUrl || '', // This should be the HLS URL from database
-    rtmpUrl: streamConfig?.rtmpUrl || '',
-    hlsUrl: streamConfig?.hlsUrl || ''
-  };
+  // Create streamData object for backward compatibility - ensure correct URLs
+  const streamData = streamConfig ? {
+    streamKey: streamConfig.streamKey,
+    streamUrl: streamConfig.hlsUrl, // Use HLS URL for video playback
+    rtmpUrl: streamConfig.rtmpUrl,
+    hlsUrl: streamConfig.hlsUrl
+  } : null;
 
   return {
     streamKey: streamConfig?.streamKey || '',

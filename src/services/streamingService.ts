@@ -20,11 +20,11 @@ class StreamingService {
       if (!user) throw new Error('User not authenticated');
 
       // Generate a unique stream key
-      const streamKey = `nf_${Math.random().toString(36).substr(2, 9)}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const streamKey = `nf_${user.id.split('-')[0]}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
-      // CRITICAL FIX: Use the correct ports that match your server configuration
+      // CRITICAL: Use the EXACT same URLs that the server expects
       const rtmpUrl = `rtmp://67.205.179.77:1935/live`;
-      const hlsUrl = `http://67.205.179.77:3001/live/${streamKey}/index.m3u8`; // FIXED: Now using port 3001
+      const hlsUrl = `http://67.205.179.77:3001/live/${streamKey}/index.m3u8`;
 
       const streamConfig: StreamConfig = {
         streamKey,
@@ -66,7 +66,7 @@ class StreamingService {
         throw new Error('Failed to save stream configuration');
       }
 
-      console.log('🎯 Stream key generated successfully with CORRECT ports:', streamConfig);
+      console.log('🎯 Stream key generated successfully:', streamConfig);
       console.log('✅ RTMP URL:', rtmpUrl);
       console.log('✅ HLS URL:', hlsUrl);
       return streamConfig;
@@ -98,14 +98,13 @@ class StreamingService {
 
       if (!data) return null;
 
-      // Ensure URLs use the correct ports
       const streamConfig = {
         streamKey: data.stream_key,
         rtmpUrl: data.rtmp_url,
         hlsUrl: data.hls_url
       };
 
-      console.log('✅ Current stream loaded with correct URLs:', streamConfig);
+      console.log('✅ Current stream loaded:', streamConfig);
       return streamConfig;
 
     } catch (error) {
