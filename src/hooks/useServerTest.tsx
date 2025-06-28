@@ -6,14 +6,14 @@ export const useServerTest = () => {
   const [testingServer, setTestingServer] = useState(false);
 
   const testNetworkConnectivity = async () => {
-    console.group('🔍 Network Connectivity Analysis');
+    console.group('🔍 Network Connectivity Analysis - DigitalOcean Droplet');
     
     const results = [];
     
-    // Test DigitalOcean app endpoints
+    // Test DigitalOcean droplet endpoints
     const testUrls = [
-      { url: 'https://nightflow-app-wijb2.ondigitalocean.app/health', name: 'App Health Check' },
-      { url: 'https://nightflow-app-wijb2.ondigitalocean.app/api/server/stats', name: 'Server Stats API' },
+      { url: 'http://67.205.179.77:3001/health', name: 'Droplet Health Check' },
+      { url: 'http://67.205.179.77:3001/api/server/stats', name: 'Droplet Server Stats API' },
       { url: 'https://httpbin.org/get', name: 'Internet Connectivity' }
     ];
 
@@ -57,38 +57,48 @@ export const useServerTest = () => {
 
   const handleTestServer = async () => {
     setTestingServer(true);
-    console.log('🔍 Starting comprehensive server connectivity test...');
+    console.log('🔍 Starting comprehensive droplet connectivity test...');
     
     try {
       const networkResults = await testNetworkConnectivity();
       
-      // Check if streaming servers are available
-      const appAvailable = networkResults.some(r => r.includes('App Health Check: Connected'));
-      const apiAvailable = networkResults.some(r => r.includes('Server Stats API: Connected'));
+      // Check if droplet servers are available
+      const dropletAvailable = networkResults.some(r => r.includes('Droplet Health Check: Connected'));
+      const apiAvailable = networkResults.some(r => r.includes('Droplet Server Stats API: Connected'));
       
       const combinedDetails = [
-        '🏥 Server Health Check Results:',
-        appAvailable ? '✅ DigitalOcean App: Online' : '❌ DigitalOcean App: Offline',
+        '🏥 DigitalOcean Droplet Health Check Results:',
+        dropletAvailable ? '✅ DigitalOcean Droplet: Online' : '❌ DigitalOcean Droplet: Offline',
         apiAvailable ? '✅ Streaming API: Online' : '❌ Streaming API: Offline',
         '',
         '🌐 Network Connectivity Tests:',
-        ...networkResults
+        ...networkResults,
+        '',
+        '🎯 Droplet Configuration:',
+        '• RTMP Server: rtmp://67.205.179.77:1935/live',
+        '• HLS Streaming: http://67.205.179.77:3001/live/[streamKey]/index.m3u8',
+        '• WebSocket: ws://67.205.179.77:3001/ws/stream/[streamKey]',
+        '• All services using droplet IP directly'
       ];
 
       setServerTest({ 
-        available: appAvailable, 
+        available: dropletAvailable, 
         details: combinedDetails
       });
       
-      console.log('Server test completed:', { appAvailable, apiAvailable });
+      console.log('Droplet test completed:', { dropletAvailable, apiAvailable });
     } catch (error) {
-      console.error('Server test failed:', error);
+      console.error('Droplet test failed:', error);
       setServerTest({ 
         available: false, 
         details: [
-          '❌ Server connectivity test failed', 
-          'DigitalOcean app is not responding',
-          'Check app deployment status'
+          '❌ DigitalOcean droplet connectivity test failed', 
+          'Droplet is not responding',
+          'Check droplet deployment status',
+          '',
+          '💡 Droplet Configuration Should Be:',
+          '• RTMP Server: rtmp://67.205.179.77:1935/live',
+          '• HLS Streaming: http://67.205.179.77:3001/live/[streamKey]/index.m3u8'
         ] 
       });
     } finally {
@@ -96,7 +106,7 @@ export const useServerTest = () => {
     }
   };
 
-  // Auto-test server on mount
+  // Auto-test droplet on mount
   useEffect(() => {
     handleTestServer();
   }, []);

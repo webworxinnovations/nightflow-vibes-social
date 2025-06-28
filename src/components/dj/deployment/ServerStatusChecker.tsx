@@ -24,18 +24,18 @@ export const useServerStatusChecker = () => {
   const checkServerStatus = async () => {
     setChecking(true);
     try {
-      console.log('🔍 Checking DigitalOcean app deployment status...');
+      console.log('🔍 Checking DigitalOcean droplet deployment status...');
       const status = await streamingService.getServerStatus();
       setServerStatus(status);
-      console.log('📊 Server status result:', status);
+      console.log('📊 Droplet status result:', status);
       
-      // Try multiple endpoints for debugging
+      // Try multiple droplet endpoints for debugging
       const testEndpoints = ['/', '/health', '/api/server/stats'];
       const results: DebugInfo = {};
       
       for (const endpoint of testEndpoints) {
         try {
-          const response = await fetch(`https://nightflow-app-wijb2.ondigitalocean.app${endpoint}`);
+          const response = await fetch(`http://67.205.179.77:3001${endpoint}`);
           results[endpoint] = {
             status: response.status,
             ok: response.ok,
@@ -50,11 +50,11 @@ export const useServerStatusChecker = () => {
       }
       
       setDebugInfo(results);
-      console.log('🔬 Debug test results:', results);
+      console.log('🔬 Droplet debug test results:', results);
       
     } catch (error) {
-      console.error('❌ Failed to check server status:', error);
-      setServerStatus({ available: false, url: 'https://nightflow-app-wijb2.ondigitalocean.app' });
+      console.error('❌ Failed to check droplet status:', error);
+      setServerStatus({ available: false, url: 'http://67.205.179.77:3001' });
     } finally {
       setChecking(false);
     }
@@ -62,9 +62,9 @@ export const useServerStatusChecker = () => {
 
   const testSpecificEndpoint = async (endpoint: string) => {
     try {
-      const response = await fetch(`https://nightflow-app-wijb2.ondigitalocean.app${endpoint}`);
+      const response = await fetch(`http://67.205.179.77:3001${endpoint}`);
       const text = await response.text();
-      console.log(`🧪 Test ${endpoint}:`, {
+      console.log(`🧪 Test droplet ${endpoint}:`, {
         status: response.status,
         ok: response.ok,
         headers: Object.fromEntries(response.headers.entries()),
@@ -72,7 +72,7 @@ export const useServerStatusChecker = () => {
       });
       return { status: response.status, ok: response.ok, text };
     } catch (error) {
-      console.error(`💥 Test ${endpoint} failed:`, error);
+      console.error(`💥 Test droplet ${endpoint} failed:`, error);
       return { error: error instanceof Error ? error.message : 'Unknown error' };
     }
   };
