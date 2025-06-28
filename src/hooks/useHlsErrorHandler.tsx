@@ -62,11 +62,12 @@ export const useHlsErrorHandler = ({
     console.error('Response Code:', data.response?.code);
     
     if (data.response?.code === 404 || data.response?.code === 403) {
-      console.error('🔑 STREAM KEY ISSUE: Server rejected the stream key');
+      console.error('🔑 STREAM KEY ISSUE: DigitalOcean droplet server rejected the stream key');
       console.error('💡 This usually means:');
-      console.error('   1. Stream key format is incorrect (should start with "nf_")');
-      console.error('   2. OBS is not streaming yet');
+      console.error('   1. DigitalOcean droplet server is not running (check: ssh root@67.205.179.77)');
+      console.error('   2. OBS is not streaming to the droplet yet');
       console.error('   3. Stream key doesn\'t match what\'s in OBS');
+      console.error('   4. Droplet firewall is blocking connections');
     }
     
     console.groupEnd();
@@ -74,40 +75,40 @@ export const useHlsErrorHandler = ({
     if (data.fatal) {
       switch (data.type) {
         case Hls.ErrorTypes.NETWORK_ERROR:
-          console.error('🌐 Network error detected');
+          console.error('🌐 Network error connecting to DigitalOcean droplet');
           
           if (data.response?.code === 404) {
-            setError('❌ Stream not found. Please generate a NEW stream key and start OBS streaming.');
+            setError('❌ Stream not found on DigitalOcean droplet. Please ensure your droplet server is running and OBS is streaming.');
             setIsLoading(false);
             return;
           }
           
-          // Test network connectivity but don't spam
+          // Test droplet connectivity but don't spam
           if (Date.now() - lastNetworkTest > 30000) {
-            logNetworkRequest(hlsUrl, 'HLS Stream Endpoint');
+            logNetworkRequest(hlsUrl, 'DigitalOcean Droplet HLS Stream');
           }
           
           const canRetry = scheduleRetry(() => {
-            console.log(`🔄 Retry attempt ${getCurrentRetryCount()}/${maxRetries} for HLS connection`);
+            console.log(`🔄 Retry attempt ${getCurrentRetryCount()}/${maxRetries} for DigitalOcean droplet connection`);
             attemptLoad();
           }, 15000);
 
           if (canRetry) {
-            setError(`Connection failed - retrying in 15 seconds (${getCurrentRetryCount()}/${maxRetries})`);
+            setError(`Cannot connect to DigitalOcean droplet - retrying in 15 seconds (${getCurrentRetryCount()}/${maxRetries})`);
           } else {
-            setError('❌ Stream unavailable. Generate a NEW stream key and ensure OBS is streaming.');
+            setError('❌ Cannot connect to your DigitalOcean droplet server. Check if it\'s running: ssh root@67.205.179.77');
             setIsLoading(false);
           }
           break;
           
         case Hls.ErrorTypes.MEDIA_ERROR:
           console.error('📺 Media error - attempting recovery');
-          setError('Media format error - trying to recover...');
+          setError('Stream format error - trying to recover...');
           break;
           
         default:
           console.error('❌ Fatal HLS error:', data.type, data.details);
-          setError(`Stream error: ${data.details}. Try generating a new stream key.`);
+          setError(`Stream error: ${data.details}. Check your DigitalOcean droplet server status.`);
           setIsLoading(false);
           break;
       }

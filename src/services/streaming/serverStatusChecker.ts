@@ -1,6 +1,7 @@
 
 export class ServerStatusChecker {
-  private static readonly SERVER_BASE_URL = 'http://67.205.179.77:3001'; // FIXED: Use port 3001
+  private static readonly DROPLET_IP = '67.205.179.77'; // Your DigitalOcean droplet IP
+  private static readonly SERVER_BASE_URL = `http://${this.DROPLET_IP}:3001`;
 
   static async checkStatus(): Promise<{ available: boolean; url: string; version?: string; uptime?: number }> {
     console.log('🔍 Testing DigitalOcean droplet server connectivity...');
@@ -32,11 +33,17 @@ export class ServerStatusChecker {
           uptime: data.uptime || 0
         };
       } else {
-        console.warn('⚠️ Server responded but with error status:', response.status);
+        console.warn('⚠️ DigitalOcean droplet responded but with error status:', response.status);
+        console.warn('💡 Check your droplet deployment: ssh root@67.205.179.77');
         return { available: false, url: this.SERVER_BASE_URL };
       }
     } catch (error) {
       console.error('❌ DigitalOcean droplet connectivity test failed:', error);
+      console.error('💡 Your droplet server is not responding. Please check:');
+      console.error('   1. SSH to droplet: ssh root@67.205.179.77');
+      console.error('   2. Check server status: pm2 status');
+      console.error('   3. Check server logs: pm2 logs');
+      console.error('   4. Restart if needed: pm2 restart all');
       return { available: false, url: this.SERVER_BASE_URL };
     }
   }
@@ -46,10 +53,14 @@ export class ServerStatusChecker {
   }
 
   static getRTMPUrl(): string {
-    return 'rtmp://67.205.179.77:1935/live'; // Standard RTMP port
+    return `rtmp://${this.DROPLET_IP}:1935/live`; // Standard RTMP port on your droplet
   }
 
   static getHLSBaseUrl(): string {
-    return `${this.SERVER_BASE_URL}/live`; // HLS on port 3001
+    return `${this.SERVER_BASE_URL}/live`; // HLS on port 3001 on your droplet
+  }
+
+  static getDropletIP(): string {
+    return this.DROPLET_IP;
   }
 }

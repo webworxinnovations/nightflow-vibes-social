@@ -10,10 +10,10 @@ class StreamingService {
 
   async generateStreamKey(): Promise<StreamConfig> {
     try {
-      // Check if server is available first
+      // Check if DigitalOcean droplet server is available first
       const serverStatus = await this.getServerStatus();
       if (!serverStatus.available) {
-        console.warn('🟡 Server offline - generating key for when server comes online');
+        console.warn('🟡 DigitalOcean droplet server offline - generating key for when server comes online');
       }
 
       const { data: { user } } = await supabase.auth.getUser();
@@ -22,7 +22,7 @@ class StreamingService {
       // Generate a unique stream key
       const streamKey = `nf_${user.id.split('-')[0]}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
-      // CRITICAL: Use the EXACT same URLs that the server expects
+      // Use DigitalOcean droplet IP directly - NO domain names
       const rtmpUrl = `rtmp://67.205.179.77:1935/live`;
       const hlsUrl = `http://67.205.179.77:3001/live/${streamKey}/index.m3u8`;
 
@@ -66,9 +66,9 @@ class StreamingService {
         throw new Error('Failed to save stream configuration');
       }
 
-      console.log('🎯 Stream key generated successfully:', streamConfig);
-      console.log('✅ RTMP URL:', rtmpUrl);
-      console.log('✅ HLS URL:', hlsUrl);
+      console.log('🎯 Stream key generated for DigitalOcean droplet:', streamConfig);
+      console.log('✅ RTMP URL (for OBS):', rtmpUrl);
+      console.log('✅ HLS URL (for playback):', hlsUrl);
       return streamConfig;
 
     } catch (error) {
@@ -104,7 +104,7 @@ class StreamingService {
         hlsUrl: data.hls_url
       };
 
-      console.log('✅ Current stream loaded:', streamConfig);
+      console.log('✅ Current stream loaded from database:', streamConfig);
       return streamConfig;
 
     } catch (error) {
@@ -169,9 +169,41 @@ class StreamingService {
 
   async getServerStatus(): Promise<{ available: boolean; url: string; version?: string; uptime?: number }> {
     try {
-      return await ServerStatusChecker.checkStatus();
+      console.log('🔍 Testing DigitalOcean droplet server connectivity...');
+      console.log(`📡 Testing server at: http://67.205.179.77:3001/health`);
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+      const response = await fetch(`http://67.205.179.77:3001/health`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache'
+        },
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (response.ok) {
+        const data = await response.json().catch(() => ({}));
+        console.log('✅ DigitalOcean droplet server is online and responding');
+        
+        return {
+          available: true,
+          url: 'http://67.205.179.77:3001',
+          version: data.version || 'unknown',
+          uptime: data.uptime || 0
+        };
+      } else {
+        console.warn('⚠️ DigitalOcean droplet responded but with error status:', response.status);
+        return { available: false, url: 'http://67.205.179.77:3001' };
+      }
     } catch (error) {
-      console.error('Server status check failed:', error);
+      console.error('❌ DigitalOcean droplet connectivity test failed:', error);
+      console.error('💡 This means your droplet server is not running or not accessible');
+      console.error('💡 Please check: ssh root@67.205.179.77 and run: pm2 status');
       return { available: false, url: 'http://67.205.179.77:3001' };
     }
   }

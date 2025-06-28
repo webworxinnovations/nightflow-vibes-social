@@ -8,7 +8,7 @@ import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Copy, Key, RefreshCw, Trash2 } from "lucide-react";
+import { Copy, Key, RefreshCw, Trash2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
 export const StreamPreviewSection = () => {
@@ -35,18 +35,18 @@ export const StreamPreviewSection = () => {
 
   const handleGenerateNewKey = async () => {
     try {
-      toast.info('🔑 Generating new stream key with correct configuration...');
+      toast.info('🔑 Generating new stream key for DigitalOcean droplet...');
       await generateStreamKey();
-      toast.success('✅ New stream key generated! Ready for OBS.');
+      toast.success('✅ New stream key generated! Copy settings to OBS and start streaming.');
     } catch (error) {
       console.error('Failed to generate stream key:', error);
-      toast.error('Failed to generate stream key. Please try again.');
+      toast.error('Failed to generate stream key. Check if your DigitalOcean droplet is running.');
     }
   };
 
   const handleClearAndRegenerate = async () => {
     try {
-      toast.info('🔄 Clearing old configuration and generating fresh stream key...');
+      toast.info('🔄 Resetting stream configuration for DigitalOcean droplet...');
       
       // Clear any localStorage cache
       localStorage.removeItem('nightflow_stream_config');
@@ -67,7 +67,7 @@ export const StreamPreviewSection = () => {
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold flex items-center gap-2">
               <Key className="h-5 w-5" />
-              Stream Configuration
+              DigitalOcean Droplet Stream Configuration
             </h3>
             {isLive && (
               <div className="flex items-center gap-2">
@@ -87,14 +87,14 @@ export const StreamPreviewSection = () => {
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-green-400 rounded-full"></div>
                   <p className="text-green-400 font-medium">
-                    ✅ Stream configuration ready! Using correct ports (RTMP: 1935, HLS: 3001)
+                    ✅ Stream configuration ready for DigitalOcean droplet (IP: 67.205.179.77)
                   </p>
                 </div>
               </div>
 
               {/* OBS Server URL */}
               <div className="space-y-2">
-                <Label className="text-blue-400">OBS Server URL</Label>
+                <Label className="text-blue-400">OBS Server URL (for DigitalOcean Droplet)</Label>
                 <div className="flex gap-2">
                   <Input
                     value={debugInfo.rtmpUrl}
@@ -151,26 +151,47 @@ export const StreamPreviewSection = () => {
                 </Button>
               </div>
 
-              {/* Debug Info - Now shows correct ports */}
-              <div className="text-xs text-muted-foreground bg-slate-800/50 p-2 rounded">
-                <p>✅ HLS URL: {debugInfo.streamUrl} (Port 3001 - FIXED)</p>
-                <p>✅ RTMP URL: {debugInfo.rtmpUrl} (Port 1935 - Standard)</p>
-                <p>Status: {debugInfo.status}</p>
+              {/* Droplet Connection Info */}
+              <div className="text-xs text-muted-foreground bg-slate-800/50 p-3 rounded">
+                <p className="font-medium text-blue-400 mb-2">DigitalOcean Droplet Configuration:</p>
+                <p>🌊 Droplet IP: 67.205.179.77</p>
+                <p>📡 RTMP Port: 1935 (for OBS connection)</p>
+                <p>🎥 HLS Port: 3001 (for web playback)</p>
+                <p>🔗 HLS URL: {debugInfo.streamUrl}</p>
+                <p>📊 Status: {debugInfo.status}</p>
               </div>
             </div>
           ) : (
             <div className="text-center py-6">
               <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg mb-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <AlertTriangle className="h-5 w-5 text-amber-400" />
+                  <p className="text-amber-400 font-medium">No stream configuration found</p>
+                </div>
                 <p className="text-amber-400 text-sm">
-                  ⚠️ No stream configuration found. Generate a new one to get started.
+                  Generate a stream key to connect OBS to your DigitalOcean droplet server.
                 </p>
               </div>
               <Button onClick={handleClearAndRegenerate} className="bg-blue-600 hover:bg-blue-700">
                 <Key className="mr-2 h-4 w-4" />
-                Generate Fresh Stream Key
+                Generate Fresh Stream Key for Droplet
               </Button>
             </div>
           )}
+        </div>
+
+        {/* Droplet Status Alert */}
+        <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+            <p className="text-blue-400 font-medium">DigitalOcean Droplet Server Status</p>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            If streaming fails, check your droplet server: <code className="bg-slate-700 px-1 rounded">ssh root@67.205.179.77</code>
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Then run: <code className="bg-slate-700 px-1 rounded">pm2 status</code> to verify the streaming server is running.
+          </p>
         </div>
 
         {/* Video Player */}
