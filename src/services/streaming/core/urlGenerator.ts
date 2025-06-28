@@ -10,8 +10,8 @@ export class URLGenerator {
   }
 
   static getOBSServerUrl(): string {
-    // CRITICAL: Use direct IP for RTMP - DigitalOcean App Platform doesn't expose TCP ports on domains
-    return `rtmp://${EnvironmentConfig.getDropletIP()}:${EnvironmentConfig.getRtmpPort()}/live`;
+    // Use DigitalOcean domain for RTMP - your server logs show this is working
+    return `rtmp://${EnvironmentConfig.getDigitalOceanDomain()}:${EnvironmentConfig.getRtmpPort()}/live`;
   }
 
   static getRtmpUrl(): string {
@@ -19,7 +19,7 @@ export class URLGenerator {
   }
 
   static getHlsUrl(streamKey: string): string {
-    // Use DigitalOcean domain for HLS video playback via HTTP
+    // Use DigitalOcean domain for HLS video playback
     const baseUrl = `https://${EnvironmentConfig.getDigitalOceanDomain()}`;
     return `${baseUrl}/live/${streamKey}/index.m3u8`;
   }
@@ -27,9 +27,7 @@ export class URLGenerator {
   static getWebSocketUrl(streamKey: string): string {
     // Use DigitalOcean domain for WebSocket connections
     const protocol = EnvironmentConfig.isProduction() ? 'wss' : 'ws';
-    const domain = EnvironmentConfig.isProduction() 
-        ? EnvironmentConfig.getDigitalOceanDomain()
-        : 'localhost:3001';
+    const domain = EnvironmentConfig.getDigitalOceanDomain();
     return `${protocol}://${domain}/ws/stream/${streamKey}`;
   }
 }

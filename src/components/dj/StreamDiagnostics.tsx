@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { GlassmorphicCard } from '@/components/ui/glassmorphic-card';
@@ -34,10 +33,10 @@ export const StreamDiagnostics = ({ streamKey, rtmpUrl, hlsUrl }: StreamDiagnost
 
     const newTests: DiagnosticTest[] = [];
 
-    // Test 1: RTMP Server Connectivity
+    // Test 1: RTMP Server Connectivity - use DigitalOcean domain
     try {
-      console.log('🧪 Testing RTMP server connectivity...');
-      const rtmpTest = await fetch('http://67.205.179.77:3001/health', {
+      console.log('🧪 Testing RTMP server connectivity via DigitalOcean domain...');
+      const rtmpTest = await fetch('https://nightflow-app-wijb2.ondigitalocean.app/health', {
         method: 'GET',
         signal: AbortSignal.timeout(5000)
       });
@@ -47,7 +46,7 @@ export const StreamDiagnostics = ({ streamKey, rtmpUrl, hlsUrl }: StreamDiagnost
         newTests.push({
           name: 'RTMP Server Connectivity',
           status: 'success',
-          message: 'Server is reachable',
+          message: 'Server is reachable via DigitalOcean domain',
           details: `Server version: ${data.version || 'Unknown'}`
         });
       } else {
@@ -133,10 +132,10 @@ export const StreamDiagnostics = ({ streamKey, rtmpUrl, hlsUrl }: StreamDiagnost
       });
     }
 
-    // Test 4: Server Stream Status
+    // Test 4: Server Stream Status - use DigitalOcean domain
     try {
       console.log('🧪 Checking server stream status...');
-      const statusTest = await fetch(`http://67.205.179.77:3001/api/stream/status/${streamKey}`, {
+      const statusTest = await fetch(`https://nightflow-app-wijb2.ondigitalocean.app/api/stream/status/${streamKey}`, {
         method: 'GET',
         signal: AbortSignal.timeout(5000)
       });
@@ -237,6 +236,7 @@ export const StreamDiagnostics = ({ streamKey, rtmpUrl, hlsUrl }: StreamDiagnost
             <li>If RTMP Server fails: Network connectivity issue or server is down</li>
             <li>If Stream Status fails: There may be a delay, wait 30 seconds and re-test</li>
             <li>Make sure OBS shows "Streaming" status, not just "End Stream" button</li>
+            <li><strong>Use DigitalOcean domain for OBS:</strong> rtmp://nightflow-app-wijb2.ondigitalocean.app:1935/live</li>
           </ul>
         </div>
       </div>
