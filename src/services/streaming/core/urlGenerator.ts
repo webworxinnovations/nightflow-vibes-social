@@ -19,10 +19,8 @@ export class URLGenerator {
   }
 
   static getHlsUrl(streamKey: string): string {
-    // Use droplet IP for HLS video playback
-    const baseUrl = EnvironmentConfig.isProduction() 
-      ? `http://${EnvironmentConfig.getDropletIP()}:8080`
-      : 'http://localhost:8080';
+    // Use droplet IP for HLS video playback - this is the key fix
+    const baseUrl = `http://${EnvironmentConfig.getDropletIP()}:8080`;
     return `${baseUrl}/live/${streamKey}/index.m3u8`;
   }
 

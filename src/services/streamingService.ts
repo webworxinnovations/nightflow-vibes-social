@@ -1,4 +1,3 @@
-
 import { StreamConfig, StreamStatus } from '@/types/streaming';
 import { StreamingConfig } from './streaming/config';
 import { supabase } from '@/integrations/supabase/client';
@@ -91,10 +90,14 @@ class StreamingService {
       const stream = streams[0];
       console.log('✅ Current stream found:', stream.stream_key);
 
+      // Fix the HLS URL to use the correct droplet IP
+      const correctedHlsUrl = `http://67.205.179.77:8080/live/${stream.stream_key}/index.m3u8`;
+      console.log('🔧 Using corrected HLS URL:', correctedHlsUrl);
+
       return {
         streamKey: stream.stream_key,
         rtmpUrl: stream.rtmp_url,
-        hlsUrl: stream.hls_url,
+        hlsUrl: correctedHlsUrl,
         isLive: stream.status === 'live',
         viewerCount: stream.viewer_count || 0
       };
