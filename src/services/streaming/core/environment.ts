@@ -8,7 +8,7 @@ export class EnvironmentConfig {
     return window.location.hostname !== 'localhost';
   }
 
-  static isDropletEnvironment(): boolean {
+  static isDigitalOceanEnvironment(): boolean {
     return window.location.hostname === 'nightflow-app-wijb2.ondigitalocean.app';
   }
 
@@ -32,7 +32,7 @@ export class EnvironmentConfig {
     const rtmpUrl = `rtmp://nightflow-app-wijb2.ondigitalocean.app:${this.RTMP_PORT}/live`;
     const hlsUrl = `${this.DIGITALOCEAN_APP_URL}/live/${streamKey}/index.m3u8`;
     
-    console.log('🔍 Correct URL Configuration:');
+    console.log('🔍 DigitalOcean App Configuration:');
     console.log('- RTMP URL (for OBS):', rtmpUrl);
     console.log('- HLS URL (for playback):', hlsUrl);
     console.log('- Stream Key:', streamKey);
@@ -52,7 +52,7 @@ export class EnvironmentConfig {
       const deploymentUrl = this.getActualDeploymentUrl();
       const healthUrl = `${deploymentUrl}/health`;
       
-      console.log(`Testing deployment health: ${healthUrl}`);
+      console.log(`Testing DigitalOcean app health: ${healthUrl}`);
       
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
