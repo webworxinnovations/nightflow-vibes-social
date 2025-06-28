@@ -1,59 +1,55 @@
 
-import { ServerStatusResponse } from './types';
-import { EnvironmentConfig } from './core/environment';
-
 export class ServerStatusChecker {
-  static async checkStatus(): Promise<ServerStatusResponse> {
+  private static readonly SERVER_BASE_URL = 'http://67.205.179.77:3001'; // FIXED: Use port 3001
+
+  static async checkStatus(): Promise<{ available: boolean; url: string; version?: string; uptime?: number }> {
+    console.log('🔍 Testing DigitalOcean droplet server connectivity...');
+    console.log(`📡 Testing server at: ${this.SERVER_BASE_URL}/health`);
+    
     try {
-      console.log('🔍 Testing DigitalOcean droplet server connectivity...');
-      const deploymentUrl = 'http://67.205.179.77:3001';
-      const healthUrl = `${deploymentUrl}/health`;
-      
-      console.log('📡 Testing server at:', healthUrl);
-      
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => {
-        console.log('⏰ Request timeout after 10 seconds');
-        controller.abort();
-      }, 10000);
-      
-      const response = await fetch(healthUrl, {
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+      const response = await fetch(`${this.SERVER_BASE_URL}/health`, {
         method: 'GET',
-        signal: controller.signal,
         headers: {
           'Accept': 'application/json',
           'Cache-Control': 'no-cache'
-        }
+        },
+        signal: controller.signal
       });
-      
+
       clearTimeout(timeoutId);
-      
+
       if (response.ok) {
-        const data = await response.json().catch(() => ({ status: 'ok' }));
-        console.log('✅ DigitalOcean droplet is operational:', data);
+        const data = await response.json().catch(() => ({}));
+        console.log('✅ DigitalOcean droplet server is online and responding');
         
         return {
           available: true,
-          url: deploymentUrl,
-          version: data.version || '2.0.4',
+          url: this.SERVER_BASE_URL,
+          version: data.version || 'unknown',
           uptime: data.uptime || 0
         };
       } else {
-        console.log('⚠️ Droplet responded with error:', response.status);
-        return {
-          available: false,
-          url: deploymentUrl,
-          error: `HTTP ${response.status}`
-        };
+        console.warn('⚠️ Server responded but with error status:', response.status);
+        return { available: false, url: this.SERVER_BASE_URL };
       }
     } catch (error) {
       console.error('❌ DigitalOcean droplet connectivity test failed:', error);
-      
-      return {
-        available: false,
-        url: 'http://67.205.179.77:3001',
-        error: error instanceof Error ? error.message : 'Connection failed'
-      };
+      return { available: false, url: this.SERVER_BASE_URL };
     }
+  }
+
+  static getServerUrl(): string {
+    return this.SERVER_BASE_URL;
+  }
+
+  static getRTMPUrl(): string {
+    return 'rtmp://67.205.179.77:1935/live'; // Standard RTMP port
+  }
+
+  static getHLSBaseUrl(): string {
+    return `${this.SERVER_BASE_URL}/live`; // HLS on port 3001
   }
 }
