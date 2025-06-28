@@ -4,6 +4,61 @@ export class StreamingConfig {
     return 'rtmp://nightflow-app-wijb2.ondigitalocean.app:1935';
   }
 
+  static getApiBaseUrl(): string {
+    return 'https://nightflow-app-wijb2.ondigitalocean.app';
+  }
+
+  static getRtmpUrl(): string {
+    return `${this.getOBSServerUrl()}/live`;
+  }
+
+  static getHlsUrl(streamKey: string): string {
+    return `${this.getApiBaseUrl()}/live/${streamKey}/index.m3u8`;
+  }
+
+  static getWebSocketUrl(streamKey: string): string {
+    return `wss://nightflow-app-wijb2.ondigitalocean.app/ws/stream/${streamKey}`;
+  }
+
+  static isProduction(): boolean {
+    return window.location.hostname !== 'localhost';
+  }
+
+  static getPortInfo(): {
+    rtmpPort: number;
+    description: string;
+    compatibility: string;
+  } {
+    return {
+      rtmpPort: 1935,
+      description: 'Standard RTMP streaming port',
+      compatibility: 'Compatible with all RTMP streaming software including OBS Studio'
+    };
+  }
+
+  static getProtocolInfo(): {
+    protocol: string;
+    description: string;
+  } {
+    return {
+      protocol: 'RTMP',
+      description: 'Real-Time Messaging Protocol - Industry standard for live streaming'
+    };
+  }
+
+  static getTroubleshootingSteps(): string[] {
+    return [
+      `✅ Use exact server URL: ${this.getOBSServerUrl()}`,
+      '✅ Ensure DigitalOcean app is running',
+      '✅ Restart OBS completely after configuration',
+      '✅ Test from different network (mobile hotspot)',
+      '✅ Check DigitalOcean app deployment status',
+      '✅ Use generated stream key exactly as provided',
+      '✅ In OBS: Service = Custom, not a preset service',
+      '⚠️ If fails: Check DigitalOcean app logs'
+    ];
+  }
+
   static getOBSSetupInstructions() {
     return {
       server: this.getOBSServerUrl(),
@@ -27,7 +82,7 @@ export class StreamingConfig {
     console.log('Server URL:', serverUrl);
     
     // Since we can't directly test RTMP from browser, we test the HTTP equivalent
-    const testUrl = 'https://nightflow-app-wijb2.ondigitalocean.app/health';
+    const testUrl = `${this.getApiBaseUrl()}/health`;
     
     try {
       const response = await fetch(testUrl, {
