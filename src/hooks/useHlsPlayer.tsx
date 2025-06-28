@@ -17,6 +17,7 @@ export const useHlsPlayer = ({ hlsUrl, isLive = false, autoplay = false, muted =
   const hlsRef = useRef<Hls | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [lastNetworkTest, setLastNetworkTest] = useState<number>(0);
   
   const hlsConfig = useHlsConfig({ isLive });
   const { clearRetryTimeout, scheduleRetry, resetRetryCount, getCurrentRetryCount, maxRetries } = useHlsRetry();
@@ -30,63 +31,65 @@ export const useHlsPlayer = ({ hlsUrl, isLive = false, autoplay = false, muted =
     handleFullscreen: baseHandleFullscreen 
   } = useVideoControls(muted);
 
+  // Throttled network test - only run once every 30 seconds
   const logNetworkRequest = async (url: string, description: string) => {
+    const now = Date.now();
+    if (now - lastNetworkTest < 30000) { // 30 second throttle
+      console.log(`⏸️ Network test throttled for ${description}`);
+      return false;
+    }
+    
+    setLastNetworkTest(now);
     console.log(`🌐 Network Test: ${description}`);
     console.log(`🎯 Testing URL: ${url}`);
     
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      
       const response = await fetch(url, { 
         method: 'HEAD',
-        mode: 'no-cors',
+        signal: controller.signal,
         cache: 'no-cache'
       });
+      
+      clearTimeout(timeoutId);
       console.log(`✅ ${description} - Response status:`, response.status);
       return true;
     } catch (error) {
-      console.error(`❌ ${description} - Network Error:`, error);
-      console.error(`❌ Error details:`, {
-        name: error instanceof Error ? error.name : 'Unknown',
-        message: error instanceof Error ? error.message : 'Unknown error',
-        url: url
-      });
+      console.error(`❌ ${description} - Network Error:`, error instanceof Error ? error.message : 'Unknown error');
       return false;
     }
   };
 
   const handleHlsError = (event: any, data: any) => {
-    // Enhanced error logging
     console.group('🚨 HLS Error Analysis');
     console.error('Error Type:', data.type);
     console.error('Error Details:', data.details);
     console.error('Fatal:', data.fatal);
     console.error('URL:', data.url);
     console.error('Response Code:', data.response?.code);
-    console.error('Response Text:', data.response?.text);
-    console.error('Network Info:', {
-      online: navigator.onLine,
-      connection: (navigator as any).connection?.effectiveType || 'unknown'
-    });
     console.groupEnd();
     
     if (data.fatal) {
       switch (data.type) {
         case Hls.ErrorTypes.NETWORK_ERROR:
-          console.error('🌐 Network error detected - analyzing...');
+          console.error('🌐 Network error detected');
           
-          // Test server connectivity
-          logNetworkRequest(hlsUrl, 'HLS Stream Endpoint');
-          logNetworkRequest('http://67.205.179.77:8888/health', 'HLS Server Health Check');
-          logNetworkRequest('http://67.205.179.77:3001/health', 'API Server Health Check');
+          // Only test network connectivity if we haven't recently
+          if (Date.now() - lastNetworkTest > 30000) {
+            logNetworkRequest(hlsUrl, 'HLS Stream Endpoint');
+          }
           
           const canRetry = scheduleRetry(() => {
             console.log(`🔄 Retry attempt ${getCurrentRetryCount()}/${maxRetries} for HLS connection`);
             attemptLoad();
-          }, 10000); // Longer delay for network issues
+          }, 20000); // 20 second delay between retries
 
           if (canRetry) {
-            setError(`Network error - retrying (${getCurrentRetryCount()}/${maxRetries}). Check console for details.`);
+            setError(`Connection failed - retrying in 20 seconds (${getCurrentRetryCount()}/${maxRetries})`);
           } else {
-            setError('❌ Connection failed after multiple attempts. Server may be offline.');
+            setError('❌ Stream unavailable. Server may be offline or not streaming.');
             setIsLoading(false);
           }
           break;
@@ -105,7 +108,7 @@ export const useHlsPlayer = ({ hlsUrl, isLive = false, autoplay = false, muted =
           
         default:
           console.error('❌ Fatal HLS error:', data.type, data.details);
-          setError(`Stream error: ${data.details} (Type: ${data.type})`);
+          setError(`Stream error: ${data.details}`);
           setIsLoading(false);
           break;
       }
@@ -123,20 +126,9 @@ export const useHlsPlayer = ({ hlsUrl, isLive = false, autoplay = false, muted =
     }
 
     console.group('🎬 HLS Connection Attempt');
-    console.log('Attempt:', getCurrentRetryCount() + 1, '/', maxRetries);
+    console.log('Attempt:', getCurrentRetryCount() + 1, '/', maxRetries + 1);
     console.log('HLS URL:', hlsUrl);
-    console.log('Browser Info:', {
-      userAgent: navigator.userAgent,
-      online: navigator.onLine,
-      cookieEnabled: navigator.cookieEnabled
-    });
-    
-    // Test basic connectivity first
-    const connectivityOk = await logNetworkRequest(hlsUrl, 'Direct HLS URL Test');
-    if (!connectivityOk) {
-      console.warn('⚠️ Direct connectivity test failed, but continuing with HLS attempt...');
-    }
-    
+    console.log('Expected HLS Format: http://67.205.179.77:8888/live/[streamKey]/index.m3u8');
     console.groupEnd();
 
     // Clean up existing HLS instance
@@ -155,7 +147,6 @@ export const useHlsPlayer = ({ hlsUrl, isLive = false, autoplay = false, muted =
 
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
         console.log('✅ HLS manifest parsed successfully!');
-        console.log('✅ Stream ready for playback');
         setIsLoading(false);
         setError(null);
         resetRetryCount();
@@ -172,15 +163,6 @@ export const useHlsPlayer = ({ hlsUrl, isLive = false, autoplay = false, muted =
 
       hls.on(Hls.Events.MEDIA_ATTACHED, () => {
         console.log('📺 Media successfully attached to video element');
-      });
-
-      // Additional event logging
-      hls.on(Hls.Events.MANIFEST_LOADING, () => {
-        console.log('📥 Loading HLS manifest...');
-      });
-
-      hls.on(Hls.Events.LEVEL_LOADED, (event, data) => {
-        console.log('📊 Quality level loaded:', data.level, 'segments:', data.details.fragments.length);
       });
 
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
@@ -203,21 +185,13 @@ export const useHlsPlayer = ({ hlsUrl, isLive = false, autoplay = false, muted =
 
       video.addEventListener('error', (e) => {
         console.error('❌ Native HLS Error:', e);
-        console.error('Video error details:', {
-          code: video.error?.code,
-          message: video.error?.message,
-          MEDIA_ERR_ABORTED: video.error?.code === 1,
-          MEDIA_ERR_NETWORK: video.error?.code === 2,
-          MEDIA_ERR_DECODE: video.error?.code === 3,
-          MEDIA_ERR_SRC_NOT_SUPPORTED: video.error?.code === 4
-        });
         
         const canRetry = scheduleRetry(() => {
           attemptLoad();
-        }, 8000);
+        }, 20000);
 
         if (canRetry) {
-          setError(`Native playback error (${getCurrentRetryCount()}/${maxRetries}). Retrying...`);
+          setError(`Native playback error (${getCurrentRetryCount()}/${maxRetries}). Retrying in 20 seconds...`);
         } else {
           setError('Video playback not supported or stream unavailable');
           setIsLoading(false);

@@ -1,7 +1,7 @@
 
 import { useRef } from 'react';
 
-export const useHlsRetry = (maxRetries: number = 3) => {
+export const useHlsRetry = (maxRetries: number = 2) => { // Reduced from 3 to 2
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const retryCountRef = useRef(0);
 
@@ -12,17 +12,20 @@ export const useHlsRetry = (maxRetries: number = 3) => {
     }
   };
 
-  const scheduleRetry = (callback: () => void, delay: number = 5000) => {
+  const scheduleRetry = (callback: () => void, delay: number = 15000) => { // Increased from 5000 to 15000
     if (retryCountRef.current < maxRetries) {
       retryCountRef.current++;
+      console.log(`⏰ Scheduling retry ${retryCountRef.current}/${maxRetries} in ${delay/1000} seconds`);
       retryTimeoutRef.current = setTimeout(callback, delay);
       return true;
     }
+    console.log(`❌ Max retries (${maxRetries}) reached, stopping retry attempts`);
     return false;
   };
 
   const resetRetryCount = () => {
     retryCountRef.current = 0;
+    console.log('🔄 Retry count reset');
   };
 
   const getCurrentRetryCount = () => retryCountRef.current;

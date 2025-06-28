@@ -10,22 +10,26 @@ export const useServerTest = () => {
     console.group('🔍 Network Connectivity Analysis');
     
     const results = [];
+    
+    // Simplified connectivity tests - don't spam the network
     const testUrls = [
-      { url: 'http://67.205.179.77:8888/health', name: 'HLS Server Health' },
       { url: 'http://67.205.179.77:3001/health', name: 'API Server Health' },
-      { url: 'http://67.205.179.77:1935', name: 'RTMP Server Check' },
       { url: 'https://httpbin.org/get', name: 'Internet Connectivity' }
     ];
 
     for (const test of testUrls) {
       try {
         console.log(`Testing: ${test.name} - ${test.url}`);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        
         const response = await fetch(test.url, { 
           method: 'HEAD',
-          mode: 'no-cors',
           cache: 'no-cache',
-          signal: AbortSignal.timeout(5000)
+          signal: controller.signal
         });
+        
+        clearTimeout(timeoutId);
         results.push(`✅ ${test.name}: Connected`);
         console.log(`✅ ${test.name}: OK`);
       } catch (error) {
@@ -53,7 +57,7 @@ export const useServerTest = () => {
 
   const handleTestServer = async () => {
     setTestingServer(true);
-    console.log('🔍 Starting comprehensive server connectivity test...');
+    console.log('🔍 Starting server connectivity test...');
     
     try {
       const networkResults = await testNetworkConnectivity();
@@ -77,7 +81,7 @@ export const useServerTest = () => {
       setServerTest({ 
         available: false, 
         details: [
-          '❌ Comprehensive server test failed', 
+          '❌ Server connectivity test failed', 
           'Network connectivity issues detected',
           'Check your internet connection and firewall settings'
         ] 
@@ -87,7 +91,7 @@ export const useServerTest = () => {
     }
   };
 
-  // Auto-test server on mount
+  // Auto-test server on mount - but only once
   useEffect(() => {
     handleTestServer();
   }, []);
