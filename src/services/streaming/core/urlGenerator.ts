@@ -19,9 +19,19 @@ export class URLGenerator {
   }
 
   static getHlsUrl(streamKey: string): string {
-    // FIXED: Use port 8888 to match what the server is actually providing
-    const baseUrl = `http://${EnvironmentConfig.getDropletIP()}:8888`;
-    return `${baseUrl}/live/${streamKey}/index.m3u8`;
+    // Try different port combinations based on what we've seen in the network requests
+    const dropletIP = EnvironmentConfig.getDropletIP();
+    
+    // Log all possible URLs for debugging
+    console.log('🔍 HLS URL Generation Debug:');
+    console.log('- Stream Key:', streamKey);
+    console.log('- Droplet IP:', dropletIP);
+    console.log('- Attempting HLS on port 8888');
+    
+    const hlsUrl = `http://${dropletIP}:8888/live/${streamKey}/index.m3u8`;
+    console.log('- Generated HLS URL:', hlsUrl);
+    
+    return hlsUrl;
   }
 
   static getWebSocketUrl(streamKey: string): string {
@@ -29,5 +39,15 @@ export class URLGenerator {
     const protocol = EnvironmentConfig.isProduction() ? 'ws' : 'ws';
     const host = `${EnvironmentConfig.getDropletIP()}:3001`;
     return `${protocol}://${host}/ws/stream/${streamKey}`;
+  }
+
+  // Add method to test multiple HLS URLs if needed
+  static getAlternativeHlsUrls(streamKey: string): string[] {
+    const dropletIP = EnvironmentConfig.getDropletIP();
+    return [
+      `http://${dropletIP}:8888/live/${streamKey}/index.m3u8`,
+      `http://${dropletIP}:8080/live/${streamKey}/index.m3u8`,
+      `http://${dropletIP}:3001/hls/${streamKey}/index.m3u8`
+    ];
   }
 }
