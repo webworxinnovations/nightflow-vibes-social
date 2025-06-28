@@ -8,18 +8,17 @@ import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Copy, Key, RefreshCw, Trash2, AlertTriangle } from "lucide-react";
+import { Copy, Key, RefreshCw, Trash2, AlertTriangle, Settings } from "lucide-react";
 import { toast } from "sonner";
 
 export const StreamPreviewSection = () => {
   const { streamData, isLive, viewerCount, generateStreamKey } = useStreamKey();
   const { streamDuration, formatDuration } = useStreamDuration(isLive);
 
-  // Use the correct HLS URL from database
   const debugInfo = useMemo(() => {
     if (streamData?.streamKey) {
       return {
-        streamUrl: streamData.hlsUrl, // Use the HLS URL from database
+        streamUrl: streamData.hlsUrl,
         streamKey: streamData.streamKey,
         rtmpUrl: streamData.rtmpUrl,
         status: isLive ? 'Live' : 'Ready for OBS'
@@ -47,16 +46,26 @@ export const StreamPreviewSection = () => {
   const handleClearAndRegenerate = async () => {
     try {
       toast.info('🔄 Resetting stream configuration for DigitalOcean droplet...');
-      
-      // Clear any localStorage cache
       localStorage.removeItem('nightflow_stream_config');
-      
-      // Generate new key
       await handleGenerateNewKey();
     } catch (error) {
       console.error('Failed to clear and regenerate:', error);
       toast.error('Failed to reset stream configuration');
     }
+  };
+
+  const handleFixDropletPorts = () => {
+    toast.info(
+      '🔧 DROPLET FIREWALL FIX NEEDED:\n\n' +
+      '1. SSH to droplet: ssh root@67.205.179.77\n' +
+      '2. Allow required ports:\n' +
+      '   ufw allow 3001\n' +
+      '   ufw allow 1935\n' +
+      '3. Check firewall: ufw status\n' +
+      '4. Restart server: pm2 restart nightflow-streaming\n\n' +
+      'Your server is running but ports need to be opened!',
+      { duration: 15000 }
+    );
   };
 
   return (
@@ -78,6 +87,26 @@ export const StreamPreviewSection = () => {
                 </span>
               </div>
             )}
+          </div>
+
+          {/* CRITICAL FIREWALL ALERT */}
+          <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertTriangle className="h-5 w-5 text-red-400" />
+              <p className="text-red-400 font-medium">🔥 DROPLET FIREWALL ISSUE DETECTED</p>
+            </div>
+            <p className="text-sm text-muted-foreground mb-3">
+              Your DigitalOcean droplet server is running (confirmed by pm2), but ports 3001 and 1935 are not accessible from the internet. This is a firewall configuration issue.
+            </p>
+            <Button
+              onClick={handleFixDropletPorts}
+              variant="destructive"
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <Settings className="h-4 w-4" />
+              Show Firewall Fix Commands
+            </Button>
           </div>
 
           {debugInfo ? (
@@ -159,6 +188,7 @@ export const StreamPreviewSection = () => {
                 <p>🎥 HLS Port: 3001 (for web playback)</p>
                 <p>🔗 HLS URL: {debugInfo.streamUrl}</p>
                 <p>📊 Status: {debugInfo.status}</p>
+                <p className="text-red-400 mt-2">⚠️ Firewall ports need to be opened!</p>
               </div>
             </div>
           ) : (
@@ -187,10 +217,10 @@ export const StreamPreviewSection = () => {
             <p className="text-blue-400 font-medium">DigitalOcean Droplet Server Status</p>
           </div>
           <p className="text-sm text-muted-foreground">
-            If streaming fails, check your droplet server: <code className="bg-slate-700 px-1 rounded">ssh root@67.205.179.77</code>
+            Server confirmed running via pm2, but firewall configuration needed.
           </p>
           <p className="text-sm text-muted-foreground">
-            Then run: <code className="bg-slate-700 px-1 rounded">pm2 status</code> to verify the streaming server is running.
+            SSH command: <code className="bg-slate-700 px-1 rounded">ssh root@67.205.179.77</code>
           </p>
         </div>
 
