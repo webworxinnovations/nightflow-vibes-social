@@ -2,9 +2,10 @@
 import { StreamConfig, StreamStatus, ServerStatusResponse } from './types';
 import { URLGenerator } from './core/urlGenerator';
 import { ServerStatusChecker } from './serverStatusChecker';
+import { WebSocketManager } from './websocketManager';
 
 export class StreamingServiceCore {
-  private statusUpdateCallback: ((status: StreamStatus) => void) | null = null;
+  private wsManager = new WebSocketManager();
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 3;
 
@@ -57,7 +58,8 @@ export class StreamingServiceCore {
   async revokeStreamKey(): Promise<void> {
     try {
       localStorage.removeItem('nightflow_stream_config');
-      console.log('🗑️ Stream key revoked');
+      this.wsManager.disconnect();
+      console.log('🗑️ Stream key revoked and connections closed');
     } catch (error) {
       console.error('❌ Failed to revoke stream key:', error);
       throw new Error('Failed to revoke stream key');
@@ -80,41 +82,16 @@ export class StreamingServiceCore {
 
   connectToStreamStatusWebSocket(streamKey: string): void {
     console.log('🔌 Setting up WebSocket connection for stream status');
-    
-    // Simulate stream status updates
-    const simulateStatus = () => {
-      const status: StreamStatus = {
-        isLive: Math.random() > 0.7, // Randomly simulate live status
-        viewerCount: Math.floor(Math.random() * 50),
-        duration: Math.floor(Math.random() * 3600),
-        bitrate: 2500 + Math.floor(Math.random() * 1000),
-        resolution: '1920x1080',
-        timestamp: new Date().toISOString()
-      };
-      
-      if (this.statusUpdateCallback) {
-        this.statusUpdateCallback(status);
-      }
-    };
-
-    // Update status every 10 seconds
-    setInterval(simulateStatus, 10000);
-    
-    // Initial status
-    setTimeout(simulateStatus, 1000);
+    this.wsManager.connectToStreamStatus(streamKey);
   }
 
   onStatusUpdate(callback: (status: StreamStatus) => void): () => void {
-    this.statusUpdateCallback = callback;
-    
-    return () => {
-      this.statusUpdateCallback = null;
-    };
+    return this.wsManager.onStatusUpdate(callback);
   }
 
   disconnect(): void {
     console.log('🔌 Disconnecting from streaming service');
-    this.statusUpdateCallback = null;
+    this.wsManager.disconnect();
     this.reconnectAttempts = 0;
   }
 }
