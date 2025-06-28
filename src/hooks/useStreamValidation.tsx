@@ -3,7 +3,7 @@ export const useStreamValidation = () => {
   const validateStreamKey = (hlsUrl: string) => {
     console.group('🎬 HLS Connection Attempt');
     console.log('HLS URL:', hlsUrl);
-    console.log('Expected HLS Format: http://67.205.179.77:8888/live/nf_[streamKey]/index.m3u8');
+    console.log('Expected HLS Format: https://nightflow-app-wijb2.ondigitalocean.app/live/nf_[streamKey]/index.m3u8');
     
     const streamKeyMatch = hlsUrl.match(/\/live\/([^\/]+)\/index\.m3u8/);
     if (streamKeyMatch) {

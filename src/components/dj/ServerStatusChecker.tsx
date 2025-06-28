@@ -21,137 +21,136 @@ interface ServerStatusCheckerProps {
 export const ServerStatusChecker = ({ onStatusUpdate }: ServerStatusCheckerProps) => {
   const [checking, setChecking] = useState(false);
 
-  const checkDropletStatus = async () => {
+  const checkDigitalOceanApp = async () => {
     setChecking(true);
-    console.log('🔍 Testing DigitalOcean droplet at 67.205.179.77...');
+    console.log('🔍 Testing DigitalOcean app at nightflow-app-wijb2.ondigitalocean.app...');
     
     onStatusUpdate({
       status: 'checking',
-      details: 'Testing DigitalOcean droplet streaming server connectivity...',
+      details: 'Testing DigitalOcean app streaming server connectivity...',
       nextSteps: []
     });
 
     const debugResults: any = {
       timestamp: new Date().toISOString(),
       tests: {},
-      dropletIP: '67.205.179.77',
-      domain: 'nightflow-app-wijb2.ondigitalocean.app'
+      appUrl: 'nightflow-app-wijb2.ondigitalocean.app'
     };
 
     try {
-      // Test 1: Check if the DigitalOcean app is responding via domain
-      console.log('🧪 Test 1: DigitalOcean app health check via domain...');
+      // Test 1: Check if the DigitalOcean app is responding
+      console.log('🧪 Test 1: DigitalOcean app health check...');
       try {
         const healthResponse = await fetch('https://nightflow-app-wijb2.ondigitalocean.app/health', {
           method: 'GET',
-          signal: AbortSignal.timeout(8000)
+          signal: AbortSignal.timeout(10000)
         });
-        debugResults.tests.domainHealthCheck = {
+        debugResults.tests.appHealthCheck = {
           status: healthResponse.status,
           success: healthResponse.ok,
           statusText: healthResponse.statusText,
           url: 'https://nightflow-app-wijb2.ondigitalocean.app/health'
         };
-        console.log('✅ Domain health check:', debugResults.tests.domainHealthCheck);
+        console.log('✅ App health check:', debugResults.tests.appHealthCheck);
       } catch (error) {
-        debugResults.tests.domainHealthCheck = {
+        debugResults.tests.appHealthCheck = {
           error: error instanceof Error ? error.message : 'Connection failed',
           success: false,
           url: 'https://nightflow-app-wijb2.ondigitalocean.app/health'
         };
-        console.log('❌ Domain health check failed:', debugResults.tests.domainHealthCheck);
+        console.log('❌ App health check failed:', debugResults.tests.appHealthCheck);
       }
 
-      // Test 2: Check RTMP server status via IP
-      console.log('🧪 Test 2: RTMP server via direct IP...');
+      // Test 2: Check server stats API
+      console.log('🧪 Test 2: Server stats API...');
       try {
-        const rtmpResponse = await fetch('http://67.205.179.77:8888/api/server/stats', {
+        const statsResponse = await fetch('https://nightflow-app-wijb2.ondigitalocean.app/api/server/stats', {
           method: 'GET',
-          signal: AbortSignal.timeout(8000)
+          signal: AbortSignal.timeout(10000)
         });
-        const rtmpData = await rtmpResponse.json();
-        debugResults.tests.rtmpViaIP = {
-          success: rtmpResponse.ok,
-          data: rtmpData,
-          url: 'http://67.205.179.77:8888/api/server/stats'
+        const statsData = await statsResponse.json();
+        debugResults.tests.serverStats = {
+          success: statsResponse.ok,
+          data: statsData,
+          url: 'https://nightflow-app-wijb2.ondigitalocean.app/api/server/stats'
         };
-        console.log('📡 RTMP via IP test:', debugResults.tests.rtmpViaIP);
+        console.log('📡 Server stats test:', debugResults.tests.serverStats);
       } catch (error) {
-        debugResults.tests.rtmpViaIP = {
-          error: error instanceof Error ? error.message : 'RTMP via IP failed',
+        debugResults.tests.serverStats = {
+          error: error instanceof Error ? error.message : 'Server stats failed',
           success: false,
-          url: 'http://67.205.179.77:8888/api/server/stats'
+          url: 'https://nightflow-app-wijb2.ondigitalocean.app/api/server/stats'
         };
-        console.log('❌ RTMP via IP test failed:', debugResults.tests.rtmpViaIP);
+        console.log('❌ Server stats test failed:', debugResults.tests.serverStats);
       }
 
       // Analyze results and provide status
-      const domainWorking = debugResults.tests.domainHealthCheck.success;
-      const rtmpWorking = debugResults.tests.rtmpViaIP.success;
+      const appWorking = debugResults.tests.appHealthCheck.success;
+      const statsWorking = debugResults.tests.serverStats.success;
 
-      if (domainWorking && rtmpWorking) {
-        console.log('✅ DigitalOcean droplet is fully operational');
+      if (appWorking && statsWorking) {
+        console.log('✅ DigitalOcean app is fully operational');
         onStatusUpdate({
           status: 'online',
-          details: 'DigitalOcean droplet is running and RTMP server is operational',
+          details: 'DigitalOcean app is running and streaming server is operational',
           nextSteps: [
-            '✅ Server: Online via domain',
-            '✅ RTMP server: Running on droplet IP',
-            '🎯 OBS should connect to: rtmp://67.205.179.77:1935/live',
-            '💡 Domain works for web, IP works for RTMP',
+            '✅ App: Online via HTTPS',
+            '✅ Streaming server: Running and accessible',
+            '🎯 OBS should connect to: rtmp://nightflow-app-wijb2.ondigitalocean.app:1935/live',
+            '💡 All services confirmed operational',
             '🔄 Try streaming from OBS now'
           ],
           debugInfo: debugResults
         });
-        toast.success('✅ DigitalOcean droplet is online and ready for streaming!');
+        toast.success('✅ DigitalOcean app is online and ready for streaming!');
         
-      } else if (domainWorking && !rtmpWorking) {
-        console.log('⚠️ Domain online but RTMP server needs attention');
+      } else if (appWorking && !statsWorking) {
+        console.log('⚠️ App online but streaming server needs attention');
         onStatusUpdate({
           status: 'needs-deployment',
-          details: 'Domain accessible but RTMP server not responding on droplet IP',
+          details: 'App accessible but streaming server not responding properly',
           nextSteps: [
-            '✅ Domain: Online (nightflow-app-wijb2.ondigitalocean.app)',
-            '❌ RTMP server: Not responding on 67.205.179.77:8888',
-            '🔧 The RTMP streaming service may need restart on droplet',
-            '🔄 Check droplet directly via SSH',
-            '💡 Domain vs IP configuration issue'
+            '✅ App: Online (nightflow-app-wijb2.ondigitalocean.app)',
+            '❌ Streaming API: Not responding properly',
+            '🔧 The streaming service may need restart',
+            '🔄 Check app logs in DigitalOcean dashboard',
+            '💡 App vs streaming service configuration issue'
           ],
           debugInfo: debugResults
         });
-        toast.warning('⚠️ RTMP server on droplet needs attention');
+        toast.warning('⚠️ Streaming server on app needs attention');
         
       } else {
-        console.log('❌ DigitalOcean services not responding properly');
+        console.log('❌ DigitalOcean app not responding properly');
         onStatusUpdate({
           status: 'offline',
-          details: 'DigitalOcean services not responding as expected',
+          details: 'DigitalOcean app not responding as expected',
           nextSteps: [
-            '❌ Domain: Issues with nightflow-app-wijb2.ondigitalocean.app',
-            '❌ RTMP server: Not reachable on 67.205.179.77',
-            '⚠️ Check DigitalOcean dashboard for droplet status',
-            '🔍 Verify both app and droplet are running',
-            '🔄 May need to restart services'
+            '❌ App: Issues with nightflow-app-wijb2.ondigitalocean.app',
+            '❌ Streaming server: Not reachable',
+            '⚠️ Check DigitalOcean dashboard for app status',
+            '🔍 Verify app is running and properly deployed',
+            '🔄 May need to restart app or check logs'
           ],
           debugInfo: debugResults
         });
-        toast.error('❌ DigitalOcean services appear to be offline');
+        toast.error('❌ DigitalOcean app appears to be offline');
       }
 
     } catch (error) {
-      console.error('❌ Comprehensive server check failed:', error);
+      console.error('❌ Comprehensive app check failed:', error);
       onStatusUpdate({
         status: 'offline',
-        details: 'Unable to test DigitalOcean droplet connectivity',
+        details: 'Unable to test DigitalOcean app connectivity',
         nextSteps: [
           '❌ Connection test completely failed',
           '🌐 Check your internet connection',
-          '💡 Droplet may be unreachable',
-          '🔍 Verify droplet status in DigitalOcean dashboard'
+          '💡 App may be unreachable or crashed',
+          '🔍 Verify app status in DigitalOcean dashboard'
         ],
         debugInfo: debugResults
       });
-      toast.error('❌ Could not test droplet connectivity');
+      toast.error('❌ Could not test app connectivity');
     } finally {
       setChecking(false);
     }
@@ -160,7 +159,7 @@ export const ServerStatusChecker = ({ onStatusUpdate }: ServerStatusCheckerProps
   return (
     <div className="flex items-center gap-2">
       <Button
-        onClick={checkDropletStatus}
+        onClick={checkDigitalOceanApp}
         disabled={checking}
         variant="outline"
         size="sm"
@@ -170,12 +169,12 @@ export const ServerStatusChecker = ({ onStatusUpdate }: ServerStatusCheckerProps
         ) : (
           <Zap className="h-4 w-4 mr-2" />
         )}
-        {checking ? 'Testing Droplet...' : 'Test Droplet Server'}
+        {checking ? 'Testing App...' : 'Test DigitalOcean App'}
       </Button>
       
       {!checking && (
         <div className="text-xs text-muted-foreground">
-          Target: 67.205.179.77:1935 (RTMP) + nightflow-app-wijb2.ondigitalocean.app (Web)
+          Target: nightflow-app-wijb2.ondigitalocean.app (HTTPS)
         </div>
       )}
     </div>

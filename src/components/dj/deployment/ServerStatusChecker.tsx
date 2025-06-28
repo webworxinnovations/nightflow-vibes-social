@@ -24,18 +24,18 @@ export const useServerStatusChecker = () => {
   const checkServerStatus = async () => {
     setChecking(true);
     try {
-      console.log('🔍 Checking Railway deployment status...');
+      console.log('🔍 Checking DigitalOcean app deployment status...');
       const status = await streamingService.getServerStatus();
       setServerStatus(status);
       console.log('📊 Server status result:', status);
       
       // Try multiple endpoints for debugging
-      const testEndpoints = ['/', '/health', '/test'];
+      const testEndpoints = ['/', '/health', '/api/server/stats'];
       const results: DebugInfo = {};
       
       for (const endpoint of testEndpoints) {
         try {
-          const response = await fetch(`https://nightflow-vibes-social-production.up.railway.app${endpoint}`);
+          const response = await fetch(`https://nightflow-app-wijb2.ondigitalocean.app${endpoint}`);
           results[endpoint] = {
             status: response.status,
             ok: response.ok,
@@ -54,7 +54,7 @@ export const useServerStatusChecker = () => {
       
     } catch (error) {
       console.error('❌ Failed to check server status:', error);
-      setServerStatus({ available: false, url: 'https://nightflow-vibes-social-production.up.railway.app' });
+      setServerStatus({ available: false, url: 'https://nightflow-app-wijb2.ondigitalocean.app' });
     } finally {
       setChecking(false);
     }
@@ -62,7 +62,7 @@ export const useServerStatusChecker = () => {
 
   const testSpecificEndpoint = async (endpoint: string) => {
     try {
-      const response = await fetch(`https://nightflow-vibes-social-production.up.railway.app${endpoint}`);
+      const response = await fetch(`https://nightflow-app-wijb2.ondigitalocean.app${endpoint}`);
       const text = await response.text();
       console.log(`🧪 Test ${endpoint}:`, {
         status: response.status,
