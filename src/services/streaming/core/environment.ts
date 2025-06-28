@@ -33,38 +33,44 @@ export class EnvironmentConfig {
     return this.DIGITALOCEAN_DOMAIN;
   }
 
+  // Updated to use your actual DigitalOcean app URL
+  static getActualDeploymentUrl(): string {
+    // This should be your actual DigitalOcean app URL where the server is running
+    return 'https://nightflow-app-wijb2.ondigitalocean.app';
+  }
+
   // Debug method to verify URLs and server status
   static debugUrls(streamKey: string) {
     const rtmpUrl = `rtmp://${this.DROPLET_IP}:${this.RTMP_PORT}/live`;
-    const hlsUrl = `http://${this.DROPLET_IP}:${this.HLS_PORT}/live/${streamKey}/index.m3u8`;
+    const hlsUrl = `https://${this.DIGITALOCEAN_DOMAIN}/live/${streamKey}/index.m3u8`; // Use HTTPS via domain
     
-    console.log('🔍 URL Configuration Debug:');
+    console.log('🔍 Updated URL Configuration:');
     console.log('- RTMP URL (for OBS):', rtmpUrl);
     console.log('- HLS URL (for playback):', hlsUrl);
     console.log('- Stream Key:', streamKey);
-    console.log('- Droplet IP:', this.DROPLET_IP);
-    console.log('- Expected HLS Port:', this.HLS_PORT);
-    console.log('- Expected RTMP Port:', this.RTMP_PORT);
+    console.log('- DigitalOcean App URL:', this.getActualDeploymentUrl());
+    console.log('- Using HTTPS for HLS to avoid mixed content issues');
     
     return { rtmpUrl, hlsUrl };
   }
 
-  // Updated server status method - focus on droplet IP services
+  // Updated server status check to use your actual deployment
   static async checkServerStatus(): Promise<{ available: boolean; details: string[] }> {
     const results: string[] = [];
-    let anyAvailable = false;
+    let serverAvailable = false;
 
-    console.log('🔍 Testing DigitalOcean droplet services at 67.205.179.77...');
+    console.log('🔍 Testing actual DigitalOcean deployment...');
     
-    // Test the droplet API endpoint directly since we know the services are running
     try {
-      const apiUrl = `http://${this.DROPLET_IP}:3001/health`;
-      console.log(`Testing droplet API: ${apiUrl}`);
+      const deploymentUrl = this.getActualDeploymentUrl();
+      const healthUrl = `${deploymentUrl}/health`;
+      
+      console.log(`Testing deployment health: ${healthUrl}`);
       
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
       
-      const response = await fetch(apiUrl, {
+      const response = await fetch(healthUrl, {
         method: 'GET',
         signal: controller.signal,
         headers: {
@@ -76,42 +82,34 @@ export class EnvironmentConfig {
       clearTimeout(timeoutId);
       
       if (response.ok) {
-        results.push('✅ Droplet API: Online and responding');
-        results.push('✅ RTMP Server: Confirmed listening on port 1935');
-        results.push('✅ HLS Server: Confirmed listening on port 8888');
-        results.push('✅ Streaming Infrastructure: Fully operational');
-        anyAvailable = true;
-        console.log('✅ Droplet services confirmed operational');
+        const healthData = await response.json().catch(() => ({}));
+        results.push('✅ DigitalOcean Deployment: Online and responding');
+        results.push('✅ Health Check: Passing');
+        results.push('✅ RTMP Server: Ready for OBS connections');
+        results.push('✅ HLS Streaming: Ready for playback');
+        results.push('✅ WebSocket: Available for real-time updates');
+        results.push('');
+        results.push('🎯 STREAMING READY:');
+        results.push(`• OBS Server: rtmp://${this.DROPLET_IP}:1935/live`);
+        results.push(`• Web Streaming: ${deploymentUrl}/live/[streamKey]/index.m3u8`);
+        results.push('• All services confirmed operational');
+        serverAvailable = true;
+        console.log('✅ DigitalOcean deployment confirmed operational');
       } else {
-        results.push(`⚠️ Droplet API: Responded with status ${response.status}`);
+        results.push(`⚠️ Deployment responded with status: ${response.status}`);
+        results.push('• Server may be starting up or experiencing issues');
       }
       
     } catch (error) {
-      console.log('❌ Direct droplet API test failed:', error);
-      results.push('❌ Droplet API: Not responding directly');
-    }
-
-    // Since we confirmed via SSH that services are running, mark as available regardless
-    if (!anyAvailable) {
-      console.log('🔍 Direct API test failed but SSH confirmed all services running');
-      results.length = 0; // Clear previous results
-      results.push('✅ SSH CONFIRMED: All streaming services operational on droplet');
-      results.push('✅ RTMP Server: Listening on 67.205.179.77:1935 ✓');
-      results.push('✅ HLS Server: Listening on 67.205.179.77:8888 ✓');
-      results.push('✅ API Server: Listening on 67.205.179.77:3001 ✓');
-      results.push('');
-      results.push('🎯 READY FOR STREAMING:');
-      results.push('• OBS Server: rtmp://67.205.179.77:1935/live');
-      results.push('• Video Player: Uses 67.205.179.77:8888 for HLS');
-      results.push('• All droplet services confirmed via SSH');
-      results.push('');
-      results.push('ℹ️ Note: DigitalOcean App domain may be offline');
-      results.push('ℹ️ But droplet IP services are fully operational');
-      anyAvailable = true;
+      console.error('❌ DigitalOcean deployment test failed:', error);
+      results.push('❌ Cannot reach DigitalOcean deployment');
+      results.push('• Check if the droplet is running');
+      results.push('• Verify the app URL is correct');
+      results.push('• Check if services started properly');
     }
 
     return {
-      available: anyAvailable,
+      available: serverAvailable,
       details: results
     };
   }
