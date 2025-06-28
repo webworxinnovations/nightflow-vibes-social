@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { CleanLiveStreamManager } from "@/components/dj/CleanLiveStreamManager";
+import { StreamPreviewSection } from "@/components/dj/StreamPreviewSection";
 import { DjStatsCards } from "@/components/dashboard/DjStatsCards";
 import { RequestsHeader } from "@/components/dashboard/RequestsHeader";
 import { RequestsTabsContent } from "@/components/dashboard/RequestsTabsContent";
@@ -57,6 +58,11 @@ export default function DjDashboard() {
             acceptedRequests={requests.filter(r => r.status === 'accepted').length}
             upcomingEvents={djEvents}
           />
+          
+          {/* Live Stream Preview Section */}
+          <div className="mt-6 mb-6">
+            <StreamPreviewSection />
+          </div>
           
           <Tabs defaultValue="live" className="mt-6">
             <RequestsHeader 
