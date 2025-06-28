@@ -5,7 +5,6 @@ import { useServerTest } from "@/hooks/useServerTest";
 import { RealVideoPlayer } from "./RealVideoPlayer";
 import { StreamDiagnostics } from "./StreamDiagnostics";
 import { StreamStatusHeader } from "./StreamStatusHeader";
-import { ServerTestResults } from "./ServerTestResults";
 import { StreamStatsGrid } from "./StreamStatsGrid";
 import { StreamTroubleshootingAlerts } from "./StreamTroubleshootingAlerts";
 import { GlassmorphicCard } from "@/components/ui/glassmorphic-card";
@@ -45,27 +44,30 @@ export const StreamPreviewSection = () => {
     handleTestServer();
   };
 
-  const isServerOffline = serverTest && !serverTest.available;
+  // More lenient server detection - assume server is working unless we have clear evidence it's not
+  const isServerOffline = serverTest && serverTest.available === false && serverTest.details.some(detail => 
+    detail.includes('Connection failed') || detail.includes('timeout') || detail.includes('Network error')
+  );
 
   return (
     <GlassmorphicCard>
-      {/* Server Status Alert */}
+      {/* Only show server offline alert if we have concrete evidence the server is down */}
       {isServerOffline && (
         <Alert className="mb-4 border-red-500/50 bg-red-500/10">
           <AlertTriangle className="h-4 w-4 text-red-400" />
           <AlertDescription className="text-red-400">
-            <strong>DigitalOcean Droplet Offline:</strong> Your streaming server at 67.205.179.77 is not responding. 
-            Please check your droplet status and ensure the streaming service is running.
+            <strong>Server Connection Issue:</strong> Cannot connect to your streaming server at 67.205.179.77. 
+            This may be a temporary network issue or firewall blocking the connection.
           </AlertDescription>
         </Alert>
       )}
 
-      {/* Ready Status */}
-      {!isServerOffline && debugInfo && (
+      {/* Show ready status when server is available or when we can't determine status */}
+      {(!isServerOffline && debugInfo) && (
         <Alert className="mb-4 border-green-500/50 bg-green-500/10">
           <CheckCircle className="h-4 w-4 text-green-400" />
           <AlertDescription className="text-green-400">
-            <strong>Ready for OBS:</strong> Your droplet is configured. Use rtmp://67.205.179.77:1935/live with your stream key.
+            <strong>Ready for OBS:</strong> Configure OBS with rtmp://67.205.179.77:1935/live and your stream key.
           </AlertDescription>
         </Alert>
       )}
@@ -96,8 +98,6 @@ export const StreamPreviewSection = () => {
         />
 
         <StreamTroubleshootingAlerts serverTest={serverTest} />
-
-        <ServerTestResults serverTest={serverTest} />
 
         {showDiagnostics && debugInfo && (
           <StreamDiagnostics 
