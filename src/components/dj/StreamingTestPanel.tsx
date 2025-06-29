@@ -3,11 +3,14 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { GlassmorphicCard } from "@/components/ui/glassmorphic-card";
 import { SimpleOBSSetup } from "./SimpleOBSSetup";
+import { RealVideoPlayer } from "./RealVideoPlayer";
+import { useStreamKey } from "@/hooks/useStreamKey";
 import { TestTube, Settings, Monitor, Play } from "lucide-react";
 import { toast } from "sonner";
 
 export const StreamingTestPanel = () => {
   const [testMode, setTestMode] = useState<'welcome' | 'test' | 'obs'>('welcome');
+  const { streamData, isLive } = useStreamKey();
 
   const runConnectionTest = async () => {
     toast.info('🔍 Testing streaming connection...');
@@ -141,6 +144,41 @@ export const StreamingTestPanel = () => {
           {testMode === 'obs' && <SimpleOBSSetup />}
         </div>
       </GlassmorphicCard>
+
+      {/* Video Preview Section - This is where you'll see your OBS stream */}
+      {streamData?.hlsUrl && (
+        <GlassmorphicCard>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold">📺 Live Stream Preview</h3>
+              {isLive && (
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                  <span className="text-red-400 font-medium">LIVE</span>
+                </div>
+              )}
+            </div>
+            
+            <div className="aspect-video bg-black rounded-lg overflow-hidden">
+              <RealVideoPlayer 
+                hlsUrl={streamData.hlsUrl}
+                isLive={isLive}
+                autoplay={true}
+                muted={false}
+              />
+            </div>
+            
+            <div className="text-center p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+              <p className="text-blue-400 text-sm">
+                {isLive 
+                  ? "🔴 Your OBS stream is live! This is what viewers will see."
+                  : "⚫ Start streaming from OBS to see your live preview here."
+                }
+              </p>
+            </div>
+          </div>
+        </GlassmorphicCard>
+      )}
     </div>
   );
 };
