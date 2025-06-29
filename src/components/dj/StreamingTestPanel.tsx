@@ -20,10 +20,10 @@ export const StreamingTestPanel = () => {
               <Monitor className="h-10 w-10 text-green-400" />
             </div>
             <h1 className="text-3xl font-bold text-green-400 mb-4">
-              OBS Streaming Test
+              OBS Streaming Setup
             </h1>
             <p className="text-xl text-muted-foreground mb-6">
-              Get your OBS connected to NightFlow
+              Connect your OBS to NightFlow
             </p>
           </div>
           
@@ -43,12 +43,12 @@ export const StreamingTestPanel = () => {
         </div>
       </GlassmorphicCard>
 
-      {/* Video Preview - Shows your OBS stream */}
+      {/* Your Live Stream */}
       {streamData?.hlsUrl && (
         <GlassmorphicCard>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">📺 Your OBS Stream</h3>
+              <h3 className="text-lg font-semibold">📺 Your Live Stream</h3>
               {isLive && (
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
@@ -69,7 +69,7 @@ export const StreamingTestPanel = () => {
             <div className="text-center p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
               <p className="text-blue-400 text-sm">
                 {isLive 
-                  ? "🔴 Your OBS is streaming live!"
+                  ? "🔴 Your stream is live on NightFlow!"
                   : "⚫ Start streaming from OBS to see it here"
                 }
               </p>
