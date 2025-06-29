@@ -1,10 +1,11 @@
+
 const express = require('express');
 const path = require('path');
 
 function createApiRoutes(serverConfig, streamManager) {
   const router = express.Router();
 
-  // Health check endpoint
+  // Health check endpoint - DROPLET ONLY
   router.get('/health', (req, res) => {
     res.json({
       status: 'healthy',
@@ -21,9 +22,11 @@ function createApiRoutes(serverConfig, streamManager) {
         rtmp: serverConfig.RTMP_PORT,
         hls: serverConfig.HLS_PORT
       },
-      railway: {
-        environment: process.env.RAILWAY_ENVIRONMENT || 'unknown',
-        service_id: process.env.RAILWAY_SERVICE_ID || 'unknown'
+      digitalocean: {
+        droplet_ip: '67.205.179.77',
+        environment: process.env.NODE_ENV || 'production',
+        rtmp_url: `rtmp://67.205.179.77:${serverConfig.RTMP_PORT}/live`,
+        hls_url: `http://67.205.179.77:${serverConfig.HLS_PORT}/live`
       }
     });
   });
@@ -31,13 +34,14 @@ function createApiRoutes(serverConfig, streamManager) {
   // Root endpoint
   router.get('/', (req, res) => {
     res.json({
-      message: 'Nightflow Streaming Server',
+      message: 'Nightflow Streaming Server - DigitalOcean Droplet',
       version: '2.0.4',
+      droplet_ip: '67.205.179.77',
       endpoints: {
         health: '/health',
         api: '/api/*',
         websocket: '/ws/stream/:streamKey',
-        rtmp: `rtmp://nightflow-vibes-social-production.up.railway.app:${serverConfig.RTMP_PORT}/live`,
+        rtmp: `rtmp://67.205.179.77:${serverConfig.RTMP_PORT}/live`,
         hls: '/live/:streamKey/index.m3u8'
       }
     });
@@ -67,24 +71,26 @@ function createApiRoutes(serverConfig, streamManager) {
       streaming_server: 'online',
       rtmp_ready: true,
       rtmp_port: serverConfig.RTMP_PORT,
-      rtmp_url: `rtmp://nightflow-vibes-social-production.up.railway.app:${serverConfig.RTMP_PORT}/live`,
+      rtmp_url: `rtmp://67.205.179.77:${serverConfig.RTMP_PORT}/live`,
       hls_ready: true,
-      websocket_ready: true
+      websocket_ready: true,
+      droplet_ip: '67.205.179.77'
     });
   });
 
-  // RTMP status endpoint with enhanced Railway info
+  // RTMP status endpoint with DigitalOcean droplet info
   router.get('/api/rtmp/status', (req, res) => {
     res.json({
       status: 'online',
       port: serverConfig.RTMP_PORT,
       ready: true,
-      url: `rtmp://nightflow-vibes-social-production.up.railway.app:${serverConfig.RTMP_PORT}/live`,
+      url: `rtmp://67.205.179.77:${serverConfig.RTMP_PORT}/live`,
       active_streams: streamManager.getStreamCount(),
       uptime: Math.floor(process.uptime()),
-      railway: {
-        tcp_proxy_enabled: true,
-        expected_external_port: serverConfig.RTMP_PORT
+      droplet: {
+        ip: '67.205.179.77',
+        rtmp_port: serverConfig.RTMP_PORT,
+        hls_port: serverConfig.HLS_PORT
       }
     });
   });
@@ -108,17 +114,17 @@ function createApiRoutes(serverConfig, streamManager) {
       });
     }
 
-    // Check if RTMP server is ready with Railway TCP proxy info
-    const rtmpUrl = `rtmp://nightflow-vibes-social-production.up.railway.app:${serverConfig.RTMP_PORT}/live`;
+    // DigitalOcean droplet RTMP URL
+    const rtmpUrl = `rtmp://67.205.179.77:${serverConfig.RTMP_PORT}/live`;
     
     res.json({
       success: true,
-      message: 'RTMP server is ready with Railway TCP proxy',
+      message: 'RTMP server is ready on DigitalOcean droplet',
       rtmp_url: rtmpUrl,
       stream_key: streamKey,
       full_rtmp_url: `${rtmpUrl}/${streamKey}`,
       status: 'ready',
-      railway_tcp_proxy: true,
+      droplet_ip: '67.205.179.77',
       instructions: [
         'Copy the RTMP URL to OBS Settings → Stream → Server',
         'Copy the Stream Key to OBS Settings → Stream → Stream Key',
@@ -222,6 +228,7 @@ function setupErrorHandling(app) {
       error: 'Route not found',
       method: req.method,
       path: req.originalUrl,
+      droplet_ip: '67.205.179.77',
       available_endpoints: [
         'GET /',
         'GET /health',
@@ -241,7 +248,8 @@ function setupErrorHandling(app) {
     console.error('Express error:', err);
     res.status(500).json({
       error: 'Internal server error',
-      message: err.message
+      message: err.message,
+      droplet_ip: '67.205.179.77'
     });
   });
 }

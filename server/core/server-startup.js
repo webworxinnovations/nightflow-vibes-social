@@ -23,7 +23,7 @@ class ServerStartup {
   async initialize() {
     console.log('🚀 Starting Nightflow Streaming Server v2.2.0...');
     console.log('📍 Environment:', process.env.NODE_ENV || 'development');
-    console.log('📍 DigitalOcean Environment:', process.env.DIGITALOCEAN_APP_URL || 'none');
+    console.log('📍 DigitalOcean Droplet IP: 67.205.179.77');
     console.log('📍 PORT from env:', process.env.PORT);
 
     try {
@@ -34,16 +34,14 @@ class ServerStartup {
       this.httpStreamServer = new HTTPStreamServer(this.serverConfig, this.streamManager);
       
       console.log('✅ Server components initialized successfully');
-      console.log(`📍 API PORT: ${this.serverConfig.RAILWAY_PORT} (DigitalOcean Assigned)`);
-      console.log(`📍 RTMP PORT: ${this.serverConfig.RTMP_PORT} (DigitalOcean Compatible)`);
-      console.log(`📍 HTTP STREAMING: Available (DigitalOcean Compatible)`);
+      console.log(`📍 API PORT: ${this.serverConfig.RAILWAY_PORT} (DigitalOcean Droplet)`);
+      console.log(`📍 RTMP PORT: ${this.serverConfig.RTMP_PORT} (DigitalOcean Droplet)`);
+      console.log(`📍 HLS PORT: ${this.serverConfig.HLS_PORT} (DigitalOcean Droplet)`);
       
-      // DigitalOcean-specific configuration
-      if (process.env.DIGITALOCEAN_APP_URL) {
-        console.log('🌊 DigitalOcean deployment detected - optimizing for platform...');
-        console.log(`🌊 App URL: ${process.env.DIGITALOCEAN_APP_URL}`);
-        console.log('🌐 HTTP Streaming: Primary method for DigitalOcean compatibility');
-      }
+      // DigitalOcean droplet configuration
+      console.log('🌊 DigitalOcean droplet deployment - optimizing for platform...');
+      console.log(`🌊 Droplet IP: 67.205.179.77`);
+      console.log('🌐 HTTP Streaming: Primary method for DigitalOcean compatibility');
       
     } catch (error) {
       console.error('❌ Failed to initialize server components:', error);
@@ -86,24 +84,28 @@ class ServerStartup {
         version: '2.2.0',
         uptime: Math.floor(process.uptime()),
         digitalocean: {
-          app_url: process.env.DIGITALOCEAN_APP_URL || 'unknown',
-          environment: process.env.NODE_ENV || 'development'
+          droplet_ip: '67.205.179.77',
+          environment: process.env.NODE_ENV || 'production'
         },
         streaming: {
           rtmp: {
             configured: true,
             port: this.serverConfig.RTMP_PORT,
             ready: this.rtmpReady,
-            status: this.rtmpReady ? 'ready' : 'initializing'
+            status: this.rtmpReady ? 'ready' : 'initializing',
+            url: `rtmp://67.205.179.77:${this.serverConfig.RTMP_PORT}/live`
           },
           http: {
             configured: true,
             available: true,
-            status: 'ready'
+            status: 'ready',
+            port: this.serverConfig.HLS_PORT,
+            url: `http://67.205.179.77:${this.serverConfig.HLS_PORT}/live`
           },
           api: {
             ready: true,
-            status: 'operational'
+            status: 'operational',
+            port: this.serverConfig.RAILWAY_PORT
           }
         }
       };
@@ -117,7 +119,8 @@ class ServerStartup {
         rtmp_ready: this.rtmpReady,
         api_ready: true,
         timestamp: new Date().toISOString(),
-        uptime: Math.floor(process.uptime())
+        uptime: Math.floor(process.uptime()),
+        droplet_ip: '67.205.179.77'
       });
     });
   }
@@ -143,14 +146,14 @@ class ServerStartup {
       
       this.server.listen(this.serverConfig.RAILWAY_PORT, '0.0.0.0', () => {
         console.log(`✅ API + WebSocket SERVER RUNNING ON PORT ${this.serverConfig.RAILWAY_PORT}`);
-        console.log(`🔗 Health: https://nightflow-app-wijb2.ondigitalocean.app/health`);
-        console.log(`🔗 API Health: https://nightflow-app-wijb2.ondigitalocean.app/api/health`);
-        console.log(`🔗 Root: https://nightflow-app-wijb2.ondigitalocean.app/`);
+        console.log(`🔗 Health: http://67.205.179.77:${this.serverConfig.RAILWAY_PORT}/health`);
+        console.log(`🔗 API Health: http://67.205.179.77:${this.serverConfig.RAILWAY_PORT}/api/health`);
+        console.log(`🔗 Root: http://67.205.179.77:${this.serverConfig.RAILWAY_PORT}/`);
         
         // DigitalOcean streaming URLs
-        console.log(`🎥 RTMP: rtmp://nightflow-app-wijb2.ondigitalocean.app:${this.serverConfig.RTMP_PORT}/live`);
-        console.log(`📺 HLS: https://nightflow-app-wijb2.ondigitalocean.app/live/`);
-        console.log(`🔌 WebSocket: wss://nightflow-app-wijb2.ondigitalocean.app/ws/stream/:streamKey`);
+        console.log(`🎥 RTMP: rtmp://67.205.179.77:${this.serverConfig.RTMP_PORT}/live`);
+        console.log(`📺 HLS: http://67.205.179.77:${this.serverConfig.HLS_PORT}/live/`);
+        console.log(`🔌 WebSocket: ws://67.205.179.77:${this.serverConfig.RAILWAY_PORT}/ws/stream/:streamKey`);
         
         // Start media server after API is ready
         this.startMediaServerSafely(app);
@@ -230,22 +233,22 @@ class ServerStartup {
           
           if (mediaStarted) {
             this.rtmpReady = true;
-            console.log('🎥 ✅ RTMP server started successfully on DigitalOcean!');
-            console.log(`🎯 ✅ OBS Connection: rtmp://nightflow-app-wijb2.ondigitalocean.app:1935/live`);
-            console.log('📱 ✅ HLS streams: https://nightflow-app-wijb2.ondigitalocean.app/live/STREAM_KEY/index.m3u8');
-            console.log('🌊 ✅ DigitalOcean streaming infrastructure fully operational');
+            console.log('🎥 ✅ RTMP server started successfully on DigitalOcean droplet!');
+            console.log(`🎯 ✅ OBS Connection: rtmp://67.205.179.77:1935/live`);
+            console.log('📱 ✅ HLS streams: http://67.205.179.77:3001/live/STREAM_KEY/index.m3u8');
+            console.log('🌊 ✅ DigitalOcean droplet streaming infrastructure fully operational');
           } else {
             console.log('⚠️ RTMP server startup issues - using HTTP streaming as fallback');
-            console.log('🌐 HTTP streaming provides full functionality on DigitalOcean');
+            console.log('🌐 HTTP streaming provides full functionality on DigitalOcean droplet');
           }
           
         } catch (error) {
           console.error('❌ RTMP startup error:', error);
-          console.log('🌐 HTTP streaming continues - DigitalOcean compatible solution active');
+          console.log('🌐 HTTP streaming continues - DigitalOcean droplet compatible solution active');
         }
         
         console.log('🌐 ✅ HTTP STREAMING SERVER READY!');
-        console.log('🌐 ✅ Browser streaming: Fully functional on DigitalOcean');
+        console.log('🌐 ✅ Browser streaming: Fully functional on DigitalOcean droplet');
         console.log('🌐 ✅ WebRTC streaming: Available for compatible software');
         
         app.locals.mediaServer = this.mediaServer;
@@ -256,7 +259,7 @@ class ServerStartup {
       
     } catch (error) {
       console.error('❌ Media server startup error:', error);
-      console.log('🌐 HTTP streaming continues - DigitalOcean compatible solution active');
+      console.log('🌐 HTTP streaming continues - DigitalOcean droplet compatible solution active');
     }
   }
 
