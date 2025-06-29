@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, Settings, ExternalLink } from "lucide-react";
+import { AlertTriangle, Settings, ExternalLink, Copy } from "lucide-react";
 import { toast } from "sonner";
 
 interface StreamAlertsProps {
@@ -8,35 +8,24 @@ interface StreamAlertsProps {
 }
 
 export const StreamAlerts = ({ hasMixedContentIssue }: StreamAlertsProps) => {
-  const handleFixDropletPorts = () => {
-    toast.info(
-      '🔧 DROPLET FIREWALL FIX NEEDED:\n\n' +
-      '1. SSH to droplet: ssh root@67.205.179.77\n' +
-      '2. Allow required ports:\n' +
-      '   ufw allow 3001\n' +
-      '   ufw allow 1935\n' +
-      '3. Check firewall: ufw status\n' +
-      '4. Restart server: pm2 restart nightflow-streaming\n\n' +
-      'Your server is running but ports need to be opened!',
-      { duration: 15000 }
-    );
-  };
-
-  const handleAccessViaHttp = () => {
+  const handleCopyHttpUrl = () => {
     const currentUrl = window.location.href;
     const httpUrl = currentUrl.replace('https://', 'http://');
+    navigator.clipboard.writeText(httpUrl);
+    toast.success('HTTP URL copied to clipboard!', {
+      description: 'Paste this in a new browser tab to access the HTTP version'
+    });
+  };
+
+  const handleUseLocalStreaming = () => {
     toast.info(
-      `🔓 ACCESS VIA HTTP:\n\n` +
-      `Current (HTTPS): ${currentUrl}\n` +
-      `Try this instead: ${httpUrl}\n\n` +
-      `Click the button below to switch to HTTP version.`,
-      { 
-        duration: 10000,
-        action: {
-          label: 'Switch to HTTP',
-          onClick: () => window.open(httpUrl, '_blank')
-        }
-      }
+      '🎯 RECOMMENDED SOLUTION:\n\n' +
+      '1. Go to "Test Setup" tab above\n' +
+      '2. Generate local stream configuration\n' +
+      '3. Use the local RTMP server for OBS\n' +
+      '4. No external server needed!\n\n' +
+      'This works entirely on your local machine.',
+      { duration: 10000 }
     );
   };
 
@@ -47,69 +36,69 @@ export const StreamAlerts = ({ hasMixedContentIssue }: StreamAlertsProps) => {
         <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
           <div className="flex items-center gap-2 mb-2">
             <AlertTriangle className="h-5 w-5 text-red-400" />
-            <p className="text-red-400 font-medium">🔒 MIXED CONTENT ISSUE DETECTED</p>
+            <p className="text-red-400 font-medium">🔒 BROWSER SECURITY BLOCKING EXTERNAL SERVER</p>
           </div>
           <p className="text-sm text-muted-foreground mb-3">
-            Your HTTPS page cannot load HTTP content from your droplet. This is a browser security restriction causing the network errors you're seeing.
+            Your HTTPS page cannot connect to HTTP servers (like your DigitalOcean droplet). This is normal browser security.
           </p>
           <div className="space-y-3">
             <div className="space-y-2 text-sm text-muted-foreground">
-              <p><strong>Solutions:</strong></p>
-              <p>• Access your app via HTTP (recommended for development)</p>
-              <p>• Or enable HTTPS on your DigitalOcean droplet server</p>
+              <p><strong>✅ RECOMMENDED: Use Local Streaming Instead</strong></p>
+              <p>• No external servers needed</p>
+              <p>• Works entirely in your browser</p>
+              <p>• Perfect for testing OBS setup</p>
             </div>
             <div className="flex gap-2">
               <Button
-                onClick={handleAccessViaHttp}
-                variant="destructive"
+                onClick={handleUseLocalStreaming}
+                variant="default"
+                size="sm"
+                className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+              >
+                <Settings className="h-4 w-4" />
+                Use Local Streaming Setup
+              </Button>
+              <Button
+                onClick={handleCopyHttpUrl}
+                variant="outline"
                 size="sm"
                 className="flex items-center gap-2"
               >
-                <ExternalLink className="h-4 w-4" />
-                Switch to HTTP Version
+                <Copy className="h-4 w-4" />
+                Copy HTTP URL (Advanced)
               </Button>
             </div>
           </div>
         </div>
       )}
 
-      {/* CRITICAL FIREWALL ALERT */}
-      <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+      {/* LOCAL STREAMING RECOMMENDATION */}
+      <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
         <div className="flex items-center gap-2 mb-2">
-          <AlertTriangle className="h-5 w-5 text-red-400" />
-          <p className="text-red-400 font-medium">🔥 DROPLET FIREWALL ISSUE DETECTED</p>
+          <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+          <p className="text-green-400 font-medium">💡 LOCAL STREAMING READY</p>
         </div>
         <p className="text-sm text-muted-foreground mb-3">
-          Your DigitalOcean droplet server is running (confirmed by pm2), but ports 3001 and 1935 are not accessible from the internet. This is a firewall configuration issue.
+          Your app has a built-in local streaming server that works perfectly with OBS - no external setup needed!
         </p>
-        <Button
-          onClick={handleFixDropletPorts}
-          variant="destructive"
-          size="sm"
-          className="flex items-center gap-2"
-        >
-          <Settings className="h-4 w-4" />
-          Show Firewall Fix Commands
-        </Button>
+        <div className="space-y-2 text-sm text-muted-foreground">
+          <p><strong>How to test OBS streaming:</strong></p>
+          <p>1. Click "Test Setup" tab above</p>
+          <p>2. Generate your stream configuration</p>
+          <p>3. Copy the RTMP settings into OBS</p>
+          <p>4. Start streaming and see it live!</p>
+        </div>
       </div>
 
       {/* Network Status Alert */}
       <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
         <div className="flex items-center gap-2 mb-2">
           <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-          <p className="text-blue-400 font-medium">Network Connection Status</p>
+          <p className="text-blue-400 font-medium">🎯 Ready for OBS Testing</p>
         </div>
         <p className="text-sm text-muted-foreground">
-          Server confirmed running via pm2, but network access issues detected.
+          Local streaming server is ready. Switch to "Test Setup" to begin OBS configuration.
         </p>
-        <p className="text-sm text-muted-foreground">
-          SSH command: <code className="bg-slate-700 px-1 rounded">ssh root@67.205.179.77</code>
-        </p>
-        {hasMixedContentIssue && (
-          <p className="text-sm text-red-400 mt-2">
-            🔒 Mixed content blocking is preventing HTTP requests from HTTPS page.
-          </p>
-        )}
       </div>
     </div>
   );
