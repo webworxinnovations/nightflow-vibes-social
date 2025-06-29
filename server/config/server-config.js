@@ -4,7 +4,7 @@ const path = require('path');
 class ServerConfig {
   constructor() {
     // DigitalOcean droplet configuration - DROPLET ONLY
-    this.RAILWAY_PORT = process.env.PORT || 3001; // Keep variable name for compatibility but it's for droplet
+    this.DROPLET_PORT = process.env.PORT || 3001; // Renamed from RAILWAY_PORT
     
     // Force standard RTMP port 1935 - DigitalOcean droplet compatible
     this.RTMP_PORT = 1935;
@@ -20,7 +20,7 @@ class ServerConfig {
     
     console.log(`📍 DigitalOcean Droplet Configuration:`);
     console.log(`   Droplet IP: 67.205.179.77`);
-    console.log(`   HTTP API Port: ${this.RAILWAY_PORT}`);
+    console.log(`   HTTP API Port: ${this.DROPLET_PORT}`);
     console.log(`   RTMP Port: ${this.RTMP_PORT}`);
     console.log(`   HLS HTTP Port: ${this.HLS_PORT}`);
     console.log(`   SSL Enabled: ${this.SSL_ENABLED}`);

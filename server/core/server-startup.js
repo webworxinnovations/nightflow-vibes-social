@@ -1,12 +1,9 @@
 
 const http = require('http');
-const ServerConfig = require('../config/server-config');
-const { setupMiddleware } = require('../middleware/express-middleware');
-const { createApiRoutes, setupErrorHandling } = require('../routes/api-routes');
+const ServerInitializer = require('./server-initializer');
+const ExpressSetup = require('./express-setup');
 const { setupWebSocketRoutes } = require('../routes/websocket-routes');
-const StreamManager = require('../utils/stream-manager');
 const MediaServerService = require('../services/media-server');
-const HTTPStreamServer = require('../services/http-stream-server');
 
 class ServerStartup {
   constructor() {
@@ -21,108 +18,16 @@ class ServerStartup {
   }
 
   async initialize() {
-    console.log('🚀 Starting Nightflow Streaming Server v2.2.0...');
-    console.log('📍 Environment:', process.env.NODE_ENV || 'development');
-    console.log('📍 DigitalOcean Droplet IP: 67.205.179.77');
-    console.log('📍 PORT from env:', process.env.PORT);
-
-    try {
-      this.serverConfig = new ServerConfig();
-      this.streamManager = new StreamManager();
-      
-      // Initialize HTTP Stream Server
-      this.httpStreamServer = new HTTPStreamServer(this.serverConfig, this.streamManager);
-      
-      console.log('✅ Server components initialized successfully');
-      console.log(`📍 API PORT: ${this.serverConfig.RAILWAY_PORT} (DigitalOcean Droplet)`);
-      console.log(`📍 RTMP PORT: ${this.serverConfig.RTMP_PORT} (DigitalOcean Droplet)`);
-      console.log(`📍 HLS PORT: ${this.serverConfig.HLS_PORT} (DigitalOcean Droplet)`);
-      
-      // DigitalOcean droplet configuration
-      console.log('🌊 DigitalOcean droplet deployment - optimizing for platform...');
-      console.log(`🌊 Droplet IP: 67.205.179.77`);
-      console.log('🌐 HTTP Streaming: Primary method for DigitalOcean compatibility');
-      
-    } catch (error) {
-      console.error('❌ Failed to initialize server components:', error);
-      process.exit(1);
-    }
+    const initializer = new ServerInitializer();
+    const components = await initializer.initialize();
+    
+    this.serverConfig = components.serverConfig;
+    this.streamManager = components.streamManager;
+    this.httpStreamServer = components.httpStreamServer;
   }
 
   setupExpress(app) {
-    try {
-      setupMiddleware(app);
-      console.log('✅ Middleware setup complete');
-    } catch (error) {
-      console.error('❌ Failed to setup middleware:', error);
-      process.exit(1);
-    }
-
-    try {
-      console.log('🔧 Setting up Express routes...');
-      const apiRoutes = createApiRoutes(this.serverConfig, this.streamManager);
-      app.use('/', apiRoutes);
-      
-      // Add HTTP streaming routes
-      app.use('/api', this.httpStreamServer.getRouter());
-      console.log('🌐 HTTP streaming routes mounted');
-      
-      console.log('✅ Routes mounted successfully');
-    } catch (error) {
-      console.error('❌ Failed to setup routes:', error);
-      process.exit(1);
-    }
-
-    setupErrorHandling(app);
-    
-    // Enhanced health check endpoint for DigitalOcean
-    app.get('/health', (req, res) => {
-      const healthData = {
-        status: 'healthy',
-        timestamp: new Date().toISOString(),
-        server: 'nightflow-streaming-server',
-        version: '2.2.0',
-        uptime: Math.floor(process.uptime()),
-        digitalocean: {
-          droplet_ip: '67.205.179.77',
-          environment: process.env.NODE_ENV || 'production'
-        },
-        streaming: {
-          rtmp: {
-            configured: true,
-            port: this.serverConfig.RTMP_PORT,
-            ready: this.rtmpReady,
-            status: this.rtmpReady ? 'ready' : 'initializing',
-            url: `rtmp://67.205.179.77:${this.serverConfig.RTMP_PORT}/live`
-          },
-          http: {
-            configured: true,
-            available: true,
-            status: 'ready',
-            port: this.serverConfig.HLS_PORT,
-            url: `http://67.205.179.77:${this.serverConfig.HLS_PORT}/live`
-          },
-          api: {
-            ready: true,
-            status: 'operational',
-            port: this.serverConfig.RAILWAY_PORT
-          }
-        }
-      };
-      res.json(healthData);
-    });
-
-    // API health endpoint
-    app.get('/api/health', (req, res) => {
-      res.json({
-        status: 'ok',
-        rtmp_ready: this.rtmpReady,
-        api_ready: true,
-        timestamp: new Date().toISOString(),
-        uptime: Math.floor(process.uptime()),
-        droplet_ip: '67.205.179.77'
-      });
-    });
+    ExpressSetup.setupApp(app, this.serverConfig, this.streamManager, this.httpStreamServer);
   }
 
   async startServer(app) {
@@ -138,22 +43,22 @@ class ServerStartup {
       console.log('✅ WebSocket routes setup complete');
     } catch (error) {
       console.error('❌ Failed to setup WebSocket routes:', error);
-      process.exit(1);
+      throw error;
     }
 
     return new Promise((resolve, reject) => {
       this.setupDigitalOceanSignalHandlers();
       
-      this.server.listen(this.serverConfig.RAILWAY_PORT, '0.0.0.0', () => {
-        console.log(`✅ API + WebSocket SERVER RUNNING ON PORT ${this.serverConfig.RAILWAY_PORT}`);
-        console.log(`🔗 Health: http://67.205.179.77:${this.serverConfig.RAILWAY_PORT}/health`);
-        console.log(`🔗 API Health: http://67.205.179.77:${this.serverConfig.RAILWAY_PORT}/api/health`);
-        console.log(`🔗 Root: http://67.205.179.77:${this.serverConfig.RAILWAY_PORT}/`);
+      this.server.listen(this.serverConfig.DROPLET_PORT, '0.0.0.0', () => {
+        console.log(`✅ API + WebSocket SERVER RUNNING ON PORT ${this.serverConfig.DROPLET_PORT}`);
+        console.log(`🔗 Health: http://67.205.179.77:${this.serverConfig.DROPLET_PORT}/health`);
+        console.log(`🔗 API Health: http://67.205.179.77:${this.serverConfig.DROPLET_PORT}/api/health`);
+        console.log(`🔗 Root: http://67.205.179.77:${this.serverConfig.DROPLET_PORT}/`);
         
         // DigitalOcean streaming URLs
         console.log(`🎥 RTMP: rtmp://67.205.179.77:${this.serverConfig.RTMP_PORT}/live`);
         console.log(`📺 HLS: http://67.205.179.77:${this.serverConfig.HLS_PORT}/live/`);
-        console.log(`🔌 WebSocket: ws://67.205.179.77:${this.serverConfig.RAILWAY_PORT}/ws/stream/:streamKey`);
+        console.log(`🔌 WebSocket: ws://67.205.179.77:${this.serverConfig.DROPLET_PORT}/ws/stream/:streamKey`);
         
         // Start media server after API is ready
         this.startMediaServerSafely(app);
@@ -163,7 +68,7 @@ class ServerStartup {
       this.server.on('error', (error) => {
         console.error('❌ API SERVER ERROR:', error);
         if (error.code === 'EADDRINUSE') {
-          console.error(`Port ${this.serverConfig.RAILWAY_PORT} is already in use!`);
+          console.error(`Port ${this.serverConfig.DROPLET_PORT} is already in use!`);
         }
         reject(error);
       });
