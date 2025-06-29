@@ -3,11 +3,11 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { GlassmorphicCard } from "@/components/ui/glassmorphic-card";
 import { SimpleOBSSetup } from "./SimpleOBSSetup";
-import { TestTube, Settings, Monitor } from "lucide-react";
+import { TestTube, Settings, Monitor, Play } from "lucide-react";
 import { toast } from "sonner";
 
 export const StreamingTestPanel = () => {
-  const [testMode, setTestMode] = useState<'setup' | 'test' | 'obs'>('setup');
+  const [testMode, setTestMode] = useState<'welcome' | 'test' | 'obs'>('welcome');
 
   const runConnectionTest = async () => {
     toast.info('🔍 Testing streaming connection...');
@@ -38,51 +38,81 @@ export const StreamingTestPanel = () => {
     <div className="space-y-6">
       <GlassmorphicCard>
         <div className="space-y-6">
-          <h2 className="text-2xl font-bold text-center">
-            🎥 NightFlow Streaming Test Center
-          </h2>
+          {/* Big welcome message */}
+          <div className="text-center py-8">
+            <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <TestTube className="h-10 w-10 text-green-400" />
+            </div>
+            <h1 className="text-3xl font-bold text-green-400 mb-4">
+              NightFlow OBS Streaming Test
+            </h1>
+            <p className="text-xl text-muted-foreground mb-6">
+              Let's get your OBS streaming working locally!
+            </p>
+          </div>
           
-          <div className="flex justify-center gap-4">
+          <div className="flex justify-center gap-4 mb-8">
             <Button
-              onClick={() => setTestMode('setup')}
-              variant={testMode === 'setup' ? 'default' : 'outline'}
+              onClick={() => setTestMode('welcome')}
+              variant={testMode === 'welcome' ? 'default' : 'outline'}
               className="flex items-center gap-2"
             >
               <Settings className="h-4 w-4" />
-              Setup
+              Welcome
             </Button>
             
             <Button
               onClick={runConnectionTest}
               variant={testMode === 'test' ? 'default' : 'outline'}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
             >
               <TestTube className="h-4 w-4" />
-              Test Connection
+              Test My Setup
             </Button>
             
             <Button
               onClick={() => setTestMode('obs')}
               variant={testMode === 'obs' ? 'default' : 'outline'}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
             >
               <Monitor className="h-4 w-4" />
-              OBS Setup
+              Configure OBS
             </Button>
           </div>
 
-          {testMode === 'setup' && (
-            <div className="text-center space-y-4">
-              <h3 className="text-xl font-semibold">Welcome to NightFlow Streaming!</h3>
-              <p className="text-muted-foreground">
-                Let's test your streaming setup step by step before going live.
-              </p>
+          {testMode === 'welcome' && (
+            <div className="text-center space-y-6">
+              <div className="p-6 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                <h3 className="text-xl font-semibold mb-4">Welcome to NightFlow OBS Testing!</h3>
+                <p className="text-muted-foreground mb-6">
+                  This will test your streaming setup step by step before going live.
+                  No external servers needed - everything works locally!
+                </p>
+                <div className="space-y-3 text-left max-w-md mx-auto">
+                  <div className="flex items-center gap-3">
+                    <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-sm font-bold">1</div>
+                    <span>Test camera and microphone</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-sm font-bold">2</div>
+                    <span>Generate OBS configuration</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-sm font-bold">3</div>
+                    <span>Copy settings to OBS</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-sm font-bold">4</div>
+                    <span>Start streaming!</span>
+                  </div>
+                </div>
+              </div>
               <Button
                 onClick={runConnectionTest}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-blue-600 hover:bg-blue-700 px-8 py-4 text-lg"
               >
-                <TestTube className="mr-2 h-4 w-4" />
-                Start Connection Test
+                <Play className="mr-2 h-5 w-5" />
+                Start Testing My Setup
               </Button>
             </div>
           )}
@@ -99,10 +129,10 @@ export const StreamingTestPanel = () => {
               <div className="text-center">
                 <Button
                   onClick={() => setTestMode('obs')}
-                  className="bg-blue-600 hover:bg-blue-700"
+                  className="bg-green-600 hover:bg-green-700 px-6 py-3 text-lg"
                 >
-                  <Monitor className="mr-2 h-4 w-4" />
-                  Continue to OBS Setup
+                  <Monitor className="mr-2 h-5 w-5" />
+                  Continue to OBS Configuration
                 </Button>
               </div>
             </div>
