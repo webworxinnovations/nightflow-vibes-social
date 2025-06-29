@@ -19,25 +19,35 @@ export const ServerStatusPanel = ({ onStatusChange }: ServerStatusPanelProps) =>
 
   const checkServerStatus = async () => {
     setCheckingServer(true);
-    console.log('🔍 Checking DigitalOcean server status based on deployment logs...');
+    console.log('🔍 Checking DigitalOcean droplet status at 67.205.179.77...');
     
-    // Based on your DigitalOcean deployment logs, we know the server is running perfectly:
-    // - RTMP server started successfully on port 1935
-    // - HLS server started on port 8080  
-    // - WebSocket server started on port 8080
-    // - HTTP streaming server ready
-    // - All services operational
+    try {
+      const response = await fetch('http://67.205.179.77:3001/health', {
+        method: 'GET',
+        signal: AbortSignal.timeout(10000)
+      });
+      
+      const status = {
+        available: response.ok,
+        url: 'http://67.205.179.77:3001'
+      };
+      
+      setServerStatus(status);
+      onStatusChange?.(status);
+      
+      if (response.ok) {
+        console.log('✅ DigitalOcean droplet confirmed operational');
+      } else {
+        console.log('⚠️ DigitalOcean droplet responding but with issues');
+      }
+    } catch (error) {
+      console.error('❌ DigitalOcean droplet connectivity failed:', error);
+      const status = { available: false, url: 'http://67.205.179.77:3001' };
+      setServerStatus(status);
+      onStatusChange?.(status);
+    }
     
-    const status = {
-      available: true,
-      url: 'https://nightflow-app-wijb2.ondigitalocean.app'
-    };
-    
-    setServerStatus(status);
-    onStatusChange?.(status);
     setCheckingServer(false);
-    
-    console.log('✅ DigitalOcean server confirmed operational from deployment logs');
   };
 
   useEffect(() => {
@@ -49,13 +59,13 @@ export const ServerStatusPanel = ({ onStatusChange }: ServerStatusPanelProps) =>
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold flex items-center gap-2">
           <Server className="h-5 w-5" />
-          DigitalOcean RTMP Server Status
+          DigitalOcean Droplet Status (67.205.179.77)
         </h3>
         
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 text-green-500">
+          <div className={`flex items-center gap-2 ${serverStatus?.available ? 'text-green-500' : 'text-red-500'}`}>
             <Wifi className="h-4 w-4" />
-            Online & Ready
+            {serverStatus?.available ? 'Online' : 'Offline'}
           </div>
           
           <Button 
@@ -64,43 +74,46 @@ export const ServerStatusPanel = ({ onStatusChange }: ServerStatusPanelProps) =>
             variant="outline"
             size="sm"
           >
-            Confirm Status
+            {checkingServer ? 'Checking...' : 'Test Connection'}
           </Button>
         </div>
       </div>
 
-      <div className="p-4 rounded-lg border bg-green-500/10 border-green-500/20">
+      <div className={`p-4 rounded-lg border ${serverStatus?.available ? 'bg-green-500/10 border-green-500/20' : 'bg-red-500/10 border-red-500/20'}`}>
         <div className="space-y-3">
-          <p className="text-green-400 font-medium flex items-center gap-2">
+          <p className={`font-medium flex items-center gap-2 ${serverStatus?.available ? 'text-green-400' : 'text-red-400'}`}>
             <Cloud className="h-4 w-4" />
-            ✅ DigitalOcean streaming infrastructure fully operational
+            {serverStatus?.available ? '✅ Droplet streaming infrastructure operational' : '❌ Droplet appears to be offline'}
           </p>
           
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div className="space-y-1">
-              <p className="text-green-400 font-medium">RTMP Server:</p>
-              <p className="text-muted-foreground">✅ Port 1935 - Ready for OBS</p>
+              <p className="text-blue-400 font-medium">RTMP Server:</p>
+              <p className="text-muted-foreground">Port 1935 - For OBS streaming</p>
             </div>
             <div className="space-y-1">
               <p className="text-green-400 font-medium">HLS Streaming:</p>
-              <p className="text-muted-foreground">✅ Port 8080 - Ready for playback</p>
+              <p className="text-muted-foreground">Port 3001 - For web playback</p>
             </div>
             <div className="space-y-1">
-              <p className="text-green-400 font-medium">WebSocket:</p>
-              <p className="text-muted-foreground">✅ Real-time status ready</p>
+              <p className="text-purple-400 font-medium">WebSocket:</p>
+              <p className="text-muted-foreground">Port 3001 - Real-time status</p>
             </div>
             <div className="space-y-1">
-              <p className="text-green-400 font-medium">HTTP Streaming:</p>
-              <p className="text-muted-foreground">✅ Browser streaming ready</p>
+              <p className="text-orange-400 font-medium">HTTP API:</p>
+              <p className="text-muted-foreground">Port 3001 - Stream management</p>
             </div>
           </div>
           
-          <div className="pt-2 border-t border-green-500/20">
+          <div className="pt-2 border-t border-muted/20">
             <p className="text-sm text-muted-foreground">
-              <strong>OBS Server URL:</strong> rtmp://nightflow-app-wijb2.ondigitalocean.app:1935/live
+              <strong>Droplet IP:</strong> 67.205.179.77
             </p>
             <p className="text-sm text-muted-foreground">
-              <strong>Status:</strong> All streaming services confirmed operational from deployment logs
+              <strong>OBS Server URL:</strong> rtmp://67.205.179.77:1935/live
+            </p>
+            <p className="text-sm text-muted-foreground">
+              <strong>Status:</strong> {serverStatus?.available ? 'Ready for OBS streaming' : 'Droplet needs to be started'}
             </p>
           </div>
         </div>

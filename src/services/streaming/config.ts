@@ -1,22 +1,27 @@
 
 export class StreamingConfig {
   static getOBSServerUrl(): string {
+    // OBS needs just the RTMP server URL
     return 'rtmp://67.205.179.77:1935';
   }
 
   static getApiBaseUrl(): string {
+    // Use droplet IP for all API calls
     return 'http://67.205.179.77:3001';
   }
 
   static getRtmpUrl(): string {
+    // Full RTMP URL with /live path
     return `${this.getOBSServerUrl()}/live`;
   }
 
   static getHlsUrl(streamKey: string): string {
+    // Use droplet IP for HLS playback
     return `${this.getApiBaseUrl()}/live/${streamKey}/index.m3u8`;
   }
 
   static getWebSocketUrl(streamKey: string): string {
+    // Use droplet IP for WebSocket
     return `ws://67.205.179.77:3001/ws/stream/${streamKey}`;
   }
 
@@ -49,13 +54,14 @@ export class StreamingConfig {
   static getTroubleshootingSteps(): string[] {
     return [
       `✅ Use exact server URL: ${this.getOBSServerUrl()}`,
-      '✅ Ensure DigitalOcean droplet is running',
+      '✅ Ensure DigitalOcean droplet is running on 67.205.179.77',
       '✅ Restart OBS completely after configuration',
       '✅ Test from different network (mobile hotspot)',
-      '✅ Check DigitalOcean droplet deployment status',
+      '✅ Check droplet firewall allows port 1935 (RTMP)',
+      '✅ Check droplet firewall allows port 3001 (HTTP/WebSocket)',
       '✅ Use generated stream key exactly as provided',
       '✅ In OBS: Service = Custom, not a preset service',
-      '⚠️ If fails: Check DigitalOcean droplet logs'
+      '⚠️ If fails: SSH into droplet and check service status'
     ];
   }
 

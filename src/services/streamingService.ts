@@ -1,4 +1,3 @@
-
 import { StreamingAPI } from './streaming/api';
 import { ServerStatusChecker } from './streaming/serverStatusChecker';
 import { WebSocketManager } from './streaming/websocketManager';
@@ -22,7 +21,7 @@ class StreamingService {
       // Generate a unique stream key
       const streamKey = `nf_${user.id.split('-')[0]}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
-      // Use DigitalOcean droplet IP directly - NO domain names
+      // Use DigitalOcean droplet IP only - no domain names
       const rtmpUrl = `rtmp://67.205.179.77:1935/live`;
       const hlsUrl = `http://67.205.179.77:3001/live/${streamKey}/index.m3u8`;
 
@@ -66,7 +65,7 @@ class StreamingService {
         throw new Error('Failed to save stream configuration');
       }
 
-      console.log('🎯 Stream key generated for DigitalOcean droplet:', streamConfig);
+      console.log('🎯 Stream key generated for DigitalOcean droplet only:', streamConfig);
       console.log('✅ RTMP URL (for OBS):', rtmpUrl);
       console.log('✅ HLS URL (for playback):', hlsUrl);
       return streamConfig;
@@ -172,54 +171,39 @@ class StreamingService {
       console.log('🔍 Testing DigitalOcean droplet server connectivity...');
       console.log(`📡 Testing server at: http://67.205.179.77:3001/health`);
       
-      // Handle mixed content gracefully - try different approaches
-      const testUrls = [
-        'http://67.205.179.77:3001/health',
-        'http://67.205.179.77:3001/',
-        'http://67.205.179.77:3001/api/server/stats'
-      ];
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      for (const testUrl of testUrls) {
-        try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 5000);
+      const response = await fetch('http://67.205.179.77:3001/health', {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache'
+        },
+        signal: controller.signal,
+        mode: 'cors'
+      });
 
-          const response = await fetch(testUrl, {
-            method: 'GET',
-            headers: {
-              'Accept': 'application/json',
-              'Cache-Control': 'no-cache'
-            },
-            signal: controller.signal,
-            mode: 'cors'
-          });
+      clearTimeout(timeoutId);
 
-          clearTimeout(timeoutId);
-
-          if (response.ok) {
-            const data = await response.json().catch(() => ({}));
-            console.log('✅ DigitalOcean droplet server is online and responding');
-            
-            return {
-              available: true,
-              url: 'http://67.205.179.77:3001',
-              version: data.version || 'unknown',
-              uptime: data.uptime || 0
-            };
-          }
-        } catch (error) {
-          console.warn(`⚠️ Failed to test ${testUrl}:`, error);
-          continue;
-        }
+      if (response.ok) {
+        const data = await response.json().catch(() => ({}));
+        console.log('✅ DigitalOcean droplet server is online and responding');
+        
+        return {
+          available: true,
+          url: 'http://67.205.179.77:3001',
+          version: data.version || 'unknown',
+          uptime: data.uptime || 0
+        };
       }
 
-      console.warn('⚠️ All server connectivity tests failed');
+      console.warn('⚠️ All droplet connectivity tests failed');
       return { available: false, url: 'http://67.205.179.77:3001' };
 
     } catch (error) {
       console.error('❌ DigitalOcean droplet connectivity test failed:', error);
-      console.error('💡 This is likely due to mixed content (HTTPS->HTTP) restrictions');
-      console.error('💡 Please access your app via HTTP or enable HTTPS on your droplet');
+      console.error('💡 Make sure your droplet is running and accessible');
       return { available: false, url: 'http://67.205.179.77:3001' };
     }
   }
@@ -228,7 +212,7 @@ class StreamingService {
     try {
       this.wsManager.connectToStreamStatus(streamKey);
     } catch (error) {
-      console.warn('WebSocket connection failed (likely due to mixed content):', error);
+      console.warn('WebSocket connection to droplet failed:', error);
     }
   }
 
