@@ -1,20 +1,24 @@
-
 export class StreamingConfig {
   // Your actual droplet server IP
   private static readonly DROPLET_IP = '67.205.179.77';
   private static readonly RTMP_PORT = 1935;
   private static readonly HTTP_PORT = 3001;
+  private static readonly HTTPS_PORT = 3443;
 
   static getDropletIP(): string {
     return this.DROPLET_IP;
   }
 
   static getServerBaseUrl(): string {
+    // Try HTTPS first, fallback to HTTP
+    if (this.isHTTPSAvailable()) {
+      return `https://${this.DROPLET_IP}:${this.HTTPS_PORT}`;
+    }
     return `http://${this.DROPLET_IP}:${this.HTTP_PORT}`;
   }
 
   static getApiBaseUrl(): string {
-    return `http://${this.DROPLET_IP}:${this.HTTP_PORT}`;
+    return this.getServerBaseUrl();
   }
 
   static getOBSServerUrl(): string {
@@ -26,6 +30,10 @@ export class StreamingConfig {
   }
 
   static getHLSUrl(streamKey: string): string {
+    // Use HTTPS if available for HLS streaming
+    if (this.isHTTPSAvailable()) {
+      return `https://${this.DROPLET_IP}:${this.HTTPS_PORT}/live/${streamKey}/index.m3u8`;
+    }
     return `http://${this.DROPLET_IP}:${this.HTTP_PORT}/live/${streamKey}/index.m3u8`;
   }
 
@@ -34,11 +42,21 @@ export class StreamingConfig {
   }
 
   static getWebSocketUrl(streamKey: string): string {
+    // Use WSS if HTTPS is available
+    if (this.isHTTPSAvailable()) {
+      return `wss://${this.DROPLET_IP}:${this.HTTPS_PORT}/ws/stream/${streamKey}`;
+    }
     return `ws://${this.DROPLET_IP}:${this.HTTP_PORT}/ws/stream/${streamKey}`;
   }
 
   static isProduction(): boolean {
     return true; // Always production when using actual droplet
+  }
+
+  static isHTTPSAvailable(): boolean {
+    // This will be determined by testing the HTTPS endpoint
+    // For now, we'll assume it's available if we're in a secure context
+    return window.location.protocol === 'https:';
   }
 
   static getPortInfo(): { rtmpPort: number; description: string; compatibility: string } {
@@ -99,7 +117,27 @@ export class StreamingConfig {
 
   static async testDropletConnection(): Promise<{ available: boolean; details: string }> {
     try {
-      const response = await fetch(`${this.getServerBaseUrl()}/health`, {
+      // Try HTTPS first
+      if (this.isHTTPSAvailable()) {
+        try {
+          const httpsResponse = await fetch(`https://${this.DROPLET_IP}:${this.HTTPS_PORT}/health`, {
+            method: 'GET',
+            signal: AbortSignal.timeout(10000)
+          });
+          
+          if (httpsResponse.ok) {
+            return { 
+              available: true, 
+              details: 'Droplet server is online with HTTPS support - perfect for NightFlow!' 
+            };
+          }
+        } catch (httpsError) {
+          console.log('HTTPS not available, trying HTTP...');
+        }
+      }
+      
+      // Fallback to HTTP
+      const response = await fetch(`http://${this.DROPLET_IP}:${this.HTTP_PORT}/health`, {
         method: 'GET',
         signal: AbortSignal.timeout(10000)
       });
@@ -107,7 +145,7 @@ export class StreamingConfig {
       if (response.ok) {
         return { 
           available: true, 
-          details: 'Droplet server is online and responding' 
+          details: 'Droplet server is online (HTTP only) - HTTPS setup needed for full compatibility' 
         };
       } else {
         return { 
