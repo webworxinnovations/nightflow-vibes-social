@@ -108,7 +108,7 @@ class StreamingService {
     }
   }
 
-  private async fallbackToPolling(streamKey: string): void {
+  private async fallbackToPolling(streamKey: string): Promise<void> {
     // Since WebSocket is blocked, we'll simulate status updates
     console.log('📡 Using fallback polling (WebSocket blocked by mixed content)');
     

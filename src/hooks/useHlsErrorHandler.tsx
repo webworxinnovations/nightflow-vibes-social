@@ -34,7 +34,7 @@ export const useHlsErrorHandler = ({
     // Check for mixed content issues
     const isMixedContentError = 
       data.details === Hls.ErrorDetails.MANIFEST_LOAD_ERROR ||
-      data.details === Hls.ErrorDetails.NETWORK_ERROR ||
+      data.details === Hls.ErrorDetails.LEVEL_LOAD_ERROR ||
       (data.response && data.response.code === 0);
 
     if (isMixedContentError) {
