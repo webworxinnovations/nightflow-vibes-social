@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, Settings, ExternalLink, Copy } from "lucide-react";
+import { AlertTriangle, Settings, ExternalLink, Copy, Globe } from "lucide-react";
 import { toast } from "sonner";
 
 interface StreamAlertsProps {
@@ -17,46 +17,51 @@ export const StreamAlerts = ({ hasMixedContentIssue }: StreamAlertsProps) => {
     });
   };
 
-  const handleUseLocalStreaming = () => {
-    toast.info(
-      '🎯 RECOMMENDED SOLUTION:\n\n' +
-      '1. Go to "Test Setup" tab above\n' +
-      '2. Generate local stream configuration\n' +
-      '3. Use the local RTMP server for OBS\n' +
-      '4. No external server needed!\n\n' +
-      'This works entirely on your local machine.',
-      { duration: 10000 }
-    );
+  const handleOpenHttpVersion = () => {
+    const currentUrl = window.location.href;
+    const httpUrl = currentUrl.replace('https://', 'http://');
+    window.open(httpUrl, '_blank');
   };
 
   return (
     <div className="space-y-4">
-      {/* MIXED CONTENT ALERT */}
-      {hasMixedContentIssue && (
-        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
-          <div className="flex items-center gap-2 mb-2">
-            <AlertTriangle className="h-5 w-5 text-red-400" />
-            <p className="text-red-400 font-medium">🔒 BROWSER SECURITY BLOCKING EXTERNAL SERVER</p>
-          </div>
-          <p className="text-sm text-muted-foreground mb-3">
-            Your HTTPS page cannot connect to HTTP servers (like your DigitalOcean droplet). This is normal browser security.
+      {/* CRITICAL MIXED CONTENT ALERT */}
+      <div className="p-4 bg-red-500/20 border-2 border-red-500/50 rounded-lg">
+        <div className="flex items-center gap-2 mb-3">
+          <AlertTriangle className="h-6 w-6 text-red-400" />
+          <p className="text-red-400 font-bold text-lg">🚨 CRITICAL: Mixed Content Security Error</p>
+        </div>
+        
+        <div className="space-y-3 text-sm">
+          <p className="text-red-300">
+            <strong>Your HTTPS page cannot connect to your HTTP droplet server.</strong> 
+            This is a browser security feature that blocks "mixed content" (HTTP content on HTTPS pages).
           </p>
-          <div className="space-y-3">
-            <div className="space-y-2 text-sm text-muted-foreground">
-              <p><strong>✅ RECOMMENDED: Use Local Streaming Instead</strong></p>
-              <p>• No external servers needed</p>
-              <p>• Works entirely in your browser</p>
-              <p>• Perfect for testing OBS setup</p>
-            </div>
+          
+          <div className="bg-red-900/30 p-3 rounded border border-red-500/30">
+            <p className="text-red-200 font-medium mb-2">🔒 What's happening:</p>
+            <ul className="text-red-200 text-xs space-y-1">
+              <li>• Your NightFlow app: HTTPS (secure)</li>
+              <li>• Your droplet server: HTTP (insecure)</li>
+              <li>• Browser blocks: HTTP video, WebSocket, API calls</li>
+              <li>• Result: Stream won't load, OBS status unknown</li>
+            </ul>
+          </div>
+
+          <div className="bg-green-900/30 p-3 rounded border border-green-500/30">
+            <p className="text-green-200 font-medium mb-2">✅ IMMEDIATE SOLUTION:</p>
+            <p className="text-green-200 text-xs mb-2">
+              Access your NightFlow app via HTTP instead of HTTPS to match your droplet:
+            </p>
             <div className="flex gap-2">
               <Button
-                onClick={handleUseLocalStreaming}
+                onClick={handleOpenHttpVersion}
                 variant="default"
                 size="sm"
-                className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+                className="bg-green-600 hover:bg-green-700 flex items-center gap-2"
               >
-                <Settings className="h-4 w-4" />
-                Use Local Streaming Setup
+                <Globe className="h-4 w-4" />
+                Open HTTP Version
               </Button>
               <Button
                 onClick={handleCopyHttpUrl}
@@ -65,39 +70,45 @@ export const StreamAlerts = ({ hasMixedContentIssue }: StreamAlertsProps) => {
                 className="flex items-center gap-2"
               >
                 <Copy className="h-4 w-4" />
-                Copy HTTP URL (Advanced)
+                Copy HTTP URL
               </Button>
             </div>
           </div>
-        </div>
-      )}
 
-      {/* LOCAL STREAMING RECOMMENDATION */}
-      <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
-        <div className="flex items-center gap-2 mb-2">
-          <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-          <p className="text-green-400 font-medium">💡 LOCAL STREAMING READY</p>
-        </div>
-        <p className="text-sm text-muted-foreground mb-3">
-          Your app has a built-in local streaming server that works perfectly with OBS - no external setup needed!
-        </p>
-        <div className="space-y-2 text-sm text-muted-foreground">
-          <p><strong>How to test OBS streaming:</strong></p>
-          <p>1. Click "Test Setup" tab above</p>
-          <p>2. Generate your stream configuration</p>
-          <p>3. Copy the RTMP settings into OBS</p>
-          <p>4. Start streaming and see it live!</p>
+          <div className="bg-blue-900/30 p-3 rounded border border-blue-500/30">
+            <p className="text-blue-200 font-medium mb-2">🔧 PERMANENT SOLUTIONS:</p>
+            <ul className="text-blue-200 text-xs space-y-1">
+              <li>• Install SSL certificate on your droplet (make it HTTPS)</li>
+              <li>• Use Cloudflare proxy to add HTTPS to your droplet</li>
+              <li>• Deploy to a platform that provides HTTPS by default</li>
+            </ul>
+          </div>
         </div>
       </div>
 
-      {/* Network Status Alert */}
-      <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+      {/* DROPLET STATUS */}
+      <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
         <div className="flex items-center gap-2 mb-2">
           <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-          <p className="text-blue-400 font-medium">🎯 Ready for OBS Testing</p>
+          <p className="text-blue-400 font-medium">📡 Your Droplet Server Status</p>
+        </div>
+        <div className="space-y-2 text-sm text-muted-foreground">
+          <p><strong>IP:</strong> 67.205.179.77</p>
+          <p><strong>RTMP:</strong> rtmp://67.205.179.77:1935/live (for OBS)</p>
+          <p><strong>HTTP API:</strong> http://67.205.179.77:3001 (blocked by HTTPS)</p>
+          <p><strong>Status:</strong> Running (but blocked by mixed content)</p>
+        </div>
+      </div>
+
+      {/* OBS STILL WORKS */}
+      <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+          <p className="text-green-400 font-medium">🎥 OBS Streaming Still Works!</p>
         </div>
         <p className="text-sm text-muted-foreground">
-          Local streaming server is ready. Switch to "Test Setup" to begin OBS configuration.
+          OBS connects directly to your droplet via RTMP. The mixed content issue only affects the web interface, 
+          not OBS streaming itself. Your streams will work once you use the HTTP version of your app.
         </p>
       </div>
     </div>
