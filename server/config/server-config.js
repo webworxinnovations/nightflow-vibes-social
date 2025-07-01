@@ -10,7 +10,7 @@ class ServerConfig {
     
     // Force standard RTMP port 1935 - DigitalOcean droplet compatible
     this.RTMP_PORT = 1935;
-    this.HLS_PORT = 3001; // Use port 3001 for HLS to match frontend expectations
+    this.HLS_PORT = 3001; // Use port 3001 for HLS to match frontend expectations - FIXED: Use droplet port
     
     // Enable SSL for HTTPS support
     this.SSL_ENABLED = process.env.SSL_ENABLED === 'true' || false;
@@ -37,6 +37,7 @@ class ServerConfig {
     }
     
     console.log(`📡 RTMP URL: rtmp://67.205.179.77:${this.RTMP_PORT}/live`);
+    console.log(`📺 HLS URL: http://67.205.179.77:${this.HLS_PORT}/live`);
   }
   
   getMediaServerConfig() {
@@ -61,7 +62,7 @@ class ServerConfig {
     };
 
     console.log(`🔧 RTMP configuration on port ${this.RTMP_PORT}`);
-    console.log(`🔧 HLS HTTP server on port ${this.HLS_PORT}`);
+    console.log(`🔧 HLS HTTP server on port ${this.HLS_PORT} - serving to DigitalOcean IP`);
     return config;
   }
   
@@ -97,7 +98,7 @@ class ServerConfig {
     return `rtmp://67.205.179.77:${this.RTMP_PORT}/live`;
   }
   
-  // Get the HLS base URL for video playback - HTTPS if available
+  // FIXED: Get the HLS base URL for video playback using DigitalOcean IP
   getHLSBaseUrl() {
     if (this.SSL_ENABLED && this.hasSSLCertificates()) {
       return `https://67.205.179.77:${this.HTTPS_PORT}/live`;

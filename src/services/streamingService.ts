@@ -16,6 +16,11 @@ class StreamingService {
       hlsUrl: StreamingConfig.getHLSUrl(streamKey)
     };
 
+    console.log('📡 Stream configuration:');
+    console.log('- RTMP URL (for OBS):', config.rtmpUrl);
+    console.log('- HLS URL (for playback):', config.hlsUrl);
+    console.log('- Stream Key:', streamKey);
+
     // Store in localStorage for persistence
     localStorage.setItem('nightflow_stream_config', JSON.stringify(config));
     
@@ -71,6 +76,7 @@ class StreamingService {
     
     try {
       const wsUrl = StreamingConfig.getWebSocketUrl(streamKey);
+      console.log('WebSocket URL:', wsUrl);
       this.wsConnection = new WebSocket(wsUrl);
       
       this.wsConnection.onopen = () => {
@@ -96,20 +102,36 @@ class StreamingService {
   private fallbackToPolling(streamKey: string): void {
     console.log('📡 Using fallback polling for stream status');
     
-    // Simulate periodic status updates
-    setInterval(() => {
-      if (this.statusCallback) {
-        this.statusCallback({
-          isLive: false,
-          viewerCount: 0,
-          duration: 0,
-          bitrate: 0,
-          resolution: '',
-          timestamp: new Date().toISOString()
-        });
+    // Poll the server for stream status
+    const pollInterval = setInterval(async () => {
+      try {
+        const response = await fetch(`${StreamingConfig.getApiBaseUrl()}/api/stream/${streamKey}/status`);
+        if (response.ok) {
+          const status = await response.json();
+          console.log('📊 Stream status update:', status);
+          this.statusCallback?.(status);
+        }
+      } catch (error) {
+        console.warn('Polling failed:', error);
+        // Simulate offline status
+        if (this.statusCallback) {
+          this.statusCallback({
+            isLive: false,
+            viewerCount: 0,
+            duration: 0,
+            bitrate: 0,
+            resolution: '',
+            timestamp: new Date().toISOString()
+          });
+        }
       }
     }, 5000);
+
+    // Store interval ID to clear it later
+    this.pollInterval = pollInterval;
   }
+
+  private pollInterval: NodeJS.Timeout | null = null;
 
   onStatusUpdate(callback: (status: any) => void): () => void {
     this.statusCallback = callback;
@@ -122,6 +144,10 @@ class StreamingService {
     if (this.wsConnection) {
       this.wsConnection.close();
       this.wsConnection = null;
+    }
+    if (this.pollInterval) {
+      clearInterval(this.pollInterval);
+      this.pollInterval = null;
     }
   }
 }
