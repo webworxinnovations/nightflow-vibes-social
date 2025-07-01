@@ -1,11 +1,12 @@
 
 export class ServerStatusChecker {
+  // Use your actual droplet IP where the server is running
   private static readonly DROPLET_IP = '67.205.179.77';
   private static readonly SERVER_BASE_URL = `http://${this.DROPLET_IP}:3001`;
 
   static async checkStatus(): Promise<{ available: boolean; url: string; version?: string; uptime?: number }> {
-    console.log('🔍 Testing DigitalOcean droplet server connectivity...');
-    console.log(`📡 Testing droplet at: ${this.SERVER_BASE_URL}/health`);
+    console.log('🔍 Testing your actual droplet server connectivity...');
+    console.log(`📡 Testing server at: ${this.SERVER_BASE_URL}/health`);
     
     try {
       const controller = new AbortController();
@@ -25,7 +26,7 @@ export class ServerStatusChecker {
 
       if (response.ok) {
         const data = await response.json().catch(() => ({}));
-        console.log('✅ DigitalOcean droplet server is online and responding');
+        console.log('✅ Your droplet server is online and responding!');
         
         return {
           available: true,
@@ -34,12 +35,12 @@ export class ServerStatusChecker {
           uptime: data.uptime || 0
         };
       } else {
-        console.warn('⚠️ DigitalOcean droplet responded but with error status:', response.status);
+        console.warn('⚠️ Droplet responded but with error status:', response.status);
         return { available: false, url: this.SERVER_BASE_URL };
       }
     } catch (error) {
-      console.error('❌ DigitalOcean droplet connectivity test failed:', error);
-      console.error('💡 Check if droplet is running and accessible');
+      console.error('❌ Droplet connectivity test failed:', error);
+      console.error('💡 Make sure your server is still running in PowerShell');
       return { available: false, url: this.SERVER_BASE_URL };
     }
   }
