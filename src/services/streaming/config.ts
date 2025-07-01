@@ -41,25 +41,32 @@ export class StreamingConfig {
     return true; // Always production when using actual droplet
   }
 
-  static getPortInfo(): { rtmp: number; http: number; api: number } {
+  static getPortInfo(): { rtmpPort: number; description: string; compatibility: string } {
     return {
-      rtmp: this.RTMP_PORT,
-      http: this.HTTP_PORT,
-      api: this.HTTP_PORT
+      rtmpPort: this.RTMP_PORT,
+      description: 'Standard RTMP streaming port',
+      compatibility: 'Compatible with all RTMP streaming software including OBS Studio'
     };
   }
 
-  static getProtocolInfo(): { rtmp: string; http: string; secure: boolean } {
+  static getProtocolInfo(): { protocol: string; description: string } {
     return {
-      rtmp: 'rtmp',
-      http: 'http',
-      secure: false
+      protocol: 'RTMP',
+      description: 'Real-Time Messaging Protocol - Industry standard for live streaming'
     };
   }
 
-  static getOBSSetupInstructions(): { server: string; streamKey: string; settings: string[] } {
+  static getOBSSetupInstructions(): { 
+    server: string; 
+    backup_server: string;
+    streamKey: string; 
+    settings: string[];
+    steps: string[];
+  } {
+    const serverUrl = `rtmp://${this.DROPLET_IP}:${this.RTMP_PORT}/live`;
     return {
-      server: `rtmp://${this.DROPLET_IP}:${this.RTMP_PORT}/live`,
+      server: serverUrl,
+      backup_server: serverUrl, // Same server for backup
       streamKey: 'Generate from NightFlow app',
       settings: [
         'Service: Custom',
@@ -67,6 +74,15 @@ export class StreamingConfig {
         'Stream Key: [Your generated key]',
         'Output Resolution: 1920x1080',
         'Bitrate: 2500-6000 kbps'
+      ],
+      steps: [
+        '1. Open OBS Studio',
+        '2. Go to Settings → Stream',
+        '3. Service: Select "Custom..."',
+        `4. Server: ${serverUrl}`,
+        '5. Stream Key: Copy from app',
+        '6. Click Apply → OK',
+        '7. Click Start Streaming'
       ]
     };
   }
@@ -107,29 +123,61 @@ export class StreamingConfig {
     }
   }
 
-  static async testRTMPConnection(): Promise<{ available: boolean; details: string }> {
-    // Since we can't directly test RTMP from browser, we check the API endpoint
+  static async testRTMPConnection(): Promise<{ 
+    primary: { success: boolean; url: string; error?: string };
+    backup: { success: boolean; url: string; error?: string };
+    recommendations: string[];
+  }> {
+    const primaryUrl = this.getOBSServerUrl();
+    const apiUrl = `${this.getApiBaseUrl()}/api/rtmp/status`;
+    
     try {
-      const response = await fetch(`${this.getApiBaseUrl()}/api/rtmp/status`, {
+      const response = await fetch(apiUrl, {
         method: 'GET',
         signal: AbortSignal.timeout(5000)
       });
       
-      if (response.ok) {
-        return {
-          available: true,
-          details: 'RTMP server is accessible'
-        };
-      } else {
-        return {
-          available: false,
-          details: 'RTMP status endpoint not responding'
-        };
-      }
+      const primaryResult = {
+        success: response.ok,
+        url: primaryUrl,
+        error: response.ok ? undefined : `Status: ${response.status}`
+      };
+
+      return {
+        primary: primaryResult,
+        backup: {
+          success: false,
+          url: primaryUrl,
+          error: 'Backup not configured'
+        },
+        recommendations: response.ok ? [
+          'RTMP server is ready for OBS streaming',
+          'Use the exact server URL provided',
+          'Generate a fresh stream key if needed'
+        ] : [
+          'Check if your droplet server is running',
+          'Verify firewall allows port 1935',
+          'Try restarting your droplet server'
+        ]
+      };
     } catch (error) {
       return {
-        available: false,
-        details: `RTMP test failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        primary: {
+          success: false,
+          url: primaryUrl,
+          error: error instanceof Error ? error.message : 'Connection failed'
+        },
+        backup: {
+          success: false,
+          url: primaryUrl,
+          error: 'Backup not available'
+        },
+        recommendations: [
+          'Check if your droplet server is running in DigitalOcean dashboard',
+          'Verify your droplet IP address is correct',
+          'Ensure firewall rules allow RTMP traffic on port 1935',
+          'Try accessing your droplet via SSH to check server status'
+        ]
       };
     }
   }
