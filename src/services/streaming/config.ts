@@ -10,8 +10,8 @@ export class StreamingConfig {
   }
 
   static getServerBaseUrl(): string {
-    // Always try HTTPS first since we set it up
-    return `https://${this.DROPLET_IP}:${this.HTTPS_PORT}`;
+    // Use HTTP for now since HTTPS isn't working
+    return `http://${this.DROPLET_IP}:${this.HTTP_PORT}`;
   }
 
   static getApiBaseUrl(): string {
@@ -27,8 +27,8 @@ export class StreamingConfig {
   }
 
   static getHLSUrl(streamKey: string): string {
-    // Use HTTPS for HLS streaming to avoid mixed content
-    return `https://${this.DROPLET_IP}:${this.HTTPS_PORT}/live/${streamKey}/index.m3u8`;
+    // Use HTTP for now since HTTPS isn't working
+    return `http://${this.DROPLET_IP}:${this.HTTP_PORT}/live/${streamKey}/index.m3u8`;
   }
 
   static getHlsUrl(streamKey: string): string {
@@ -36,8 +36,8 @@ export class StreamingConfig {
   }
 
   static getWebSocketUrl(streamKey: string): string {
-    // Use WSS for secure WebSocket connection
-    return `wss://${this.DROPLET_IP}:${this.HTTPS_PORT}/ws/stream/${streamKey}`;
+    // Use WS for now since WSS isn't working
+    return `ws://${this.DROPLET_IP}:${this.HTTP_PORT}/ws/stream/${streamKey}`;
   }
 
   static isProduction(): boolean {
@@ -45,8 +45,8 @@ export class StreamingConfig {
   }
 
   static isHTTPSAvailable(): boolean {
-    // We know HTTPS is available since we just set it up
-    return true;
+    // HTTPS is not working right now
+    return false;
   }
 
   static getPortInfo(): { rtmpPort: number; description: string; compatibility: string } {
@@ -107,48 +107,28 @@ export class StreamingConfig {
 
   static async testDropletConnection(): Promise<{ available: boolean; details: string }> {
     try {
-      // Test HTTPS first since we set it up
-      const httpsResponse = await fetch(`https://${this.DROPLET_IP}:${this.HTTPS_PORT}/health`, {
+      // Test HTTP since HTTPS isn't working
+      const response = await fetch(`http://${this.DROPLET_IP}:${this.HTTP_PORT}/health`, {
         method: 'GET',
         signal: AbortSignal.timeout(10000)
       });
       
-      if (httpsResponse.ok) {
+      if (response.ok) {
         return { 
           available: true, 
-          details: 'Droplet server is online with HTTPS support - perfect for NightFlow!' 
+          details: 'Droplet server is online (HTTP only) - You can test streaming now' 
         };
       } else {
         return { 
           available: false, 
-          details: `Droplet HTTPS server responded with status ${httpsResponse.status}` 
+          details: `Droplet server responded with status ${response.status}` 
         };
       }
     } catch (error) {
-      // Fallback to HTTP test
-      try {
-        const response = await fetch(`http://${this.DROPLET_IP}:${this.HTTP_PORT}/health`, {
-          method: 'GET',
-          signal: AbortSignal.timeout(10000)
-        });
-        
-        if (response.ok) {
-          return { 
-            available: true, 
-            details: 'Droplet server is online (HTTP only) - HTTPS setup may need troubleshooting' 
-          };
-        } else {
-          return { 
-            available: false, 
-            details: `Droplet server responded with status ${response.status}` 
-          };
-        }
-      } catch (httpError) {
-        return { 
-          available: false, 
-          details: `Cannot connect to droplet: ${error instanceof Error ? error.message : 'Unknown error'}` 
-        };
-      }
+      return { 
+        available: false, 
+        details: `Cannot connect to droplet: ${error instanceof Error ? error.message : 'Unknown error'}` 
+      };
     }
   }
 
