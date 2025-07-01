@@ -52,7 +52,7 @@ export const DigitalOceanDeploymentHelper = () => {
         <div className="flex items-center justify-between">
           <h3 className="text-xl font-semibold flex items-center gap-2">
             {getStatusIcon()}
-            DigitalOcean Streaming Server Status
+            Your Droplet Streaming Server Status
           </h3>
           <ServerStatusChecker onStatusUpdate={handleStatusUpdate} />
         </div>
@@ -61,9 +61,9 @@ export const DigitalOceanDeploymentHelper = () => {
         <div className={`p-4 rounded-lg border-2 ${getStatusColor()}`}>
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h4 className="font-medium">DigitalOcean App Status</h4>
+              <h4 className="font-medium">Your Droplet Server (67.205.179.77)</h4>
               <div className="text-sm font-medium">
-                URL: nightflow-app-wijb2.ondigitalocean.app
+                Running in PowerShell
               </div>
             </div>
             
@@ -92,7 +92,7 @@ export const DigitalOceanDeploymentHelper = () => {
           <h4 className="font-medium">Expected OBS Configuration:</h4>
           <div className="bg-muted/30 p-3 rounded-lg font-mono text-sm space-y-2">
             <div><strong>Service:</strong> Custom</div>
-            <div><strong>Server:</strong> rtmp://nightflow-app-wijb2.ondigitalocean.app:1935/live</div>
+            <div><strong>Server:</strong> rtmp://67.205.179.77:1935/live</div>
             <div><strong>Stream Key:</strong> [Your generated stream key]</div>
           </div>
         </div>
@@ -104,14 +104,14 @@ export const DigitalOceanDeploymentHelper = () => {
             <div className="p-3 bg-blue-500/10 rounded-lg">
               <div className="font-medium text-blue-400">If Server is Online:</div>
               <div className="text-muted-foreground">
-                Make sure OBS is configured correctly and click "Start Streaming"
+                Generate stream key and configure OBS with the settings above
               </div>
             </div>
             
             <div className="p-3 bg-yellow-500/10 rounded-lg">
               <div className="font-medium text-yellow-400">If Server is Offline:</div>
               <div className="text-muted-foreground">
-                Check DigitalOcean dashboard and restart the app
+                Check your PowerShell window and restart the server
               </div>
             </div>
           </div>
