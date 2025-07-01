@@ -44,7 +44,6 @@ export const useHlsErrorHandler = ({
       console.error('    1. Access your app via HTTP instead of HTTPS');
       console.error('    2. Enable HTTPS on your DigitalOcean droplet');
       console.error('    3. Use a proxy to serve HTTPS content');
-      console.error('🌐 Network error connecting to DigitalOcean droplet');
       
       setError(
         '🔒 Mixed Content Error: Your HTTPS page cannot load HTTP streams from your droplet. ' +
@@ -75,7 +74,6 @@ export const useHlsErrorHandler = ({
         case Hls.ErrorTypes.MEDIA_ERROR:
           console.error('💥 Fatal media error - attempting recovery...');
           try {
-            // Try to recover from media error
             const hls = event.target as Hls;
             hls.recoverMediaError();
           } catch (err) {

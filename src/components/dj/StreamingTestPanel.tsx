@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { GlassmorphicCard } from "@/components/ui/glassmorphic-card";
 import { SimpleOBSSetup } from "./SimpleOBSSetup";
 import { RealVideoPlayer } from "./RealVideoPlayer";
+import { HttpAccessHelper } from "./HttpAccessHelper";
 import { useStreamKey } from "@/hooks/useStreamKey";
 import { Monitor, Play } from "lucide-react";
 
@@ -13,6 +14,9 @@ export const StreamingTestPanel = () => {
 
   return (
     <div className="space-y-6">
+      {/* HTTP Access Helper */}
+      <HttpAccessHelper />
+
       <GlassmorphicCard>
         <div className="space-y-6">
           <div className="text-center py-8">
@@ -23,7 +27,7 @@ export const StreamingTestPanel = () => {
               OBS Streaming Setup
             </h1>
             <p className="text-xl text-muted-foreground mb-6">
-              Connect your OBS to NightFlow
+              Connect your OBS to NightFlow via your droplet server
             </p>
           </div>
           
