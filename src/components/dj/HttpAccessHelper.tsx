@@ -14,15 +14,33 @@ export const HttpAccessHelper = () => {
 
   const handleOpenHttpVersion = () => {
     const currentUrl = window.location.href;
-    const httpUrl = currentUrl.replace('https://', 'http://');
-    window.open(httpUrl, '_blank');
+    console.log('Current URL:', currentUrl);
+    
+    // Properly convert HTTPS to HTTP
+    const httpUrl = currentUrl.replace(/^https:\/\//, 'http://');
+    console.log('Converted HTTP URL:', httpUrl);
+    
+    // Open in new tab
+    const newWindow = window.open(httpUrl, '_blank');
+    
+    // Verify the window opened
+    if (newWindow) {
+      toast.success('Opening HTTP version in new tab...');
+    } else {
+      toast.error('Failed to open new tab. Please allow popups and try again.');
+    }
   };
 
   const handleCopyHttpUrl = () => {
     const currentUrl = window.location.href;
-    const httpUrl = currentUrl.replace('https://', 'http://');
-    navigator.clipboard.writeText(httpUrl);
-    toast.success('HTTP URL copied to clipboard!');
+    const httpUrl = currentUrl.replace(/^https:\/\//, 'http://');
+    
+    navigator.clipboard.writeText(httpUrl).then(() => {
+      toast.success('HTTP URL copied to clipboard!');
+      console.log('Copied HTTP URL:', httpUrl);
+    }).catch(() => {
+      toast.error('Failed to copy URL to clipboard');
+    });
   };
 
   if (!isHttps) {
@@ -70,6 +88,11 @@ export const HttpAccessHelper = () => {
             <li>• Browser blocks mixed content for security</li>
             <li>• Solution: Use HTTP version or add HTTPS to droplet</li>
           </ul>
+        </div>
+
+        <div className="text-xs text-yellow-400 bg-yellow-500/10 p-3 rounded border border-yellow-500/20">
+          <p className="font-medium mb-1">⚠️ If button still opens HTTPS:</p>
+          <p>Manually change the URL from <code>https://</code> to <code>http://</code> in your browser address bar</p>
         </div>
       </div>
     </GlassmorphicCard>
