@@ -1,4 +1,3 @@
-
 import { StreamConfig, StreamStatus } from '@/types/streaming';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -29,7 +28,6 @@ class StreamingService {
       streamKey,
       rtmpUrl: this.RTMP_URL,
       hlsUrl: `${this.API_BASE_URL}/live/${streamKey}/index.m3u8`,
-      wsUrl: `ws://67.205.179.77:8888/ws/stream/${streamKey}`,
       createdAt: new Date().toISOString()
     };
 
