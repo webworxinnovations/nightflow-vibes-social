@@ -6,7 +6,8 @@ import {
   Server,
   Wifi,
   Cloud,
-  CheckCircle
+  CheckCircle,
+  Shield
 } from "lucide-react";
 
 interface ServerStatusPanelProps {
@@ -19,30 +20,30 @@ export const ServerStatusPanel = ({ onStatusChange }: ServerStatusPanelProps) =>
 
   const checkServerStatus = async () => {
     setCheckingServer(true);
-    console.log('🔍 Checking DigitalOcean droplet status at 67.205.179.77:8888...');
+    console.log('🔍 Checking HTTPS droplet status at 67.205.179.77:3443...');
     
     try {
-      const response = await fetch('http://67.205.179.77:8888/health', {
+      const response = await fetch('https://67.205.179.77:3443/health', {
         method: 'GET',
         signal: AbortSignal.timeout(10000)
       });
       
       const status = {
         available: response.ok,
-        url: 'http://67.205.179.77:8888'
+        url: 'https://67.205.179.77:3443'
       };
       
       setServerStatus(status);
       onStatusChange?.(status);
       
       if (response.ok) {
-        console.log('✅ DigitalOcean droplet confirmed operational');
+        console.log('✅ HTTPS droplet confirmed operational');
       } else {
-        console.log('⚠️ DigitalOcean droplet responding but with issues');
+        console.log('⚠️ HTTPS droplet responding but with issues');
       }
     } catch (error) {
-      console.error('❌ DigitalOcean droplet connectivity failed:', error);
-      const status = { available: false, url: 'http://67.205.179.77:8888' };
+      console.error('❌ HTTPS droplet connectivity failed:', error);
+      const status = { available: false, url: 'https://67.205.179.77:3443' };
       setServerStatus(status);
       onStatusChange?.(status);
     }
@@ -59,13 +60,14 @@ export const ServerStatusPanel = ({ onStatusChange }: ServerStatusPanelProps) =>
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold flex items-center gap-2">
           <Server className="h-5 w-5" />
-          DigitalOcean Droplet Status (67.205.179.77:8888)
+          <Shield className="h-4 w-4 text-green-400" />
+          HTTPS Droplet Status (67.205.179.77:3443)
         </h3>
         
         <div className="flex items-center gap-2">
           <div className={`flex items-center gap-2 ${serverStatus?.available ? 'text-green-500' : 'text-red-500'}`}>
             <Wifi className="h-4 w-4" />
-            {serverStatus?.available ? 'Online' : 'Offline'}
+            {serverStatus?.available ? 'Secure Online' : 'Offline'}
           </div>
           
           <Button 
@@ -74,7 +76,7 @@ export const ServerStatusPanel = ({ onStatusChange }: ServerStatusPanelProps) =>
             variant="outline"
             size="sm"
           >
-            {checkingServer ? 'Checking...' : 'Test Connection'}
+            {checkingServer ? 'Checking...' : 'Test HTTPS Connection'}
           </Button>
         </div>
       </div>
@@ -83,7 +85,8 @@ export const ServerStatusPanel = ({ onStatusChange }: ServerStatusPanelProps) =>
         <div className="space-y-3">
           <p className={`font-medium flex items-center gap-2 ${serverStatus?.available ? 'text-green-400' : 'text-red-400'}`}>
             <Cloud className="h-4 w-4" />
-            {serverStatus?.available ? '✅ Droplet streaming infrastructure operational' : '❌ Droplet appears to be offline'}
+            <Shield className="h-4 w-4" />
+            {serverStatus?.available ? '✅ Secure HTTPS streaming infrastructure operational' : '❌ HTTPS droplet appears to be offline'}
           </p>
           
           <div className="grid grid-cols-2 gap-4 text-sm">
@@ -92,28 +95,28 @@ export const ServerStatusPanel = ({ onStatusChange }: ServerStatusPanelProps) =>
               <p className="text-muted-foreground">Port 1935 - For OBS streaming</p>
             </div>
             <div className="space-y-1">
-              <p className="text-green-400 font-medium">HLS Streaming:</p>
-              <p className="text-muted-foreground">Port 8888 - For web playback</p>
+              <p className="text-green-400 font-medium">HTTPS Streaming:</p>
+              <p className="text-muted-foreground">Port 3443 - Secure web playback</p>
             </div>
             <div className="space-y-1">
-              <p className="text-purple-400 font-medium">WebSocket:</p>
-              <p className="text-muted-foreground">Port 8888 - Real-time status</p>
+              <p className="text-purple-400 font-medium">Secure WebSocket:</p>
+              <p className="text-muted-foreground">Port 3443 - Real-time status</p>
             </div>
             <div className="space-y-1">
-              <p className="text-orange-400 font-medium">HTTP API:</p>
-              <p className="text-muted-foreground">Port 8888 - Stream management</p>
+              <p className="text-orange-400 font-medium">HTTPS API:</p>
+              <p className="text-muted-foreground">Port 3443 - Secure management</p>
             </div>
           </div>
           
           <div className="pt-2 border-t border-muted/20">
             <p className="text-sm text-muted-foreground">
-              <strong>Droplet IP:</strong> 67.205.179.77:8888
+              <strong>HTTPS API:</strong> https://67.205.179.77:3443
             </p>
             <p className="text-sm text-muted-foreground">
               <strong>OBS Server URL:</strong> rtmp://67.205.179.77:1935/live
             </p>
             <p className="text-sm text-muted-foreground">
-              <strong>Status:</strong> {serverStatus?.available ? 'Ready for OBS streaming' : 'Droplet needs to be started'}
+              <strong>Status:</strong> {serverStatus?.available ? 'Ready for secure OBS streaming' : 'HTTPS droplet needs to be started'}
             </p>
           </div>
         </div>
