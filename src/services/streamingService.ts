@@ -1,3 +1,4 @@
+
 import { StreamConfig, StreamStatus } from '@/types/streaming';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -27,8 +28,7 @@ class StreamingService {
     const config: StreamConfig = {
       streamKey,
       rtmpUrl: this.RTMP_URL,
-      hlsUrl: `${this.API_BASE_URL}/live/${streamKey}/index.m3u8`,
-      createdAt: new Date().toISOString()
+      hlsUrl: `${this.API_BASE_URL}/live/${streamKey}/index.m3u8`
     };
 
     // Store in localStorage for persistence
