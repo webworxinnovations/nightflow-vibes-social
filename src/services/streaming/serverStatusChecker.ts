@@ -2,7 +2,7 @@
 export class ServerStatusChecker {
   // Use your actual droplet IP where the server is running
   private static readonly DROPLET_IP = '67.205.179.77';
-  private static readonly SERVER_BASE_URL = `http://${this.DROPLET_IP}:3001`;
+  private static readonly SERVER_BASE_URL = `http://${this.DROPLET_IP}:8888`;
 
   static async checkStatus(): Promise<{ available: boolean; url: string; version?: string; uptime?: number }> {
     console.log('🔍 Testing your actual droplet server connectivity...');
@@ -54,7 +54,7 @@ export class ServerStatusChecker {
   }
 
   static getHLSBaseUrl(): string {
-    return `http://${this.DROPLET_IP}:3001/live`;
+    return `http://${this.DROPLET_IP}:8888/live`;
   }
 
   static getDropletIP(): string {

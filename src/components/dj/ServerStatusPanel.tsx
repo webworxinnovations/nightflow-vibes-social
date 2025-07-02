@@ -19,17 +19,17 @@ export const ServerStatusPanel = ({ onStatusChange }: ServerStatusPanelProps) =>
 
   const checkServerStatus = async () => {
     setCheckingServer(true);
-    console.log('🔍 Checking DigitalOcean droplet status at 67.205.179.77...');
+    console.log('🔍 Checking DigitalOcean droplet status at 67.205.179.77:8888...');
     
     try {
-      const response = await fetch('http://67.205.179.77:3001/health', {
+      const response = await fetch('http://67.205.179.77:8888/health', {
         method: 'GET',
         signal: AbortSignal.timeout(10000)
       });
       
       const status = {
         available: response.ok,
-        url: 'http://67.205.179.77:3001'
+        url: 'http://67.205.179.77:8888'
       };
       
       setServerStatus(status);
@@ -42,7 +42,7 @@ export const ServerStatusPanel = ({ onStatusChange }: ServerStatusPanelProps) =>
       }
     } catch (error) {
       console.error('❌ DigitalOcean droplet connectivity failed:', error);
-      const status = { available: false, url: 'http://67.205.179.77:3001' };
+      const status = { available: false, url: 'http://67.205.179.77:8888' };
       setServerStatus(status);
       onStatusChange?.(status);
     }
@@ -59,7 +59,7 @@ export const ServerStatusPanel = ({ onStatusChange }: ServerStatusPanelProps) =>
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold flex items-center gap-2">
           <Server className="h-5 w-5" />
-          DigitalOcean Droplet Status (67.205.179.77)
+          DigitalOcean Droplet Status (67.205.179.77:8888)
         </h3>
         
         <div className="flex items-center gap-2">
@@ -93,21 +93,21 @@ export const ServerStatusPanel = ({ onStatusChange }: ServerStatusPanelProps) =>
             </div>
             <div className="space-y-1">
               <p className="text-green-400 font-medium">HLS Streaming:</p>
-              <p className="text-muted-foreground">Port 3001 - For web playback</p>
+              <p className="text-muted-foreground">Port 8888 - For web playback</p>
             </div>
             <div className="space-y-1">
               <p className="text-purple-400 font-medium">WebSocket:</p>
-              <p className="text-muted-foreground">Port 3001 - Real-time status</p>
+              <p className="text-muted-foreground">Port 8888 - Real-time status</p>
             </div>
             <div className="space-y-1">
               <p className="text-orange-400 font-medium">HTTP API:</p>
-              <p className="text-muted-foreground">Port 3001 - Stream management</p>
+              <p className="text-muted-foreground">Port 8888 - Stream management</p>
             </div>
           </div>
           
           <div className="pt-2 border-t border-muted/20">
             <p className="text-sm text-muted-foreground">
-              <strong>Droplet IP:</strong> 67.205.179.77
+              <strong>Droplet IP:</strong> 67.205.179.77:8888
             </p>
             <p className="text-sm text-muted-foreground">
               <strong>OBS Server URL:</strong> rtmp://67.205.179.77:1935/live
