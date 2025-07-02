@@ -2,16 +2,16 @@ export class StreamingConfig {
   // Your actual droplet server IP
   private static readonly DROPLET_IP = '67.205.179.77';
   private static readonly RTMP_PORT = 1935;
-  private static readonly HTTP_PORT = 3001;
-  private static readonly HTTPS_PORT = 3443;
+  private static readonly HTTP_PORT = 8888; // Updated to match actual server port
+  private static readonly HTTPS_PORT = 8888; // Updated to match actual server port
 
   static getDropletIP(): string {
     return this.DROPLET_IP;
   }
 
   static getServerBaseUrl(): string {
-    // Try HTTPS first, fallback to HTTP if needed
-    return `https://${this.DROPLET_IP}:${this.HTTPS_PORT}`;
+    // Use HTTP with the correct port 8888
+    return `http://${this.DROPLET_IP}:${this.HTTP_PORT}`;
   }
 
   static getApiBaseUrl(): string {
@@ -27,8 +27,8 @@ export class StreamingConfig {
   }
 
   static getHLSUrl(streamKey: string): string {
-    // Use HTTPS for HLS streaming
-    return `https://${this.DROPLET_IP}:${this.HTTPS_PORT}/live/${streamKey}/index.m3u8`;
+    // Use HTTP with port 8888 for HLS streaming
+    return `http://${this.DROPLET_IP}:${this.HTTP_PORT}/live/${streamKey}/index.m3u8`;
   }
 
   static getHlsUrl(streamKey: string): string {
@@ -36,8 +36,8 @@ export class StreamingConfig {
   }
 
   static getWebSocketUrl(streamKey: string): string {
-    // Use WSS for secure WebSocket connections
-    return `wss://${this.DROPLET_IP}:${this.HTTPS_PORT}/ws/stream/${streamKey}`;
+    // Use WS with port 8888 for WebSocket connections
+    return `ws://${this.DROPLET_IP}:${this.HTTP_PORT}/ws/stream/${streamKey}`;
   }
 
   static isProduction(): boolean {
@@ -45,7 +45,7 @@ export class StreamingConfig {
   }
 
   static isHTTPSAvailable(): boolean {
-    return true;
+    return false; // Currently running on HTTP port 8888
   }
 
   static getPortInfo(): { rtmpPort: number; description: string; compatibility: string } {
@@ -105,46 +105,42 @@ export class StreamingConfig {
   }
 
   static async testDropletConnection(): Promise<{ available: boolean; details: string }> {
-    console.log('🔍 Testing droplet connectivity with multiple endpoints...');
+    console.log('🔍 Testing droplet connectivity with correct port 8888...');
     
-    // Test both HTTPS and HTTP endpoints
-    const testEndpoints = [
-      { url: `https://${this.DROPLET_IP}:${this.HTTPS_PORT}/health`, protocol: 'HTTPS' },
-      { url: `http://${this.DROPLET_IP}:${this.HTTP_PORT}/health`, protocol: 'HTTP' }
-    ];
+    const testEndpoint = `http://${this.DROPLET_IP}:${this.HTTP_PORT}/health`;
     
-    let lastError = '';
-    
-    for (const endpoint of testEndpoints) {
-      try {
-        console.log(`🧪 Testing ${endpoint.protocol}: ${endpoint.url}`);
-        const response = await fetch(endpoint.url, {
-          method: 'GET',
-          signal: AbortSignal.timeout(8000)
-        });
+    try {
+      console.log(`🧪 Testing HTTP: ${testEndpoint}`);
+      const response = await fetch(testEndpoint, {
+        method: 'GET',
+        signal: AbortSignal.timeout(8000)
+      });
+      
+      if (response.ok) {
+        const data = await response.text();
+        console.log(`✅ HTTP connection successful:`, data);
         
-        if (response.ok) {
-          const data = await response.text();
-          console.log(`✅ ${endpoint.protocol} connection successful:`, data);
-          
-          return { 
-            available: true, 
-            details: `Droplet server is online via ${endpoint.protocol} - Ready for streaming!` 
-          };
-        } else {
-          console.log(`⚠️ ${endpoint.protocol} responded with status ${response.status}`);
-          lastError = `${endpoint.protocol} status ${response.status}`;
-        }
-      } catch (error) {
-        console.log(`❌ ${endpoint.protocol} connection failed:`, error);
-        lastError = error instanceof Error ? error.message : 'Connection failed';
+        return { 
+          available: true, 
+          details: `Droplet server is online on port 8888 - Ready for streaming!` 
+        };
+      } else {
+        console.log(`⚠️ HTTP responded with status ${response.status}`);
+        
+        return { 
+          available: false, 
+          details: `Server responded with status ${response.status}. Check server logs.` 
+        };
       }
+    } catch (error) {
+      console.log(`❌ HTTP connection failed:`, error);
+      const lastError = error instanceof Error ? error.message : 'Connection failed';
+      
+      return { 
+        available: false, 
+        details: `Cannot connect to droplet server on port 8888. Error: ${lastError}` 
+      };
     }
-    
-    return { 
-      available: false, 
-      details: `Cannot connect to droplet server. Last error: ${lastError}. Please check if your server is running.` 
-    };
   }
 
   static async testRTMPConnection(): Promise<{ 
