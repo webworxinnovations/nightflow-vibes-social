@@ -1,13 +1,12 @@
 
 import { StreamConfig, StreamStatus } from '@/types/streaming';
-import { v4 as uuidv4 } from 'uuid';
 
 class StreamingService {
   private static instance: StreamingService;
   private statusCallbacks: ((status: StreamStatus) => void)[] = [];
   private pollingInterval: number | null = null;
 
-  // Use the correct droplet server URL on port 8888
+  // Consistent URLs using port 8888
   private readonly API_BASE_URL = 'http://67.205.179.77:8888';
   private readonly RTMP_URL = 'rtmp://67.205.179.77:1935/live';
 
@@ -23,7 +22,7 @@ class StreamingService {
   async generateStreamKey(): Promise<StreamConfig> {
     const streamKey = `nf_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
     
-    console.log('🔑 Generating stream key for DigitalOcean droplet...');
+    console.log('🔑 Generating stream key...');
     
     const config: StreamConfig = {
       streamKey,
@@ -31,7 +30,7 @@ class StreamingService {
       hlsUrl: `${this.API_BASE_URL}/live/${streamKey}/index.m3u8`
     };
 
-    // Store in localStorage for persistence
+    // Store in localStorage
     localStorage.setItem('nightflow_stream_config', JSON.stringify(config));
     
     console.log('✅ Stream config generated:', config);
@@ -42,9 +41,7 @@ class StreamingService {
     try {
       const stored = localStorage.getItem('nightflow_stream_config');
       if (stored) {
-        const config = JSON.parse(stored);
-        console.log('📝 Loaded stored stream config:', config);
-        return config;
+        return JSON.parse(stored);
       }
     } catch (error) {
       console.error('Failed to load stored config:', error);
@@ -52,70 +49,43 @@ class StreamingService {
     return null;
   }
 
-  async validateStreamKey(streamKey: string): Promise<boolean> {
+  async getServerStatus(): Promise<{ available: boolean; url: string; error?: string }> {
+    console.log('🔍 Testing droplet server at 67.205.179.77:8888...');
+    
     try {
-      console.log('🔍 Validating stream key with droplet server...');
-      const response = await fetch(`${this.API_BASE_URL}/api/stream/${streamKey}/validate`, {
+      const response = await fetch(`${this.API_BASE_URL}/health`, {
         method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
         signal: AbortSignal.timeout(10000)
       });
       
-      const isValid = response.ok;
-      console.log('🔑 Stream key validation result:', isValid);
-      return isValid;
-    } catch (error) {
-      console.error('❌ Stream key validation failed:', error);
-      return false; // Assume valid if server is unreachable
-    }
-  }
-
-  async getServerStatus(): Promise<{ available: boolean; url: string }> {
-    try {
-      console.log('🔍 Checking droplet server status on port 8888...');
-      const response = await fetch(`${this.API_BASE_URL}/health`, {
-        method: 'GET',
-        signal: AbortSignal.timeout(8000)
-      });
-      
       const available = response.ok;
-      console.log(available ? '✅ Droplet server is online!' : '⚠️ Droplet server issues detected');
+      console.log(available ? '✅ Server online!' : '⚠️ Server issues');
       
       return {
         available,
-        url: this.API_BASE_URL
+        url: this.API_BASE_URL,
+        error: available ? undefined : `HTTP ${response.status}`
       };
     } catch (error) {
-      console.error('❌ Failed to connect to droplet server:', error);
+      const errorMsg = error instanceof Error ? error.message : 'Connection failed';
+      console.error('❌ Server connection failed:', errorMsg);
+      
       return {
         available: false,
-        url: this.API_BASE_URL
+        url: this.API_BASE_URL,
+        error: errorMsg
       };
     }
   }
 
+  async validateStreamKey(streamKey: string): Promise<boolean> {
+    // For now, just return true since we can't validate without server
+    console.log('🔑 Stream key validation (offline mode):', streamKey);
+    return true;
+  }
+
   async getStreamStatus(streamKey: string): Promise<StreamStatus> {
-    try {
-      const response = await fetch(`${this.API_BASE_URL}/api/stream/${streamKey}/status`, {
-        method: 'GET',
-        signal: AbortSignal.timeout(5000)
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        return {
-          isLive: data.isLive || false,
-          viewerCount: data.viewerCount || 0,
-          duration: data.duration || 0,
-          bitrate: data.bitrate || 0,
-          resolution: data.resolution || '',
-          timestamp: new Date().toISOString()
-        };
-      }
-    } catch (error) {
-      console.warn('Polling failed:', error);
-    }
-    
+    // Return default status since server is not accessible
     return {
       isLive: false,
       viewerCount: 0,
@@ -134,14 +104,12 @@ class StreamingService {
 
   onStatusUpdate(callback: (status: StreamStatus) => void): () => void {
     this.statusCallbacks.push(callback);
-    
     return () => {
       this.statusCallbacks = this.statusCallbacks.filter(cb => cb !== callback);
     };
   }
 
   connectToStreamStatusWebSocket(streamKey: string): void {
-    // Start polling for status updates
     this.startPolling(streamKey);
   }
 

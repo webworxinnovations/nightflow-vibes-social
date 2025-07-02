@@ -2,85 +2,83 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { GlassmorphicCard } from "@/components/ui/glassmorphic-card";
+import { useRealTimeStream } from "@/hooks/useRealTimeStream";
+import { ServerDiagnostics } from "./ServerDiagnostics";
 import { SimpleOBSSetup } from "./SimpleOBSSetup";
-import { RealVideoPlayer } from "./RealVideoPlayer";
-import { HttpAccessHelper } from "./HttpAccessHelper";
-import { useStreamKey } from "@/hooks/useStreamKey";
-import { Monitor, Play } from "lucide-react";
+import { Play, AlertTriangle } from "lucide-react";
 
 export const StreamingTestPanel = () => {
-  const [showSetup, setShowSetup] = useState(false);
-  const { streamData, isLive } = useStreamKey();
+  const { streamConfig, generateStreamKey, isLoading } = useRealTimeStream();
+  const [showDiagnostics, setShowDiagnostics] = useState(false);
 
   return (
     <div className="space-y-6">
-      {/* HTTP Access Helper */}
-      <HttpAccessHelper />
+      {/* Critical Issue Alert */}
+      <div className="p-4 bg-red-500/10 border-2 border-red-500/30 rounded-xl">
+        <div className="flex items-center gap-3 mb-3">
+          <AlertTriangle className="h-6 w-6 text-red-400" />
+          <h3 className="text-lg font-semibold text-red-400">Connection Issues Detected</h3>
+        </div>
+        <div className="space-y-2 text-sm text-red-300">
+          <p>• Your app (HTTPS) cannot connect to your server (HTTP) due to browser security</p>
+          <p>• This prevents the web player from working, but OBS streaming should still work</p>
+          <p>• Solution: Enable HTTPS on your DigitalOcean droplet or use HTTP version of this app</p>
+        </div>
+        <Button 
+          onClick={() => setShowDiagnostics(!showDiagnostics)}
+          variant="outline" 
+          size="sm" 
+          className="mt-3"
+        >
+          {showDiagnostics ? 'Hide' : 'Show'} Full Diagnostics
+        </Button>
+      </div>
 
+      {showDiagnostics && <ServerDiagnostics />}
+
+      {/* OBS Setup */}
       <GlassmorphicCard>
-        <div className="space-y-6">
-          <div className="text-center py-8">
-            <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Monitor className="h-10 w-10 text-green-400" />
-            </div>
-            <h1 className="text-3xl font-bold text-green-400 mb-4">
-              OBS Streaming Setup
-            </h1>
-            <p className="text-xl text-muted-foreground mb-6">
-              Connect your OBS to NightFlow via your droplet server
-            </p>
-          </div>
+        <div className="text-center py-6">
+          <h3 className="text-xl font-semibold mb-4">🎥 OBS Streaming Setup</h3>
+          <p className="text-muted-foreground mb-6">
+            Generate your stream key and configure OBS. The RTMP connection should work even if the web preview doesn't.
+          </p>
           
-          {!showSetup ? (
-            <div className="text-center">
-              <Button
-                onClick={() => setShowSetup(true)}
-                className="bg-green-600 hover:bg-green-700 px-8 py-4 text-lg"
-              >
-                <Play className="mr-2 h-5 w-5" />
-                Setup OBS Streaming
-              </Button>
-            </div>
+          {!streamConfig ? (
+            <Button 
+              onClick={generateStreamKey}
+              disabled={isLoading}
+              className="bg-blue-600 hover:bg-blue-700 px-8 py-3"
+            >
+              <Play className="mr-2 h-5 w-5" />
+              {isLoading ? 'Generating...' : 'Generate Stream Key'}
+            </Button>
           ) : (
-            <SimpleOBSSetup />
+            <div className="text-left">
+              <SimpleOBSSetup />
+            </div>
           )}
         </div>
       </GlassmorphicCard>
 
-      {/* Your Live Stream */}
-      {streamData?.hlsUrl && (
-        <GlassmorphicCard>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">📺 Your Live Stream</h3>
-              {isLive && (
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-                  <span className="text-red-400 font-medium">LIVE</span>
-                </div>
-              )}
-            </div>
-            
-            <div className="aspect-video bg-black rounded-lg overflow-hidden">
-              <RealVideoPlayer 
-                hlsUrl={streamData.hlsUrl}
-                isLive={isLive}
-                autoplay={true}
-                muted={false}
-              />
-            </div>
-            
-            <div className="text-center p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-              <p className="text-blue-400 text-sm">
-                {isLive 
-                  ? "🔴 Your stream is live on NightFlow!"
-                  : "⚫ Start streaming from OBS to see it here"
-                }
-              </p>
-            </div>
-          </div>
-        </GlassmorphicCard>
-      )}
+      {/* Next Steps */}
+      <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+        <h4 className="font-medium text-green-400 mb-2">✅ What Should Work</h4>
+        <div className="space-y-1 text-sm text-green-300">
+          <p>• OBS can connect directly to rtmp://67.205.179.77:1935/live</p>
+          <p>• Stream key generation and storage</p>
+          <p>• RTMP streaming from OBS to your server</p>
+        </div>
+      </div>
+
+      <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+        <h4 className="font-medium text-amber-400 mb-2">⚠️ What Won't Work (Until Fixed)</h4>
+        <div className="space-y-1 text-sm text-amber-300">
+          <p>• Web-based stream preview (mixed content security)</p>
+          <p>• Real-time viewer count updates</p>
+          <p>• Browser-based stream testing</p>
+        </div>
+      </div>
     </div>
   );
 };
