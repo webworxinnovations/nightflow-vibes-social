@@ -10,8 +10,8 @@ export class StreamingConfig {
   }
 
   static getServerBaseUrl(): string {
-    // Use HTTP for now since HTTPS isn't working
-    return `http://${this.DROPLET_IP}:${this.HTTP_PORT}`;
+    // Use HTTPS now that it's working
+    return `https://${this.DROPLET_IP}:${this.HTTPS_PORT}`;
   }
 
   static getApiBaseUrl(): string {
@@ -27,8 +27,8 @@ export class StreamingConfig {
   }
 
   static getHLSUrl(streamKey: string): string {
-    // Use HTTP for now since HTTPS isn't working
-    return `http://${this.DROPLET_IP}:${this.HTTP_PORT}/live/${streamKey}/index.m3u8`;
+    // Use HTTPS now that it's working
+    return `https://${this.DROPLET_IP}:${this.HTTPS_PORT}/live/${streamKey}/index.m3u8`;
   }
 
   static getHlsUrl(streamKey: string): string {
@@ -36,8 +36,8 @@ export class StreamingConfig {
   }
 
   static getWebSocketUrl(streamKey: string): string {
-    // Use WS for now since WSS isn't working
-    return `ws://${this.DROPLET_IP}:${this.HTTP_PORT}/ws/stream/${streamKey}`;
+    // Use WSS now that it's working
+    return `wss://${this.DROPLET_IP}:${this.HTTPS_PORT}/ws/stream/${streamKey}`;
   }
 
   static isProduction(): boolean {
@@ -45,8 +45,8 @@ export class StreamingConfig {
   }
 
   static isHTTPSAvailable(): boolean {
-    // HTTPS is not working right now
-    return false;
+    // HTTPS is now working!
+    return true;
   }
 
   static getPortInfo(): { rtmpPort: number; description: string; compatibility: string } {
@@ -107,8 +107,8 @@ export class StreamingConfig {
 
   static async testDropletConnection(): Promise<{ available: boolean; details: string }> {
     try {
-      // Test HTTP since HTTPS isn't working
-      const response = await fetch(`http://${this.DROPLET_IP}:${this.HTTP_PORT}/health`, {
+      // Test HTTPS now that it's working
+      const response = await fetch(`https://${this.DROPLET_IP}:${this.HTTPS_PORT}/health`, {
         method: 'GET',
         signal: AbortSignal.timeout(10000)
       });
@@ -116,12 +116,12 @@ export class StreamingConfig {
       if (response.ok) {
         return { 
           available: true, 
-          details: 'Droplet server is online (HTTP only) - You can test streaming now' 
+          details: 'Droplet server is online with HTTPS support - Perfect for NightFlow!' 
         };
       } else {
         return { 
           available: false, 
-          details: `Droplet server responded with status ${response.status}` 
+          details: `Droplet HTTPS server responded with status ${response.status}` 
         };
       }
     } catch (error) {
