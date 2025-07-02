@@ -1,155 +1,171 @@
 
-import { StreamingConfig } from './streaming/config';
+import { StreamConfig, StreamStatus } from '@/types/streaming';
+import { v4 as uuidv4 } from 'uuid';
 
 class StreamingService {
-  private wsConnection: WebSocket | null = null;
-  private statusCallback: ((status: any) => void) | null = null;
+  private static instance: StreamingService;
+  private statusCallbacks: ((status: StreamStatus) => void)[] = [];
+  private pollingInterval: number | null = null;
 
-  async generateStreamKey(): Promise<{ streamKey: string; rtmpUrl: string; hlsUrl: string }> {
-    const streamKey = `nf_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  // Use the correct droplet server URL on port 8888
+  private readonly API_BASE_URL = 'http://67.205.179.77:8888';
+  private readonly RTMP_URL = 'rtmp://67.205.179.77:1935/live';
+
+  private constructor() {}
+
+  static getInstance(): StreamingService {
+    if (!StreamingService.instance) {
+      StreamingService.instance = new StreamingService();
+    }
+    return StreamingService.instance;
+  }
+
+  async generateStreamKey(): Promise<StreamConfig> {
+    const streamKey = `nf_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
     
-    console.log('🔑 Generated stream key for your droplet:', streamKey);
+    console.log('🔑 Generating stream key for DigitalOcean droplet...');
     
-    const config = {
+    const config: StreamConfig = {
       streamKey,
-      rtmpUrl: StreamingConfig.getOBSServerUrl(),
-      hlsUrl: StreamingConfig.getHLSUrl(streamKey)
+      rtmpUrl: this.RTMP_URL,
+      hlsUrl: `${this.API_BASE_URL}/live/${streamKey}/index.m3u8`,
+      wsUrl: `ws://67.205.179.77:8888/ws/stream/${streamKey}`,
+      createdAt: new Date().toISOString()
     };
-
-    console.log('📡 Stream configuration:');
-    console.log('- RTMP URL (for OBS):', config.rtmpUrl);
-    console.log('- HLS URL (for playback):', config.hlsUrl);
-    console.log('- Stream Key:', streamKey);
 
     // Store in localStorage for persistence
     localStorage.setItem('nightflow_stream_config', JSON.stringify(config));
     
+    console.log('✅ Stream config generated:', config);
     return config;
   }
 
-  async getCurrentStream(): Promise<{ streamKey: string; rtmpUrl: string; hlsUrl: string } | null> {
-    const stored = localStorage.getItem('nightflow_stream_config');
-    if (stored) {
-      const config = JSON.parse(stored);
-      console.log('✅ Current stream loaded:', config);
-      return config;
+  async getCurrentStream(): Promise<StreamConfig | null> {
+    try {
+      const stored = localStorage.getItem('nightflow_stream_config');
+      if (stored) {
+        const config = JSON.parse(stored);
+        console.log('📝 Loaded stored stream config:', config);
+        return config;
+      }
+    } catch (error) {
+      console.error('Failed to load stored config:', error);
     }
     return null;
   }
 
-  async revokeStreamKey(): Promise<void> {
-    localStorage.removeItem('nightflow_stream_config');
-    this.disconnect();
-  }
-
   async validateStreamKey(streamKey: string): Promise<boolean> {
-    if (!streamKey.startsWith('nf_')) {
-      return false;
+    try {
+      console.log('🔍 Validating stream key with droplet server...');
+      const response = await fetch(`${this.API_BASE_URL}/api/stream/${streamKey}/validate`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(10000)
+      });
+      
+      const isValid = response.ok;
+      console.log('🔑 Stream key validation result:', isValid);
+      return isValid;
+    } catch (error) {
+      console.error('❌ Stream key validation failed:', error);
+      return false; // Assume valid if server is unreachable
     }
-    
-    console.log('✅ Stream key format validated');
-    return true;
   }
 
   async getServerStatus(): Promise<{ available: boolean; url: string }> {
-    console.log('🔍 Checking your droplet server status...');
-    
     try {
-      const result = await StreamingConfig.testDropletConnection();
-      console.log(result.available ? '✅ Droplet is online!' : '❌ Droplet is offline');
+      console.log('🔍 Checking droplet server status on port 8888...');
+      const response = await fetch(`${this.API_BASE_URL}/health`, {
+        method: 'GET',
+        signal: AbortSignal.timeout(8000)
+      });
+      
+      const available = response.ok;
+      console.log(available ? '✅ Droplet server is online!' : '⚠️ Droplet server issues detected');
       
       return {
-        available: result.available,
-        url: StreamingConfig.getServerBaseUrl()
+        available,
+        url: this.API_BASE_URL
       };
     } catch (error) {
-      console.error('❌ Droplet test failed:', error);
+      console.error('❌ Failed to connect to droplet server:', error);
       return {
         available: false,
-        url: StreamingConfig.getServerBaseUrl()
+        url: this.API_BASE_URL
       };
     }
   }
 
-  connectToStreamStatusWebSocket(streamKey: string): void {
-    console.log('🔌 Attempting WebSocket connection to your droplet...');
-    
+  async getStreamStatus(streamKey: string): Promise<StreamStatus> {
     try {
-      const wsUrl = StreamingConfig.getWebSocketUrl(streamKey);
-      console.log('WebSocket URL:', wsUrl);
-      this.wsConnection = new WebSocket(wsUrl);
+      const response = await fetch(`${this.API_BASE_URL}/api/stream/${streamKey}/status`, {
+        method: 'GET',
+        signal: AbortSignal.timeout(5000)
+      });
       
-      this.wsConnection.onopen = () => {
-        console.log('✅ WebSocket connected to your droplet');
-      };
-      
-      this.wsConnection.onmessage = (event) => {
-        const status = JSON.parse(event.data);
-        this.statusCallback?.(status);
-      };
-      
-      this.wsConnection.onerror = (error) => {
-        console.warn('⚠️ WebSocket connection failed - using fallback');
-        this.fallbackToPolling(streamKey);
-      };
-      
-    } catch (error) {
-      console.warn('⚠️ WebSocket blocked - using fallback');
-      this.fallbackToPolling(streamKey);
-    }
-  }
-
-  private fallbackToPolling(streamKey: string): void {
-    console.log('📡 Using fallback polling for stream status');
-    
-    // Poll the server for stream status
-    const pollInterval = setInterval(async () => {
-      try {
-        const response = await fetch(`${StreamingConfig.getApiBaseUrl()}/api/stream/${streamKey}/status`);
-        if (response.ok) {
-          const status = await response.json();
-          console.log('📊 Stream status update:', status);
-          this.statusCallback?.(status);
-        }
-      } catch (error) {
-        console.warn('Polling failed:', error);
-        // Simulate offline status
-        if (this.statusCallback) {
-          this.statusCallback({
-            isLive: false,
-            viewerCount: 0,
-            duration: 0,
-            bitrate: 0,
-            resolution: '',
-            timestamp: new Date().toISOString()
-          });
-        }
+      if (response.ok) {
+        const data = await response.json();
+        return {
+          isLive: data.isLive || false,
+          viewerCount: data.viewerCount || 0,
+          duration: data.duration || 0,
+          bitrate: data.bitrate || 0,
+          resolution: data.resolution || '',
+          timestamp: new Date().toISOString()
+        };
       }
-    }, 5000);
-
-    // Store interval ID to clear it later
-    this.pollInterval = pollInterval;
-  }
-
-  private pollInterval: NodeJS.Timeout | null = null;
-
-  onStatusUpdate(callback: (status: any) => void): () => void {
-    this.statusCallback = callback;
-    return () => {
-      this.statusCallback = null;
+    } catch (error) {
+      console.warn('Polling failed:', error);
+    }
+    
+    return {
+      isLive: false,
+      viewerCount: 0,
+      duration: 0,
+      bitrate: 0,
+      resolution: '',
+      timestamp: new Date().toISOString()
     };
   }
 
+  async revokeStreamKey(): Promise<void> {
+    localStorage.removeItem('nightflow_stream_config');
+    this.stopPolling();
+    console.log('🔑 Stream key revoked');
+  }
+
+  onStatusUpdate(callback: (status: StreamStatus) => void): () => void {
+    this.statusCallbacks.push(callback);
+    
+    return () => {
+      this.statusCallbacks = this.statusCallbacks.filter(cb => cb !== callback);
+    };
+  }
+
+  connectToStreamStatusWebSocket(streamKey: string): void {
+    // Start polling for status updates
+    this.startPolling(streamKey);
+  }
+
+  private startPolling(streamKey: string): void {
+    this.stopPolling();
+    
+    this.pollingInterval = window.setInterval(async () => {
+      const status = await this.getStreamStatus(streamKey);
+      this.statusCallbacks.forEach(callback => callback(status));
+    }, 5000);
+  }
+
+  private stopPolling(): void {
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval);
+      this.pollingInterval = null;
+    }
+  }
+
   disconnect(): void {
-    if (this.wsConnection) {
-      this.wsConnection.close();
-      this.wsConnection = null;
-    }
-    if (this.pollInterval) {
-      clearInterval(this.pollInterval);
-      this.pollInterval = null;
-    }
+    this.stopPolling();
   }
 }
 
-export const streamingService = new StreamingService();
+export const streamingService = StreamingService.getInstance();
