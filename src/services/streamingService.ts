@@ -1,4 +1,3 @@
-
 import { StreamConfig, StreamStatus } from '@/types/streaming';
 
 class StreamingService {
@@ -6,7 +5,7 @@ class StreamingService {
   private statusCallbacks: ((status: StreamStatus) => void)[] = [];
   private pollingInterval: number | null = null;
 
-  // Updated URLs to use HTTPS
+  // Updated to use HTTPS port 3443
   private readonly API_BASE_URL = 'https://67.205.179.77:3443';
   private readonly RTMP_URL = 'rtmp://67.205.179.77:1935/live';
 
@@ -22,7 +21,7 @@ class StreamingService {
   async generateStreamKey(): Promise<StreamConfig> {
     const streamKey = `nf_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
     
-    console.log('🔑 Generating stream key with HTTPS...');
+    console.log('🔑 Generating stream key with HTTPS on port 3443...');
     
     const config: StreamConfig = {
       streamKey,

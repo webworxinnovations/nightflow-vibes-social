@@ -20,7 +20,7 @@ export const ServerStatusPanel = ({ onStatusChange }: ServerStatusPanelProps) =>
 
   const checkServerStatus = async () => {
     setCheckingServer(true);
-    console.log('🔍 Checking HTTPS droplet status at 67.205.179.77:3443...');
+    console.log('🔍 Testing HTTPS server on port 3443...');
     
     try {
       const response = await fetch('https://67.205.179.77:3443/health', {
@@ -37,12 +37,12 @@ export const ServerStatusPanel = ({ onStatusChange }: ServerStatusPanelProps) =>
       onStatusChange?.(status);
       
       if (response.ok) {
-        console.log('✅ HTTPS droplet confirmed operational');
+        console.log('✅ HTTPS server confirmed operational on port 3443');
       } else {
-        console.log('⚠️ HTTPS droplet responding but with issues');
+        console.log('⚠️ HTTPS server responding but with issues');
       }
     } catch (error) {
-      console.error('❌ HTTPS droplet connectivity failed:', error);
+      console.error('❌ HTTPS server connectivity failed:', error);
       const status = { available: false, url: 'https://67.205.179.77:3443' };
       setServerStatus(status);
       onStatusChange?.(status);
@@ -61,7 +61,7 @@ export const ServerStatusPanel = ({ onStatusChange }: ServerStatusPanelProps) =>
         <h3 className="text-lg font-semibold flex items-center gap-2">
           <Server className="h-5 w-5" />
           <Shield className="h-4 w-4 text-green-400" />
-          HTTPS Droplet Status (67.205.179.77:3443)
+          HTTPS Server Status (Port 3443)
         </h3>
         
         <div className="flex items-center gap-2">
@@ -76,7 +76,7 @@ export const ServerStatusPanel = ({ onStatusChange }: ServerStatusPanelProps) =>
             variant="outline"
             size="sm"
           >
-            {checkingServer ? 'Checking...' : 'Test HTTPS Connection'}
+            {checkingServer ? 'Testing...' : 'Test HTTPS Connection'}
           </Button>
         </div>
       </div>
@@ -86,7 +86,7 @@ export const ServerStatusPanel = ({ onStatusChange }: ServerStatusPanelProps) =>
           <p className={`font-medium flex items-center gap-2 ${serverStatus?.available ? 'text-green-400' : 'text-red-400'}`}>
             <Cloud className="h-4 w-4" />
             <Shield className="h-4 w-4" />
-            {serverStatus?.available ? '✅ Secure HTTPS streaming infrastructure operational' : '❌ HTTPS droplet appears to be offline'}
+            {serverStatus?.available ? '✅ Secure HTTPS streaming infrastructure operational' : '❌ HTTPS server appears to be offline'}
           </p>
           
           <div className="grid grid-cols-2 gap-4 text-sm">
@@ -116,7 +116,7 @@ export const ServerStatusPanel = ({ onStatusChange }: ServerStatusPanelProps) =>
               <strong>OBS Server URL:</strong> rtmp://67.205.179.77:1935/live
             </p>
             <p className="text-sm text-muted-foreground">
-              <strong>Status:</strong> {serverStatus?.available ? 'Ready for secure OBS streaming' : 'HTTPS droplet needs to be started'}
+              <strong>Status:</strong> {serverStatus?.available ? 'Ready for secure streaming!' : 'Testing HTTPS connection...'}
             </p>
           </div>
         </div>
