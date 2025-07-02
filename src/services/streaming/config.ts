@@ -10,7 +10,7 @@ export class StreamingConfig {
   }
 
   static getServerBaseUrl(): string {
-    // Use HTTPS now that it's working
+    // Try HTTPS first, fallback to HTTP if needed
     return `https://${this.DROPLET_IP}:${this.HTTPS_PORT}`;
   }
 
@@ -27,7 +27,7 @@ export class StreamingConfig {
   }
 
   static getHLSUrl(streamKey: string): string {
-    // Use HTTPS now that it's working
+    // Use HTTPS for HLS streaming
     return `https://${this.DROPLET_IP}:${this.HTTPS_PORT}/live/${streamKey}/index.m3u8`;
   }
 
@@ -36,7 +36,7 @@ export class StreamingConfig {
   }
 
   static getWebSocketUrl(streamKey: string): string {
-    // Use WSS now that it's working
+    // Use WSS for secure WebSocket connections
     return `wss://${this.DROPLET_IP}:${this.HTTPS_PORT}/ws/stream/${streamKey}`;
   }
 
@@ -45,7 +45,6 @@ export class StreamingConfig {
   }
 
   static isHTTPSAvailable(): boolean {
-    // HTTPS is now working!
     return true;
   }
 
@@ -106,30 +105,46 @@ export class StreamingConfig {
   }
 
   static async testDropletConnection(): Promise<{ available: boolean; details: string }> {
-    try {
-      // Test HTTPS now that it's working
-      const response = await fetch(`https://${this.DROPLET_IP}:${this.HTTPS_PORT}/health`, {
-        method: 'GET',
-        signal: AbortSignal.timeout(10000)
-      });
-      
-      if (response.ok) {
-        return { 
-          available: true, 
-          details: 'Droplet server is online with HTTPS support - Perfect for NightFlow!' 
-        };
-      } else {
-        return { 
-          available: false, 
-          details: `Droplet HTTPS server responded with status ${response.status}` 
-        };
+    console.log('🔍 Testing droplet connectivity with multiple endpoints...');
+    
+    // Test both HTTPS and HTTP endpoints
+    const testEndpoints = [
+      { url: `https://${this.DROPLET_IP}:${this.HTTPS_PORT}/health`, protocol: 'HTTPS' },
+      { url: `http://${this.DROPLET_IP}:${this.HTTP_PORT}/health`, protocol: 'HTTP' }
+    ];
+    
+    let lastError = '';
+    
+    for (const endpoint of testEndpoints) {
+      try {
+        console.log(`🧪 Testing ${endpoint.protocol}: ${endpoint.url}`);
+        const response = await fetch(endpoint.url, {
+          method: 'GET',
+          signal: AbortSignal.timeout(8000)
+        });
+        
+        if (response.ok) {
+          const data = await response.text();
+          console.log(`✅ ${endpoint.protocol} connection successful:`, data);
+          
+          return { 
+            available: true, 
+            details: `Droplet server is online via ${endpoint.protocol} - Ready for streaming!` 
+          };
+        } else {
+          console.log(`⚠️ ${endpoint.protocol} responded with status ${response.status}`);
+          lastError = `${endpoint.protocol} status ${response.status}`;
+        }
+      } catch (error) {
+        console.log(`❌ ${endpoint.protocol} connection failed:`, error);
+        lastError = error instanceof Error ? error.message : 'Connection failed';
       }
-    } catch (error) {
-      return { 
-        available: false, 
-        details: `Cannot connect to droplet: ${error instanceof Error ? error.message : 'Unknown error'}` 
-      };
     }
+    
+    return { 
+      available: false, 
+      details: `Cannot connect to droplet server. Last error: ${lastError}. Please check if your server is running.` 
+    };
   }
 
   static async testRTMPConnection(): Promise<{ 

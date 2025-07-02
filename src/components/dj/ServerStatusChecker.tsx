@@ -23,11 +23,11 @@ export const ServerStatusChecker = ({ onStatusUpdate }: ServerStatusCheckerProps
 
   const checkDropletServer = async () => {
     setChecking(true);
-    console.log('🔍 Testing your actual droplet server at 67.205.179.77...');
+    console.log('🔍 Comprehensive droplet server test starting...');
     
     onStatusUpdate({
       status: 'checking',
-      details: 'Testing your actual droplet server connectivity...',
+      details: 'Testing your droplet server connectivity and services...',
       nextSteps: []
     });
 
@@ -38,116 +38,169 @@ export const ServerStatusChecker = ({ onStatusUpdate }: ServerStatusCheckerProps
     };
 
     try {
-      // Test your actual droplet server
-      console.log('🧪 Test 1: Your droplet health check...');
+      // Test 1: HTTPS Health Check
+      console.log('🧪 Test 1: HTTPS health check...');
       try {
-        const healthResponse = await fetch('http://67.205.179.77:3001/health', {
+        const httpsResponse = await fetch('https://67.205.179.77:3443/health', {
           method: 'GET',
-          signal: AbortSignal.timeout(10000)
+          signal: AbortSignal.timeout(8000)
         });
-        debugResults.tests.dropletHealthCheck = {
-          status: healthResponse.status,
-          success: healthResponse.ok,
-          statusText: healthResponse.statusText,
-          url: 'http://67.205.179.77:3001/health'
+        debugResults.tests.httpsHealthCheck = {
+          status: httpsResponse.status,
+          success: httpsResponse.ok,
+          statusText: httpsResponse.statusText,
+          url: 'https://67.205.179.77:3443/health',
+          responseText: await httpsResponse.text().catch(() => 'Could not read response')
         };
-        console.log('✅ Droplet health check:', debugResults.tests.dropletHealthCheck);
+        console.log('✅ HTTPS health check result:', debugResults.tests.httpsHealthCheck);
       } catch (error) {
-        debugResults.tests.dropletHealthCheck = {
-          error: error instanceof Error ? error.message : 'Connection failed',
+        debugResults.tests.httpsHealthCheck = {
+          error: error instanceof Error ? error.message : 'HTTPS connection failed',
+          success: false,
+          url: 'https://67.205.179.77:3443/health'
+        };
+        console.log('❌ HTTPS health check failed:', debugResults.tests.httpsHealthCheck);
+      }
+
+      // Test 2: HTTP Health Check (fallback)
+      console.log('🧪 Test 2: HTTP health check...');
+      try {
+        const httpResponse = await fetch('http://67.205.179.77:3001/health', {
+          method: 'GET',
+          signal: AbortSignal.timeout(8000)
+        });
+        debugResults.tests.httpHealthCheck = {
+          status: httpResponse.status,
+          success: httpResponse.ok,
+          statusText: httpResponse.statusText,
+          url: 'http://67.205.179.77:3001/health',
+          responseText: await httpResponse.text().catch(() => 'Could not read response')
+        };
+        console.log('✅ HTTP health check result:', debugResults.tests.httpHealthCheck);
+      } catch (error) {
+        debugResults.tests.httpHealthCheck = {
+          error: error instanceof Error ? error.message : 'HTTP connection failed',
           success: false,
           url: 'http://67.205.179.77:3001/health'
         };
-        console.log('❌ Droplet health check failed:', debugResults.tests.dropletHealthCheck);
+        console.log('❌ HTTP health check failed:', debugResults.tests.httpHealthCheck);
       }
 
-      // Test RTMP server status
-      console.log('🧪 Test 2: RTMP server status...');
-      try {
-        const rtmpResponse = await fetch('http://67.205.179.77:3001/api/rtmp/status', {
-          method: 'GET',
-          signal: AbortSignal.timeout(10000)
-        });
-        const rtmpData = await rtmpResponse.json();
-        debugResults.tests.rtmpStatus = {
-          success: rtmpResponse.ok,
-          data: rtmpData,
-          url: 'http://67.205.179.77:3001/api/rtmp/status'
-        };
-        console.log('📡 RTMP status test:', debugResults.tests.rtmpStatus);
-      } catch (error) {
-        debugResults.tests.rtmpStatus = {
-          error: error instanceof Error ? error.message : 'RTMP status failed',
-          success: false,
-          url: 'http://67.205.179.77:3001/api/rtmp/status'
-        };
-        console.log('❌ RTMP status test failed:', debugResults.tests.rtmpStatus);
+      // Test 3: RTMP Server Status
+      console.log('🧪 Test 3: RTMP server status...');
+      const rtmpEndpoints = [
+        'https://67.205.179.77:3443/api/rtmp/status',
+        'http://67.205.179.77:3001/api/rtmp/status'
+      ];
+      
+      for (const endpoint of rtmpEndpoints) {
+        try {
+          const rtmpResponse = await fetch(endpoint, {
+            method: 'GET',
+            signal: AbortSignal.timeout(5000)
+          });
+          const rtmpData = await rtmpResponse.json().catch(() => ({}));
+          debugResults.tests.rtmpStatus = {
+            success: rtmpResponse.ok,
+            data: rtmpData,
+            url: endpoint,
+            protocol: endpoint.includes('https') ? 'HTTPS' : 'HTTP'
+          };
+          console.log('📡 RTMP status test result:', debugResults.tests.rtmpStatus);
+          if (rtmpResponse.ok) break; // Use first successful response
+        } catch (error) {
+          debugResults.tests.rtmpStatus = {
+            error: error instanceof Error ? error.message : 'RTMP status failed',
+            success: false,
+            url: endpoint
+          };
+        }
       }
 
-      // Analyze results
-      const dropletWorking = debugResults.tests.dropletHealthCheck.success;
-      const rtmpWorking = debugResults.tests.rtmpStatus.success;
+      // Analyze results and provide recommendations
+      const httpsWorking = debugResults.tests.httpsHealthCheck?.success;
+      const httpWorking = debugResults.tests.httpHealthCheck?.success;
+      const rtmpWorking = debugResults.tests.rtmpStatus?.success;
 
-      if (dropletWorking && rtmpWorking) {
-        console.log('✅ Your droplet server is fully operational');
+      if (httpsWorking && rtmpWorking) {
+        console.log('✅ Droplet fully operational with HTTPS');
         onStatusUpdate({
           status: 'online',
-          details: 'Your droplet server is running and RTMP server is operational',
+          details: 'Your droplet server is fully operational with HTTPS and RTMP support',
           nextSteps: [
-            '✅ Droplet: Online at 67.205.179.77',
+            '✅ Droplet: Online with HTTPS (67.205.179.77:3443)',
             '✅ RTMP server: Ready for OBS connections',
-            '✅ API: Responding correctly',
-            '🎯 OBS should connect to: rtmp://67.205.179.77:1935/live',
-            '💡 All services confirmed operational',
-            '🔄 Generate stream key and try OBS now'
+            '✅ All services confirmed operational',
+            '🎯 Next: Generate stream key and configure OBS',
+            '📡 OBS Server: rtmp://67.205.179.77:1935/live',
+            '🔄 After connecting OBS, check for your stream in NightFlow'
           ],
           debugInfo: debugResults
         });
-        toast.success('✅ Your droplet server is online and ready for streaming!');
+        toast.success('✅ Your droplet server is fully operational and ready for streaming!');
         
-      } else if (dropletWorking && !rtmpWorking) {
-        console.log('⚠️ Droplet online but RTMP server needs attention');
+      } else if (httpWorking && rtmpWorking) {
+        console.log('⚠️ HTTP working but HTTPS has issues');
+        onStatusUpdate({
+          status: 'online',
+          details: 'Droplet accessible via HTTP, HTTPS needs attention but streaming should work',
+          nextSteps: [
+            '✅ Droplet: Online via HTTP (67.205.179.77:3001)',
+            '✅ RTMP server: Ready for OBS connections',
+            '⚠️ HTTPS: Has connection issues (not critical for OBS)',
+            '🎯 Next: Generate stream key and configure OBS',
+            '📡 OBS Server: rtmp://67.205.179.77:1935/live',
+            '💡 Streaming will work - HTTPS is only needed for web interface'
+          ],
+          debugInfo: debugResults
+        });
+        toast.success('✅ Your droplet server is ready for streaming (HTTP working)!');
+        
+      } else if (httpWorking || httpsWorking) {
+        console.log('⚠️ Partial connectivity - server alive but RTMP issues');
         onStatusUpdate({
           status: 'needs-deployment',
-          details: 'Droplet accessible but RTMP server not responding properly',
+          details: 'Droplet server responding but RTMP service may need restart',
           nextSteps: [
-            '✅ Droplet: Online (67.205.179.77)',
+            httpWorking ? '✅ HTTP: Working' : '❌ HTTP: Issues',
+            httpsWorking ? '✅ HTTPS: Working' : '❌ HTTPS: Issues',
             '❌ RTMP API: Not responding properly',
-            '🔧 The RTMP service may need restart',
-            '💡 Check your PowerShell window - server may have crashed',
-            '🔄 Try restarting the server in PowerShell'
+            '🔧 The RTMP streaming service may need restart',
+            '💡 Your server is running but streaming services need attention',
+            '🔄 Try restarting your streaming server'
           ],
           debugInfo: debugResults
         });
-        toast.warning('⚠️ RTMP server on droplet needs attention');
+        toast.warning('⚠️ Server online but streaming services need restart');
         
       } else {
-        console.log('❌ Your droplet server not responding properly');
+        console.log('❌ Complete connectivity failure');
         onStatusUpdate({
           status: 'offline',
-          details: 'Your droplet server is not responding as expected',
+          details: 'Cannot connect to your droplet server at all',
           nextSteps: [
-            '❌ Droplet: Issues with 67.205.179.77:3001',
-            '❌ RTMP server: Not reachable',
-            '⚠️ Check if your PowerShell server is still running',
-            '🔍 Verify the server didn\'t crash or stop',
-            '🔄 Try restarting the server in PowerShell'
+            '❌ HTTPS: Cannot connect to 67.205.179.77:3443',
+            '❌ HTTP: Cannot connect to 67.205.179.77:3001',
+            '❌ RTMP: Not accessible',
+            '⚠️ Your droplet server appears to be completely offline',
+            '🔍 Check DigitalOcean dashboard - droplet may be stopped',
+            '💡 Server may have crashed or been terminated'
           ],
           debugInfo: debugResults
         });
-        toast.error('❌ Your droplet server appears to be offline');
+        toast.error('❌ Your droplet server appears to be completely offline');
       }
 
     } catch (error) {
-      console.error('❌ Comprehensive droplet check failed:', error);
+      console.error('❌ Comprehensive server check failed:', error);
       onStatusUpdate({
         status: 'offline',
-        details: 'Unable to test your droplet server connectivity',
+        details: 'Unable to perform comprehensive server connectivity test',
         nextSteps: [
-          '❌ Connection test completely failed',
+          '❌ Complete connectivity test failed',
           '🌐 Check your internet connection',
-          '💡 Your droplet server may be unreachable or crashed',
-          '🔍 Verify server is still running in PowerShell window'
+          '💡 Your droplet may be unreachable',
+          '🔍 Verify droplet status in DigitalOcean dashboard'
         ],
         debugInfo: debugResults
       });
@@ -175,7 +228,7 @@ export const ServerStatusChecker = ({ onStatusUpdate }: ServerStatusCheckerProps
       
       {!checking && (
         <div className="text-xs text-muted-foreground">
-          Target: 67.205.179.77:3001 (Your Running Server)
+          Comprehensive Test: HTTPS, HTTP, RTMP
         </div>
       )}
     </div>
