@@ -1,16 +1,15 @@
-
 const path = require('path');
 const fs = require('fs');
 
 class ServerConfig {
   constructor() {
-    // DigitalOcean droplet configuration with HTTPS support
-    this.DROPLET_PORT = process.env.PORT || 3001;
-    this.HTTPS_PORT = process.env.HTTPS_PORT || 3443; // HTTPS port
+    // DigitalOcean droplet configuration - FIXED TO USE PORT 8888
+    this.DROPLET_PORT = process.env.PORT || 8888; // CHANGED FROM 3001 TO 8888
+    this.HTTPS_PORT = process.env.HTTPS_PORT || 3443;
     
     // Force standard RTMP port 1935 - DigitalOcean droplet compatible
     this.RTMP_PORT = 1935;
-    this.HLS_PORT = 3001; // Use port 3001 for HLS to match frontend expectations - FIXED: Use droplet port
+    this.HLS_PORT = 8888; // CHANGED TO USE SAME PORT AS DROPLET_PORT
     
     // Enable SSL for HTTPS support
     this.SSL_ENABLED = process.env.SSL_ENABLED === 'true' || false;
@@ -20,15 +19,15 @@ class ServerConfig {
     // Media storage - use /tmp on DigitalOcean droplet
     this.mediaRoot = process.env.MEDIA_ROOT || '/tmp/media';
     
-    console.log(`📍 DigitalOcean Droplet Configuration:`);
+    console.log(`📍 DigitalOcean Droplet Configuration (FIXED):`);
     console.log(`   Droplet IP: 67.205.179.77`);
-    console.log(`   HTTP API Port: ${this.DROPLET_PORT}`);
+    console.log(`   HTTP API Port: ${this.DROPLET_PORT} (DigitalOcean Assigned)`); // FIXED
     console.log(`   HTTPS API Port: ${this.HTTPS_PORT}`);
     console.log(`   RTMP Port: ${this.RTMP_PORT}`);
     console.log(`   HLS HTTP Port: ${this.HLS_PORT}`);
     console.log(`   SSL Enabled: ${this.SSL_ENABLED}`);
     console.log(`   Media Root: ${this.mediaRoot}`);
-    console.log(`   Environment: DigitalOcean Droplet with HTTPS support`);
+    console.log(`   Environment: DigitalOcean Droplet (NO RAILWAY)`); // FIXED
     
     if (this.SSL_ENABLED) {
       console.log(`🔒 HTTPS URLs:`);
@@ -62,11 +61,10 @@ class ServerConfig {
     };
 
     console.log(`🔧 RTMP configuration on port ${this.RTMP_PORT}`);
-    console.log(`🔧 HLS HTTP server on port ${this.HLS_PORT} - serving to DigitalOcean IP`);
+    console.log(`🔧 HLS HTTP server on port ${this.HLS_PORT} - DigitalOcean configuration`);
     return config;
   }
   
-  // Check if SSL certificates exist
   hasSSLCertificates() {
     try {
       return fs.existsSync(this.SSL_CERT_PATH) && fs.existsSync(this.SSL_KEY_PATH);
@@ -75,7 +73,6 @@ class ServerConfig {
     }
   }
   
-  // Get SSL options for HTTPS server
   getSSLOptions() {
     if (!this.hasSSLCertificates()) {
       console.warn('⚠️ SSL certificates not found. HTTPS will not be available.');
@@ -93,12 +90,10 @@ class ServerConfig {
     }
   }
   
-  // Get the actual RTMP URL that OBS should use - DROPLET IP ONLY
   getRTMPUrl() {
     return `rtmp://67.205.179.77:${this.RTMP_PORT}/live`;
   }
   
-  // FIXED: Get the HLS base URL for video playback using DigitalOcean IP
   getHLSBaseUrl() {
     if (this.SSL_ENABLED && this.hasSSLCertificates()) {
       return `https://67.205.179.77:${this.HTTPS_PORT}/live`;
@@ -106,7 +101,6 @@ class ServerConfig {
     return `http://67.205.179.77:${this.HLS_PORT}/live`;
   }
   
-  // Get API base URL - HTTPS if available
   getApiBaseUrl() {
     if (this.SSL_ENABLED && this.hasSSLCertificates()) {
       return `https://67.205.179.77:${this.HTTPS_PORT}`;
