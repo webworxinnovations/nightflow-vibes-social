@@ -1,16 +1,17 @@
+
 export class StreamingConfig {
   // Your actual droplet server IP
   private static readonly DROPLET_IP = '67.205.179.77';
   private static readonly RTMP_PORT = 1935;
-  private static readonly HTTP_PORT = 8888; // Updated to match your actual server
-  private static readonly HTTPS_PORT = 3443; // Keep for future HTTPS setup
+  private static readonly HTTP_PORT = 8888; // Your working port!
+  private static readonly HTTPS_PORT = 3443;
 
   static getDropletIP(): string {
     return this.DROPLET_IP;
   }
 
   static getServerBaseUrl(): string {
-    // Use HTTP 8888 since that's what your server is actually running on
+    // Use working HTTP 8888 port
     return `http://${this.DROPLET_IP}:${this.HTTP_PORT}`;
   }
 
@@ -27,7 +28,7 @@ export class StreamingConfig {
   }
 
   static getHLSUrl(streamKey: string): string {
-    // Use HTTP 8888 for HLS streaming (matching your server)
+    // Use working HTTP 8888 for HLS streaming
     return `http://${this.DROPLET_IP}:${this.HTTP_PORT}/live/${streamKey}/index.m3u8`;
   }
 
@@ -36,7 +37,7 @@ export class StreamingConfig {
   }
 
   static getWebSocketUrl(streamKey: string): string {
-    // Use WS with port 8888 for WebSocket connections
+    // Use WS with working port 8888
     return `ws://${this.DROPLET_IP}:${this.HTTP_PORT}/ws/stream/${streamKey}`;
   }
 
@@ -105,12 +106,12 @@ export class StreamingConfig {
   }
 
   static async testDropletConnection(): Promise<{ available: boolean; details: string }> {
-    console.log('🔍 Testing droplet HTTP connectivity on port 8888...');
+    console.log('🔍 Testing working droplet HTTP connectivity on port 8888...');
     
     const testEndpoint = `http://${this.DROPLET_IP}:${this.HTTP_PORT}/health`;
     
     try {
-      console.log(`🧪 Testing HTTP: ${testEndpoint}`);
+      console.log(`🧪 Testing working HTTP: ${testEndpoint}`);
       const response = await fetch(testEndpoint, {
         method: 'GET',
         signal: AbortSignal.timeout(8000)
@@ -118,11 +119,11 @@ export class StreamingConfig {
       
       if (response.ok) {
         const data = await response.text();
-        console.log(`✅ HTTP connection successful:`, data);
+        console.log(`✅ HTTP connection successful with working server:`, data);
         
         return { 
           available: true, 
-          details: `Droplet server is online with HTTP on port 8888 - Ready for streaming!` 
+          details: `Droplet server is online and working with HTTP on port 8888 - Ready for streaming!` 
         };
       } else {
         console.log(`⚠️ HTTP responded with status ${response.status}`);
