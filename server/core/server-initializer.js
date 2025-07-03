@@ -28,10 +28,11 @@ class ServerInitializer {
       console.log(`📍 RTMP PORT: ${this.serverConfig.RTMP_PORT} (DigitalOcean Droplet)`);
       console.log(`📍 HLS PORT: ${this.serverConfig.HLS_PORT} (DigitalOcean Droplet)`);
       
-      // DigitalOcean droplet configuration
-      console.log('🌊 DigitalOcean droplet deployment - optimizing for platform...');
+      // DigitalOcean droplet configuration - NO RAILWAY
+      console.log('🌊 DigitalOcean droplet deployment - optimized for direct IP access...');
       console.log(`🌊 Droplet IP: 67.205.179.77`);
-      console.log('🌐 HTTP Streaming: Primary method for DigitalOcean compatibility');
+      console.log('🌐 HTTP Streaming: Primary method for DigitalOcean droplet compatibility');
+      console.log('🚫 NO RAILWAY REFERENCES - Pure DigitalOcean droplet deployment');
       
       return {
         serverConfig: this.serverConfig,

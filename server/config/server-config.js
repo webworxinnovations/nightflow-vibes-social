@@ -1,15 +1,16 @@
+
 const path = require('path');
 const fs = require('fs');
 
 class ServerConfig {
   constructor() {
-    // DigitalOcean droplet configuration - FIXED TO USE PORT 8888
-    this.DROPLET_PORT = process.env.PORT || 8888; // CHANGED FROM 3001 TO 8888
+    // DigitalOcean droplet configuration - FIXED TO USE PORT 9001
+    this.DROPLET_PORT = process.env.PORT || 9001; // CHANGED FROM 8888 TO 9001
     this.HTTPS_PORT = process.env.HTTPS_PORT || 3443;
     
     // Force standard RTMP port 1935 - DigitalOcean droplet compatible
     this.RTMP_PORT = 1935;
-    this.HLS_PORT = 8888; // CHANGED TO USE SAME PORT AS DROPLET_PORT
+    this.HLS_PORT = 9001; // CHANGED TO USE SAME PORT AS DROPLET_PORT
     
     // Enable SSL for HTTPS support
     this.SSL_ENABLED = process.env.SSL_ENABLED === 'true' || false;
@@ -19,15 +20,15 @@ class ServerConfig {
     // Media storage - use /tmp on DigitalOcean droplet
     this.mediaRoot = process.env.MEDIA_ROOT || '/tmp/media';
     
-    console.log(`📍 DigitalOcean Droplet Configuration (FIXED):`);
+    console.log(`📍 DigitalOcean Droplet Configuration (FIXED - NO RAILWAY):`);
     console.log(`   Droplet IP: 67.205.179.77`);
-    console.log(`   HTTP API Port: ${this.DROPLET_PORT} (DigitalOcean Assigned)`); // FIXED
+    console.log(`   HTTP API Port: ${this.DROPLET_PORT} (DigitalOcean Droplet)`); // FIXED
     console.log(`   HTTPS API Port: ${this.HTTPS_PORT}`);
     console.log(`   RTMP Port: ${this.RTMP_PORT}`);
     console.log(`   HLS HTTP Port: ${this.HLS_PORT}`);
     console.log(`   SSL Enabled: ${this.SSL_ENABLED}`);
     console.log(`   Media Root: ${this.mediaRoot}`);
-    console.log(`   Environment: DigitalOcean Droplet (NO RAILWAY)`); // FIXED
+    console.log(`   Environment: DigitalOcean Droplet (NO RAILWAY REFERENCES)`); // FIXED
     
     if (this.SSL_ENABLED) {
       console.log(`🔒 HTTPS URLs:`);
@@ -61,7 +62,7 @@ class ServerConfig {
     };
 
     console.log(`🔧 RTMP configuration on port ${this.RTMP_PORT}`);
-    console.log(`🔧 HLS HTTP server on port ${this.HLS_PORT} - DigitalOcean configuration`);
+    console.log(`🔧 HLS HTTP server on port ${this.HLS_PORT} - DigitalOcean droplet configuration`);
     return config;
   }
   

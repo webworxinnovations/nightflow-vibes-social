@@ -3,7 +3,7 @@ export class StreamingConfig {
   // Your actual droplet server IP
   private static readonly DROPLET_IP = '67.205.179.77';
   private static readonly RTMP_PORT = 1935;
-  private static readonly HTTP_PORT = 8888; // Your working port!
+  private static readonly HTTP_PORT = 9001; // UPDATED TO MATCH YOUR WORKING PORT!
   private static readonly HTTPS_PORT = 3443;
 
   static getDropletIP(): string {
@@ -11,7 +11,7 @@ export class StreamingConfig {
   }
 
   static getServerBaseUrl(): string {
-    // Use working HTTP 8888 port
+    // Use working HTTP 9001 port
     return `http://${this.DROPLET_IP}:${this.HTTP_PORT}`;
   }
 
@@ -28,7 +28,7 @@ export class StreamingConfig {
   }
 
   static getHLSUrl(streamKey: string): string {
-    // Use working HTTP 8888 for HLS streaming
+    // Use working HTTP 9001 for HLS streaming
     return `http://${this.DROPLET_IP}:${this.HTTP_PORT}/live/${streamKey}/index.m3u8`;
   }
 
@@ -37,7 +37,7 @@ export class StreamingConfig {
   }
 
   static getWebSocketUrl(streamKey: string): string {
-    // Use WS with working port 8888
+    // Use WS with working port 9001
     return `ws://${this.DROPLET_IP}:${this.HTTP_PORT}/ws/stream/${streamKey}`;
   }
 
@@ -99,14 +99,14 @@ export class StreamingConfig {
     return [
       'Check if your droplet server is running in PowerShell',
       'Verify OBS is connected (should show "OBS SUCCESSFULLY CONNECTED!")',
-      'Make sure firewall allows ports 1935 and 3001',
+      'Make sure firewall allows ports 1935 and 9001',
       'Test stream key generation in NightFlow app',
       'Check browser console for connection errors'
     ];
   }
 
   static async testDropletConnection(): Promise<{ available: boolean; details: string }> {
-    console.log('🔍 Testing working droplet HTTP connectivity on port 8888...');
+    console.log('🔍 Testing working droplet HTTP connectivity on port 9001...');
     
     const testEndpoint = `http://${this.DROPLET_IP}:${this.HTTP_PORT}/health`;
     
@@ -123,7 +123,7 @@ export class StreamingConfig {
         
         return { 
           available: true, 
-          details: `Droplet server is online and working with HTTP on port 8888 - Ready for streaming!` 
+          details: `Droplet server is online and working with HTTP on port 9001 - Ready for streaming!` 
         };
       } else {
         console.log(`⚠️ HTTP responded with status ${response.status}`);
@@ -139,7 +139,7 @@ export class StreamingConfig {
       
       return { 
         available: false, 
-        details: `Cannot connect to droplet server on HTTP port 8888. Error: ${lastError}` 
+        details: `Cannot connect to droplet server on HTTP port 9001. Error: ${lastError}` 
       };
     }
   }

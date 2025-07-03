@@ -1,3 +1,4 @@
+
 import { StreamConfig, StreamStatus } from '@/types/streaming';
 
 class StreamingService {
@@ -5,8 +6,8 @@ class StreamingService {
   private statusCallbacks: ((status: StreamStatus) => void)[] = [];
   private pollingInterval: number | null = null;
 
-  // Updated to use HTTP port 8888 (matching your actual server)
-  private readonly API_BASE_URL = 'http://67.205.179.77:8888';
+  // Updated to use HTTP port 9001 (matching your actual server)
+  private readonly API_BASE_URL = 'http://67.205.179.77:9001';
   private readonly RTMP_URL = 'rtmp://67.205.179.77:1935/live';
 
   private constructor() {}
@@ -21,7 +22,7 @@ class StreamingService {
   async generateStreamKey(): Promise<StreamConfig> {
     const streamKey = `nf_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
     
-    console.log('🔑 Generating stream key with HTTP on port 8888...');
+    console.log('🔑 Generating stream key with HTTP on port 9001...');
     
     const config: StreamConfig = {
       streamKey,
@@ -49,7 +50,7 @@ class StreamingService {
   }
 
   async getServerStatus(): Promise<{ available: boolean; url: string; error?: string }> {
-    console.log('🔍 Testing HTTP server at 67.205.179.77:8888...');
+    console.log('🔍 Testing HTTP server at 67.205.179.77:9001...');
     
     try {
       const response = await fetch(`${this.API_BASE_URL}/health`, {
