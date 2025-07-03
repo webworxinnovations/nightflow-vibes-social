@@ -50,14 +50,15 @@ class ServerStartup {
       this.setupDigitalOceanSignalHandlers();
       
       this.server.listen(this.serverConfig.DROPLET_PORT, '0.0.0.0', () => {
-        console.log(`✅ API + WebSocket SERVER RUNNING ON PORT ${this.serverConfig.DROPLET_PORT}`);
-        console.log(`🔗 Health: http://67.205.179.77:${this.serverConfig.DROPLET_PORT}/health`);
+        console.log(`🌐 ✅ NIGHTFLOW SERVER FULLY OPERATIONAL!`);
+        console.log(`📍 Server IP: 67.205.179.77:${this.serverConfig.DROPLET_PORT}`);
+        console.log(`🔗 Health Check: http://67.205.179.77:${this.serverConfig.DROPLET_PORT}/health`);
         console.log(`🔗 API Health: http://67.205.179.77:${this.serverConfig.DROPLET_PORT}/api/health`);
-        console.log(`🔗 Root: http://67.205.179.77:${this.serverConfig.DROPLET_PORT}/`);
+        console.log(`🔗 Root API: http://67.205.179.77:${this.serverConfig.DROPLET_PORT}/`);
         
         // DigitalOcean streaming URLs
-        console.log(`🎥 RTMP: rtmp://67.205.179.77:${this.serverConfig.RTMP_PORT}/live`);
-        console.log(`📺 HLS: http://67.205.179.77:${this.serverConfig.HLS_PORT}/live/`);
+        console.log(`🎥 RTMP for OBS: rtmp://67.205.179.77:${this.serverConfig.RTMP_PORT}/live`);
+        console.log(`📺 HLS Streaming: http://67.205.179.77:${this.serverConfig.DROPLET_PORT}/live/`);
         console.log(`🔌 WebSocket: ws://67.205.179.77:${this.serverConfig.DROPLET_PORT}/ws/stream/:streamKey`);
         
         // Start media server after API is ready
@@ -66,9 +67,9 @@ class ServerStartup {
       });
 
       this.server.on('error', (error) => {
-        console.error('❌ API SERVER ERROR:', error);
+        console.error('❌ HTTP SERVER ERROR:', error);
         if (error.code === 'EADDRINUSE') {
-          console.error(`Port ${this.serverConfig.DROPLET_PORT} is already in use!`);
+          console.error(`❌ Port ${this.serverConfig.DROPLET_PORT} is already in use!`);
         }
         reject(error);
       });

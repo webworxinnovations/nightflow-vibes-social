@@ -3,6 +3,8 @@ const { setupMiddleware, createApiRoutes, setupErrorHandling } = require('../rou
 
 class ExpressSetup {
   static setupApp(app, serverConfig, streamManager, httpStreamServer) {
+    console.log('🔧 Setting up Express application...');
+    
     try {
       setupMiddleware(app, serverConfig);
       console.log('✅ Middleware setup complete');
@@ -11,30 +13,10 @@ class ExpressSetup {
       throw error;
     }
 
-    try {
-      console.log('🔧 Setting up Express routes...');
-      const apiRoutes = createApiRoutes(serverConfig, streamManager);
-      app.use('/', apiRoutes);
-      
-      // Add HTTP streaming routes
-      app.use('/api', httpStreamServer.getRouter());
-      console.log('🌐 HTTP streaming routes mounted');
-      
-      console.log('✅ Routes mounted successfully');
-    } catch (error) {
-      console.error('❌ Failed to setup routes:', error);
-      throw error;
-    }
-
-    setupErrorHandling(app);
-    
-    // Enhanced health check endpoint for DigitalOcean
-    this.setupHealthEndpoints(app, serverConfig);
-  }
-
-  static setupHealthEndpoints(app, serverConfig) {
+    // Add essential health check endpoint FIRST
     app.get('/health', (req, res) => {
-      const healthData = {
+      console.log('📋 Health check requested');
+      res.json({
         status: 'healthy',
         timestamp: new Date().toISOString(),
         server: 'nightflow-streaming-server',
@@ -55,8 +37,8 @@ class ExpressSetup {
             configured: true,
             available: true,
             status: 'ready',
-            port: serverConfig.HLS_PORT,
-            url: `http://67.205.179.77:${serverConfig.HLS_PORT}/live`
+            port: serverConfig.DROPLET_PORT,
+            url: `http://67.205.179.77:${serverConfig.DROPLET_PORT}/live`
           },
           api: {
             ready: true,
@@ -64,11 +46,12 @@ class ExpressSetup {
             port: serverConfig.DROPLET_PORT
           }
         }
-      };
-      res.json(healthData);
+      });
     });
 
+    // Add API health endpoint
     app.get('/api/health', (req, res) => {
+      console.log('📋 API health check requested');
       res.json({
         status: 'ok',
         rtmp_ready: true,
@@ -78,6 +61,26 @@ class ExpressSetup {
         droplet_ip: '67.205.179.77'
       });
     });
+
+    try {
+      console.log('🔧 Setting up API routes...');
+      const apiRoutes = createApiRoutes(serverConfig, streamManager);
+      app.use('/', apiRoutes);
+      
+      // Add HTTP streaming routes
+      if (httpStreamServer) {
+        app.use('/api', httpStreamServer.getRouter());
+        console.log('🌐 HTTP streaming routes mounted');
+      }
+      
+      console.log('✅ All routes mounted successfully');
+    } catch (error) {
+      console.error('❌ Failed to setup routes:', error);
+      throw error;
+    }
+
+    setupErrorHandling(app);
+    console.log('✅ Express setup complete - all endpoints ready');
   }
 }
 
