@@ -1,4 +1,3 @@
-
 const http = require('http');
 const ServerInitializer = require('./server-initializer');
 const ExpressSetup = require('./express-setup');
@@ -141,7 +140,7 @@ class ServerStartup {
             this.rtmpReady = true;
             console.log('🎥 ✅ RTMP server started successfully on DigitalOcean droplet!');
             console.log(`🎯 ✅ OBS Connection: rtmp://67.205.179.77:1935/live`);
-            console.log('📱 ✅ HLS streams: http://67.205.179.77:3001/live/STREAM_KEY/index.m3u8');
+            console.log('📱 ✅ HLS streams: http://67.205.179.77:9001/live/STREAM_KEY/index.m3u8');
             console.log('🌊 ✅ DigitalOcean droplet streaming infrastructure fully operational');
           } else {
             console.log('⚠️ RTMP server startup issues - using HTTP streaming as fallback');
