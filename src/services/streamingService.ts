@@ -1,3 +1,4 @@
+
 import { StreamConfig, StreamStatus } from '@/types/streaming';
 
 class StreamingService {
@@ -5,8 +6,8 @@ class StreamingService {
   private statusCallbacks: ((status: StreamStatus) => void)[] = [];
   private pollingInterval: number | null = null;
 
-  // Updated to use HTTPS port 3443
-  private readonly API_BASE_URL = 'https://67.205.179.77:3443';
+  // Updated to use HTTP port 8888 (matching your actual server)
+  private readonly API_BASE_URL = 'http://67.205.179.77:8888';
   private readonly RTMP_URL = 'rtmp://67.205.179.77:1935/live';
 
   private constructor() {}
@@ -21,7 +22,7 @@ class StreamingService {
   async generateStreamKey(): Promise<StreamConfig> {
     const streamKey = `nf_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
     
-    console.log('🔑 Generating stream key with HTTPS on port 3443...');
+    console.log('🔑 Generating stream key with HTTP on port 8888...');
     
     const config: StreamConfig = {
       streamKey,
@@ -32,7 +33,7 @@ class StreamingService {
     // Store in localStorage
     localStorage.setItem('nightflow_stream_config', JSON.stringify(config));
     
-    console.log('✅ Stream config generated with HTTPS:', config);
+    console.log('✅ Stream config generated with HTTP:', config);
     return config;
   }
 
@@ -49,7 +50,7 @@ class StreamingService {
   }
 
   async getServerStatus(): Promise<{ available: boolean; url: string; error?: string }> {
-    console.log('🔍 Testing HTTPS server at 67.205.179.77:3443...');
+    console.log('🔍 Testing HTTP server at 67.205.179.77:8888...');
     
     try {
       const response = await fetch(`${this.API_BASE_URL}/health`, {
@@ -58,7 +59,7 @@ class StreamingService {
       });
       
       const available = response.ok;
-      console.log(available ? '✅ HTTPS Server online!' : '⚠️ HTTPS Server issues');
+      console.log(available ? '✅ HTTP Server online!' : '⚠️ HTTP Server issues');
       
       return {
         available,
@@ -67,7 +68,7 @@ class StreamingService {
       };
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Connection failed';
-      console.error('❌ HTTPS Server connection failed:', errorMsg);
+      console.error('❌ HTTP Server connection failed:', errorMsg);
       
       return {
         available: false,
