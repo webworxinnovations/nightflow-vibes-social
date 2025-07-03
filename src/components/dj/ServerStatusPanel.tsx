@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { GlassmorphicCard } from "@/components/ui/glassmorphic-card";
@@ -18,14 +19,21 @@ export const ServerStatusPanel = ({ onStatusChange }: ServerStatusPanelProps) =>
   const [checkingServer, setCheckingServer] = useState(true);
 
   const checkServerStatus = async () => {
+    console.log('🔄 Starting HTTP server test...');
     setCheckingServer(true);
-    console.log('🔍 Testing HTTP server on port 8888...');
     
     try {
-      const response = await fetch('http://67.205.179.77:8888/health', {
+      const testUrl = 'http://67.205.179.77:8888/health';
+      console.log(`🧪 Testing: ${testUrl}`);
+      
+      const response = await fetch(testUrl, {
         method: 'GET',
-        signal: AbortSignal.timeout(10000)
+        signal: AbortSignal.timeout(8000),
+        cache: 'no-cache'
       });
+      
+      console.log(`📊 Response status: ${response.status}`);
+      console.log(`📊 Response ok: ${response.ok}`);
       
       const status = {
         available: response.ok,
@@ -36,21 +44,34 @@ export const ServerStatusPanel = ({ onStatusChange }: ServerStatusPanelProps) =>
       onStatusChange?.(status);
       
       if (response.ok) {
-        console.log('✅ HTTP server confirmed operational on port 8888');
+        console.log('✅ HTTP server test PASSED!');
+        try {
+          const data = await response.text();
+          console.log('📄 Server response:', data);
+        } catch (parseError) {
+          console.log('📄 Could not read response body, but connection successful');
+        }
       } else {
-        console.log('⚠️ HTTP server responding but with issues');
+        console.log(`⚠️ HTTP server responded with status ${response.status}`);
       }
     } catch (error) {
-      console.error('❌ HTTP server connectivity failed:', error);
+      console.error('❌ HTTP server test FAILED:', error);
       const status = { available: false, url: 'http://67.205.179.77:8888' };
       setServerStatus(status);
       onStatusChange?.(status);
     }
     
     setCheckingServer(false);
+    console.log('🏁 HTTP server test completed');
+  };
+
+  const handleTestClick = () => {
+    console.log('🖱️ Test button clicked!');
+    checkServerStatus();
   };
 
   useEffect(() => {
+    console.log('🚀 ServerStatusPanel mounted, running initial test...');
     checkServerStatus();
   }, []);
 
@@ -70,7 +91,7 @@ export const ServerStatusPanel = ({ onStatusChange }: ServerStatusPanelProps) =>
           </div>
           
           <Button 
-            onClick={checkServerStatus} 
+            onClick={handleTestClick}
             disabled={checkingServer}
             variant="outline"
             size="sm"
@@ -84,7 +105,7 @@ export const ServerStatusPanel = ({ onStatusChange }: ServerStatusPanelProps) =>
         <div className="space-y-3">
           <p className={`font-medium flex items-center gap-2 ${serverStatus?.available ? 'text-green-400' : 'text-red-400'}`}>
             <Cloud className="h-4 w-4" />
-            {serverStatus?.available ? '✅ HTTP streaming infrastructure operational' : '❌ HTTP server appears to be offline'}
+            {serverStatus?.available ? '✅ HTTP streaming infrastructure operational' : '❌ HTTP server test failed or pending'}
           </p>
           
           <div className="grid grid-cols-2 gap-4 text-sm">
@@ -114,7 +135,7 @@ export const ServerStatusPanel = ({ onStatusChange }: ServerStatusPanelProps) =>
               <strong>OBS Server URL:</strong> rtmp://67.205.179.77:1935/live
             </p>
             <p className="text-sm text-muted-foreground">
-              <strong>Status:</strong> {serverStatus?.available ? 'Ready for streaming!' : 'Testing HTTP connection...'}
+              <strong>Status:</strong> {serverStatus?.available ? 'Ready for streaming!' : 'Click Test to check connection'}
             </p>
           </div>
         </div>
