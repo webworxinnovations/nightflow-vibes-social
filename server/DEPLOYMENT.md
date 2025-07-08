@@ -1,35 +1,29 @@
-
 # Nightflow Streaming Server Deployment Guide
 
 This guide will help you deploy your Node.js streaming server to make OBS integration work with your live Nightflow app.
 
-## Quick Deployment Options
+## DigitalOcean Droplet Deployment (Recommended)
 
-### Option 1: Railway (Recommended - Easiest)
-
-Railway is perfect for Node.js apps and handles everything automatically.
+DigitalOcean droplets provide full control and excellent performance for streaming applications.
 
 **Steps:**
-1. Go to [railway.app](https://railway.app) and sign up
-2. Click "New Project" → "Deploy from GitHub repo"
-3. Connect your GitHub account and select your Nightflow repository
-4. Railway will detect the `server/` folder automatically
-5. Set these environment variables in Railway:
+1. Create a DigitalOcean account at [digitalocean.com](https://digitalocean.com)
+2. Create a new Droplet (Ubuntu 22.04 LTS recommended)
+3. Choose appropriate size:
+   - **Basic ($12/month):** 2GB RAM, 1 CPU - Good for 10-50 viewers
+   - **General Purpose ($18/month):** 2GB RAM, 2 CPU - Good for 50-200 viewers
+4. Add your SSH key for secure access
+5. Use the provided deployment script:
+   ```bash
+   ./scripts/deploy-to-droplet.sh
    ```
-   NODE_ENV=production
-   PORT=3001
-   RTMP_PORT=1935
-   HTTP_PORT=8080
-   ```
-6. Deploy! Railway will give you URLs like:
-   - API: `https://your-app.railway.app`
-   - WebSocket: `wss://your-app.railway.app`
 
-**Cost:** Free tier available, then ~$5/month
+**Manual Setup:**
+If you prefer manual setup, see `deploy-to-droplet.md` for detailed instructions.
 
-### Option 2: DigitalOcean App Platform
+## Alternative: DigitalOcean App Platform
 
-Good balance of control and simplicity.
+Good balance of control and simplicity with managed infrastructure.
 
 **Steps:**
 1. Go to [digitalocean.com](https://digitalocean.com) and create account
@@ -39,26 +33,13 @@ Good balance of control and simplicity.
 5. Add environment variables:
    ```
    NODE_ENV=production
+   PORT=9001
    RTMP_PORT=1935
-   HTTP_PORT=8080
-   API_PORT=3001
+   HLS_PORT=9001
    ```
 6. Deploy
 
 **Cost:** ~$12/month for basic plan
-
-### Option 3: Heroku (Simple but more expensive)
-
-**Steps:**
-1. Install Heroku CLI
-2. In your `server/` directory:
-   ```bash
-   heroku create your-streaming-app
-   git subtree push --prefix server heroku main
-   heroku config:set NODE_ENV=production
-   ```
-
-**Cost:** ~$25/month minimum
 
 ## Environment Variables You Need
 
@@ -66,16 +47,16 @@ After deployment, update your Nightflow frontend with these URLs:
 
 ```env
 # Replace with your actual deployed URLs
-VITE_STREAMING_SERVER_URL=wss://your-streaming-server.railway.app
-VITE_RTMP_URL=rtmp://your-streaming-server.railway.app/live
-VITE_HLS_BASE_URL=https://your-streaming-server.railway.app
+VITE_STREAMING_SERVER_URL=wss://your-droplet-ip:9001
+VITE_RTMP_URL=rtmp://your-droplet-ip:1935/live
+VITE_HLS_BASE_URL=http://your-droplet-ip:9001/live
 ```
 
 ## Testing Your Deployment
 
 1. **Test API endpoint:**
    ```bash
-   curl https://your-streaming-server.railway.app/api/stream/test123/status
+   curl http://your-droplet-ip:9001/health
    ```
 
 2. **Test WebSocket:**
@@ -83,7 +64,7 @@ VITE_HLS_BASE_URL=https://your-streaming-server.railway.app
 
 3. **Test OBS streaming:**
    - Generate stream key in your app
-   - Set OBS server to: `rtmp://your-streaming-server.railway.app/live`
+   - Set OBS server to: `rtmp://your-droplet-ip:1935/live`
    - Use your generated stream key
    - Start streaming from OBS
    - Check if you go live in your app
@@ -92,78 +73,82 @@ VITE_HLS_BASE_URL=https://your-streaming-server.railway.app
 
 Make sure these ports are open on your server:
 - **1935** - RTMP ingestion (OBS connects here)
-- **8080** - HLS video delivery (viewers watch here)  
-- **3001** - API and WebSocket (your app connects here)
+- **9001** - API, WebSocket, and HLS delivery
+- **22** - SSH access (for management)
 
-Most cloud providers (Railway, DigitalOcean, Heroku) handle this automatically.
+DigitalOcean droplets come with ufw firewall that needs configuration.
 
-## SSL/HTTPS Requirements
+## SSL/HTTPS Setup (Optional)
 
-For production, you MUST have HTTPS/WSS because:
-- Modern browsers require HTTPS for camera access
-- WebSocket connections need WSS in production
+For production with custom domains, you can add HTTPS:
+- Use Let's Encrypt for free SSL certificates
+- Configure nginx as reverse proxy
+- Ensure WebSocket connections use WSS
 - OBS works fine with regular RTMP (no SSL needed)
 
-All recommended platforms provide HTTPS automatically.
+See `setup-ssl.sh` for automated SSL setup.
 
 ## Performance Considerations
 
 **For 10-100 concurrent viewers:**
-- Railway free tier is fine
-- 1GB RAM, 1 CPU core sufficient
+- Basic DigitalOcean droplet ($12/month) is sufficient
+- 2GB RAM, 1 CPU core
 
 **For 100-1000 concurrent viewers:**
-- Upgrade to paid plan
-- 2GB RAM, 2 CPU cores minimum
+- General Purpose droplet ($18-36/month)
+- 4GB RAM, 2 CPU cores minimum
 - Consider CDN for video delivery
 
 **For 1000+ concurrent viewers:**
-- Multiple server instances
-- Load balancer
+- Multiple server instances with load balancer
 - CDN (Cloudflare, AWS CloudFront)
-- Professional streaming service (100ms, Agora)
+- Professional streaming service integration
 
 ## Monitoring and Logs
 
-**Railway:** Built-in logs and metrics dashboard
-**DigitalOcean:** Integrated monitoring available
-**Heroku:** Heroku logs command
+**DigitalOcean Droplet:**
+- SSH access for direct log monitoring
+- Built-in monitoring dashboard
+- Can install custom monitoring (Grafana, etc.)
+
+**DigitalOcean App Platform:**
+- Integrated monitoring and logging
+- Real-time metrics dashboard
 
 ## Troubleshooting Common Issues
 
 **OBS can't connect:**
-- Check RTMP URL format: `rtmp://your-server.com/live`
-- Verify port 1935 is open
-- Try with/without `/live` suffix
+- Check RTMP URL format: `rtmp://your-droplet-ip:1935/live`
+- Verify port 1935 is open in firewall
+- Check server logs: `pm2 logs`
 
 **WebSocket connection fails:**
-- Ensure using WSS (not WS) in production
-- Check firewall allows port 3001
+- Ensure port 9001 is accessible
+- Check firewall settings
 - Verify environment variables are set
 
 **Videos won't play:**
-- Check HLS URL is accessible in browser
+- Check HLS URL is accessible: `http://your-droplet-ip:9001/live/STREAM_KEY/index.m3u8`
 - Verify FFmpeg is installed on server
 - Check server logs for transcoding errors
 
 **High latency:**
 - Reduce OBS keyframe interval to 1-2 seconds
 - Use CBR (constant bitrate) in OBS
-- Choose server region close to you
+- Choose droplet region close to your location
 
 ## Next Steps After Deployment
 
 1. **Update frontend URLs** in your Nightflow app
 2. **Test everything** with real OBS streaming
-3. **Add monitoring** to track server health
-4. **Set up backups** for important data
-5. **Plan scaling** for when you get popular!
+3. **Set up monitoring** to track server health
+4. **Configure backups** for important data
+5. **Plan scaling** for growth
 
 ## Need Help?
 
-- Railway Discord: Great community for deployment help
-- DigitalOcean tutorials: Comprehensive guides
-- Nightflow Discord: App-specific help (if available)
+- DigitalOcean tutorials: Comprehensive deployment guides
+- DigitalOcean Community: Active support forums
+- Nightflow documentation: App-specific configuration help
 
 Remember: Start simple, test thoroughly, scale when needed! 🚀
-

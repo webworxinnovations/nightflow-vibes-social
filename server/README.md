@@ -1,4 +1,3 @@
-
 # Nightflow Streaming Server
 
 This is the backend streaming server for Nightflow that handles real RTMP ingestion and HLS output.
@@ -31,9 +30,9 @@ This is the backend streaming server for Nightflow that handles real RTMP ingest
 ## Server Endpoints
 
 - **RTMP Ingest:** `rtmp://localhost:1935/live/{stream_key}`
-- **HLS Output:** `http://localhost:8080/live/{stream_key}/index.m3u8`
-- **API Status:** `http://localhost:3001/api/stream/{stream_key}/status`
-- **WebSocket:** `ws://localhost:3001/stream/{stream_key}/status`
+- **HLS Output:** `http://localhost:9001/live/{stream_key}/index.m3u8`
+- **API Status:** `http://localhost:9001/api/stream/{stream_key}/status`
+- **WebSocket:** `ws://localhost:9001/stream/{stream_key}/status`
 
 ## OBS Configuration
 
@@ -46,13 +45,20 @@ This is the backend streaming server for Nightflow that handles real RTMP ingest
 
 ## Production Deployment
 
-For production, you'll need to:
+For production deployment to DigitalOcean:
 
-1. Deploy this server to a cloud provider (AWS, DigitalOcean, etc.)
-2. Update the URLs in `src/services/streamingService.ts`
-3. Set up proper domain names and SSL certificates
-4. Configure firewall rules for ports 1935 (RTMP) and 3001 (API)
-5. Set up load balancing for multiple streaming servers if needed
+1. **DigitalOcean Droplet (Recommended):**
+   - Use the automated deployment script: `./scripts/deploy-to-droplet.sh`
+   - Manual setup guide: See `deploy-to-droplet.md`
+   - Full control over server configuration
+   - Cost: $12-36/month depending on performance needs
+
+2. **DigitalOcean App Platform:**
+   - Managed deployment with integrated monitoring
+   - Less configuration required
+   - Cost: ~$12/month for basic plan
+
+See `DEPLOYMENT.md` for complete deployment instructions.
 
 ## Environment Variables
 
@@ -60,10 +66,11 @@ Create a `.env` file for production configuration:
 
 ```env
 NODE_ENV=production
+PORT=9001
 RTMP_PORT=1935
-HTTP_PORT=8080
-API_PORT=3001
-DOMAIN=stream.nightflow.app
+HLS_PORT=9001
+SSL_ENABLED=false
+MEDIA_ROOT=/tmp/media
 ```
 
 ## Features
@@ -76,12 +83,31 @@ DOMAIN=stream.nightflow.app
 - ✅ Stream analytics (duration, bitrate, etc.)
 - ✅ Multi-quality streaming support
 - ✅ CORS enabled for web player integration
+- ✅ DigitalOcean optimized configuration
 
 ## Scaling
 
 For high-traffic scenarios:
-- Use multiple streaming servers with load balancing
-- Implement CDN distribution for HLS streams
+- Use multiple DigitalOcean droplets with load balancing
+- Implement CDN distribution for HLS streams (Cloudflare)
 - Add Redis for session management
 - Set up stream recording and VOD playback
 - Implement proper authentication and authorization
+
+## Development
+
+**Local Testing:**
+```bash
+npm run dev
+```
+
+**Testing OBS Connection:**
+1. Start local server
+2. Configure OBS with `rtmp://localhost:1935/live`
+3. Use any stream key (e.g., `test123`)
+4. Check HLS output at `http://localhost:9001/live/test123/index.m3u8`
+
+**Debugging:**
+- Server logs show RTMP connections and HLS generation
+- Health check: `http://localhost:9001/health`
+- Stream status: `http://localhost:9001/api/stream/YOUR_KEY/status`
