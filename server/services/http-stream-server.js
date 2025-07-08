@@ -9,9 +9,8 @@ class HTTPStreamServer {
     this.serverConfig = serverConfig;
     this.streamManager = streamManager;
     this.router = express.Router();
-    this.isRailway = !!process.env.RAILWAY_ENVIRONMENT;
     
-    console.log('🌐 Initializing HTTP Stream Server (Railway RTMP Alternative)...');
+    console.log('🌐 Initializing HTTP Stream Server for DigitalOcean...');
     this.setupRoutes();
   }
 
@@ -80,12 +79,10 @@ class HTTPStreamServer {
       });
     });
 
-    // Alternative streaming instructions endpoint
+    // DigitalOcean streaming instructions endpoint
     this.router.get('/stream/instructions/:streamKey', (req, res) => {
       const { streamKey } = req.params;
-      const baseUrl = this.isRailway 
-        ? 'https://nightflow-vibes-social-production.up.railway.app'
-        : `http://localhost:${this.serverConfig.RAILWAY_PORT}`;
+      const baseUrl = `http://67.205.179.77:9001`;
 
       res.json({
         streamKey: streamKey,
@@ -100,17 +97,17 @@ class HTTPStreamServer {
             description: 'Use WebRTC-compatible software',
             supported: true
           },
-          rtmp_fallback: {
-            url: 'NOT_SUPPORTED_ON_RAILWAY',
-            description: 'RTMP port 1935 is not accessible on Railway',
-            supported: false,
-            reason: 'Railway does not expose custom TCP ports like 1935'
+          rtmp: {
+            url: `rtmp://67.205.179.77:1935/live/${streamKey}`,
+            description: 'Full RTMP support available on DigitalOcean',
+            supported: true
           }
         },
-        railway_info: {
-          platform: 'Railway',
-          limitation: 'No external RTMP access on port 1935',
-          solution: 'Use HTTP-based streaming methods above'
+        digitalocean_info: {
+          platform: 'DigitalOcean Droplet',
+          rtmp_available: true,
+          ip: '67.205.179.77',
+          ports: { rtmp: 1935, http: 9001 }
         }
       });
     });

@@ -67,11 +67,7 @@ class RTMPServerConfig {
   
   // Get HLS URL for playback
   getHLSBaseUrl() {
-    if (this.isProduction) {
-      return 'https://nightflow-vibes-social-production.up.railway.app/live';
-    } else {
-      return `http://localhost:${this.HLS_PORT}/live`;
-    }
+    return `http://67.205.179.77:9001/live`;
   }
   
   // Health check endpoint
