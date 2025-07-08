@@ -4,13 +4,13 @@ const fs = require('fs');
 
 class ServerConfig {
   constructor() {
-    // DigitalOcean droplet configuration - FIXED TO USE PORT 9001
-    this.DROPLET_PORT = process.env.PORT || 9001; // FIXED PORT
+    // DigitalOcean droplet configuration - PORT 9001
+    this.DROPLET_PORT = process.env.PORT || 9001;
     this.HTTPS_PORT = process.env.HTTPS_PORT || 3443;
     
-    // Force standard RTMP port 1935 - DigitalOcean droplet compatible
+    // Standard RTMP port 1935 - DigitalOcean droplet
     this.RTMP_PORT = 1935;
-    this.HLS_PORT = 9001; // FIXED TO USE SAME PORT AS DROPLET_PORT
+    this.HLS_PORT = 9001; // Same as DROPLET_PORT for DigitalOcean
     
     // Enable SSL for HTTPS support
     this.SSL_ENABLED = process.env.SSL_ENABLED === 'true' || false;
@@ -22,13 +22,13 @@ class ServerConfig {
     
     console.log(`📍 DigitalOcean Droplet Configuration:`);
     console.log(`   Droplet IP: 67.205.179.77`);
-    console.log(`   HTTP API Port: ${this.DROPLET_PORT} (DigitalOcean Droplet)`);
+    console.log(`   HTTP API Port: ${this.DROPLET_PORT} (DigitalOcean)`);
     console.log(`   HTTPS API Port: ${this.HTTPS_PORT}`);
     console.log(`   RTMP Port: ${this.RTMP_PORT}`);
     console.log(`   HLS HTTP Port: ${this.HLS_PORT}`);
     console.log(`   SSL Enabled: ${this.SSL_ENABLED}`);
     console.log(`   Media Root: ${this.mediaRoot}`);
-    console.log(`   Environment: DigitalOcean Droplet Production`);
+    console.log(`   Environment: DigitalOcean Production`);
     
     if (this.SSL_ENABLED) {
       console.log(`🔒 HTTPS URLs:`);
