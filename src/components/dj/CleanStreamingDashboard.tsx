@@ -46,23 +46,34 @@ export const CleanStreamingDashboard = () => {
           <p className="text-red-300 mb-4">
             Your HTTPS page cannot load HTTP streams from your droplet. This is a browser security feature.
           </p>
-          <div className="space-y-2">
-            <p className="text-white font-medium">Quick Fix: Access your app via HTTP instead:</p>
-            <div className="flex gap-2">
-              <Input
-                value="http://22ebeed8-97b2-4ac0-ab35-1b90816024e0.lovableproject.com/dj-dashboard"
-                readOnly
-                className="font-mono text-sm bg-blue-500/10 border-blue-500/20"
-              />
-              <Button
-                onClick={() => {
-                  copyToClipboard("http://22ebeed8-97b2-4ac0-ab35-1b90816024e0.lovableproject.com/dj-dashboard", "HTTP URL");
-                  window.open("http://22ebeed8-97b2-4ac0-ab35-1b90816024e0.lovableproject.com/dj-dashboard", "_blank");
-                }}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                Open HTTP Version
-              </Button>
+          <div className="space-y-3">
+            <div>
+              <p className="text-white font-medium mb-2">Option 1: Try this HTTP URL (copy and paste in new tab):</p>
+              <div className="flex gap-2">
+                <Input
+                  value="http://22ebeed8-97b2-4ac0-ab35-1b90816024e0.lovableproject.com:80/dj-dashboard"
+                  readOnly
+                  className="font-mono text-sm bg-blue-500/10 border-blue-500/20"
+                />
+                <Button
+                  onClick={() => {
+                    copyToClipboard("http://22ebeed8-97b2-4ac0-ab35-1b90816024e0.lovableproject.com:80/dj-dashboard", "HTTP URL");
+                  }}
+                  variant="outline"
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            
+            <div>
+              <p className="text-white font-medium mb-2">Option 2: Disable browser security (Chrome only):</p>
+              <div className="text-sm text-yellow-300 space-y-1">
+                <p>1. Close ALL Chrome windows</p>
+                <p>2. Open terminal/command prompt</p>
+                <p>3. Run: <code className="bg-black/30 px-1 rounded">chrome --disable-web-security --user-data-dir=/tmp/chrome_dev</code></p>
+                <p>4. Open your dashboard again</p>
+              </div>
             </div>
           </div>
         </div>
