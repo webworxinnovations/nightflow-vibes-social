@@ -70,10 +70,10 @@ export const CleanStreamingDashboard = () => {
               <p className="text-white font-medium mb-2">Option 2: Disable browser security:</p>
               <div className="text-sm text-yellow-300 space-y-2">
                 <div>
-                  <p className="font-medium">For Vivaldi:</p>
-                  <p>1. Close ALL Vivaldi windows</p>
+                  <p className="font-medium">For Microsoft Edge:</p>
+                  <p>1. Close ALL Edge windows</p>
                   <p>2. Open terminal/command prompt</p>
-                  <p>3. Run: <code className="bg-black/30 px-1 rounded">vivaldi --disable-web-security --user-data-dir=/tmp/vivaldi_dev</code></p>
+                  <p>3. Run: <code className="bg-black/30 px-1 rounded">msedge --disable-web-security --user-data-dir="C:\EdgeDev"</code></p>
                   <p>4. Open your dashboard again</p>
                 </div>
                 <div>
