@@ -24,18 +24,18 @@ export const useServerStatusChecker = () => {
   const checkServerStatus = async () => {
     setChecking(true);
     try {
-      console.log('🔍 Checking DigitalOcean droplet on port 8888...');
+      console.log('🔍 Checking DigitalOcean droplet on port 3001...');
       const status = await streamingService.getServerStatus();
       setServerStatus(status);
       console.log('📊 Droplet status result:', status);
       
-      // Try multiple endpoints on port 8888 for debugging
+      // Try multiple endpoints on port 3001 for debugging
       const testEndpoints = ['/', '/health', '/api/server/stats'];
       const results: DebugInfo = {};
       
       for (const endpoint of testEndpoints) {
         try {
-          const response = await fetch(`http://67.205.179.77:8888${endpoint}`);
+          const response = await fetch(`http://67.205.179.77:3001${endpoint}`);
           results[endpoint] = {
             status: response.status,
             ok: response.ok,
@@ -54,7 +54,7 @@ export const useServerStatusChecker = () => {
       
     } catch (error) {
       console.error('❌ Failed to check droplet status:', error);
-      setServerStatus({ available: false, url: 'http://67.205.179.77:8888' });
+      setServerStatus({ available: false, url: 'http://67.205.179.77:3001' });
     } finally {
       setChecking(false);
     }
@@ -62,7 +62,7 @@ export const useServerStatusChecker = () => {
 
   const testSpecificEndpoint = async (endpoint: string) => {
     try {
-      const response = await fetch(`http://67.205.179.77:8888${endpoint}`);
+      const response = await fetch(`http://67.205.179.77:3001${endpoint}`);
       const text = await response.text();
       console.log(`🧪 Test droplet ${endpoint}:`, {
         status: response.status,
