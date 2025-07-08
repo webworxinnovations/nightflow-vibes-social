@@ -6,7 +6,7 @@ class DigitalOceanConfig {
     // DigitalOcean App Platform configuration
     this.HTTP_PORT = process.env.PORT || 3001;
     this.RTMP_PORT = 1935; // Standard RTMP port - MUST BE EXPOSED
-    this.HLS_PORT = parseInt(process.env.HLS_PORT) || 8080;
+    this.HLS_PORT = 9001; // Force port 9001 for DigitalOcean droplet
     
     // DigitalOcean App Platform domain
     this.DIGITALOCEAN_DOMAIN = 'nightflow-app-wijb2.ondigitalocean.app';

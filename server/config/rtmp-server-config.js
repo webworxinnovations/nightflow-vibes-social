@@ -7,7 +7,7 @@ class RTMPServerConfig {
     this.isProduction = process.env.NODE_ENV === 'production';
     this.RTMP_PORT = 1935; // Standard RTMP port
     this.HTTP_PORT = process.env.PORT || 3001;
-    this.HLS_PORT = 8080;
+    this.HLS_PORT = 9001;
     
     // Media storage configuration
     this.mediaRoot = process.env.MEDIA_ROOT || path.join(process.cwd(), 'media');
@@ -67,7 +67,7 @@ class RTMPServerConfig {
   
   // Get HLS URL for playback
   getHLSBaseUrl() {
-    return `http://67.205.179.77:9001/live`;
+    return `http://67.205.179.77:${this.HLS_PORT}/live`;
   }
   
   // Health check endpoint
