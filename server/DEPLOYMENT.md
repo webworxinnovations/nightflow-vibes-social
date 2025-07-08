@@ -21,25 +21,9 @@ DigitalOcean droplets provide full control and excellent performance for streami
 **Manual Setup:**
 If you prefer manual setup, see `deploy-to-droplet.md` for detailed instructions.
 
-## Alternative: DigitalOcean App Platform
+## Only Deployment Method: DigitalOcean Droplet
 
-Good balance of control and simplicity with managed infrastructure.
-
-**Steps:**
-1. Go to [digitalocean.com](https://digitalocean.com) and create account
-2. Go to App Platform → Create App
-3. Connect your GitHub repo
-4. Set source directory to `/server`
-5. Add environment variables:
-   ```
-   NODE_ENV=production
-   PORT=9001
-   RTMP_PORT=1935
-   HLS_PORT=9001
-   ```
-6. Deploy
-
-**Cost:** ~$12/month for basic plan
+DigitalOcean droplets provide full control and excellent performance for streaming applications.
 
 ## Environment Variables You Need
 
@@ -111,9 +95,9 @@ See `setup-ssl.sh` for automated SSL setup.
 - Built-in monitoring dashboard
 - Can install custom monitoring (Grafana, etc.)
 
-**DigitalOcean App Platform:**
-- Integrated monitoring and logging
-- Real-time metrics dashboard
+**DigitalOcean Droplet:**
+- Full control over server configuration
+- Direct SSH access for debugging and monitoring
 
 ## Troubleshooting Common Issues
 

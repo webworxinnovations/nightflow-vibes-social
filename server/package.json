@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node streaming-server.js",
     "dev": "nodemon streaming-server.js",
-    "digitalocean:deploy": "echo 'Deploy to DigitalOcean App Platform'"
+    "digitalocean:deploy": "echo 'Deploy to DigitalOcean Droplet only'"
   },
   "dependencies": {
     "express": "^4.18.2",

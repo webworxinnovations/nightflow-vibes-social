@@ -53,10 +53,9 @@ For production deployment to DigitalOcean:
    - Full control over server configuration
    - Cost: $12-36/month depending on performance needs
 
-2. **DigitalOcean App Platform:**
-   - Managed deployment with integrated monitoring
-   - Less configuration required
-   - Cost: ~$12/month for basic plan
+2. **Manual Droplet Setup:**
+   - Follow the deploy-to-droplet.md guide for manual setup
+   - Full control over all configurations
 
 See `DEPLOYMENT.md` for complete deployment instructions.
 
