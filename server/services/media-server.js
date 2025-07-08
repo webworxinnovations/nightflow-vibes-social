@@ -28,7 +28,7 @@ class MediaServerService {
     // FORCE both RTMP and HTTP servers
     mediaServerConfig.rtmp.port = 1935;
     mediaServerConfig.rtmp.listen = '0.0.0.0'; // CRITICAL: External access
-    mediaServerConfig.http.port = 9001; // Use same port as API server
+    mediaServerConfig.http.port = 9001; // FORCE port 9001 to match API server
     mediaServerConfig.http.listen = '0.0.0.0'; // CRITICAL: HTTP server for HLS
     
     // DigitalOcean droplet optimizations
