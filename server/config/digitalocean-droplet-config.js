@@ -19,12 +19,12 @@ class DigitalOceanDropletConfig {
       // Server ports
       httpPort: process.env.PORT || 3001,
       rtmpPort: 1935,
-      hlsPort: 8080,
+      hlsPort: 9001,
       
       // URLs
       apiBaseUrl: `https://${this.dropletDomain}`,
       rtmpUrl: `rtmp://${this.dropletIP}:1935/live`,
-      hlsBaseUrl: `http://${this.dropletIP}:8080`,
+      hlsBaseUrl: `http://${this.dropletIP}:9001`,
       
       // CORS settings
       corsOrigins: [
