@@ -73,8 +73,11 @@ export const CleanStreamingDashboard = () => {
                   <p className="font-medium">For Microsoft Edge:</p>
                   <p>1. Close ALL Edge windows</p>
                   <p>2. Open terminal/command prompt</p>
-                  <p>3. Run: <code className="bg-black/30 px-1 rounded">msedge --disable-web-security --user-data-dir="C:\EdgeDev"</code></p>
-                  <p>4. Open your dashboard again</p>
+                  <p>3. Try this command first:</p>
+                  <p><code className="bg-black/30 px-1 rounded text-xs">"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" --disable-web-security --user-data-dir="C:\EdgeDev"</code></p>
+                  <p>4. If that doesn't work, try:</p>
+                  <p><code className="bg-black/30 px-1 rounded text-xs">"C:\Program Files\Microsoft\Edge\Application\msedge.exe" --disable-web-security --user-data-dir="C:\EdgeDev"</code></p>
+                  <p>5. Open your dashboard again</p>
                 </div>
                 <div>
                   <p className="font-medium">For Chrome:</p>
