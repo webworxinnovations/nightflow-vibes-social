@@ -36,6 +36,38 @@ export const CleanStreamingDashboard = () => {
 
   return (
     <div className="space-y-6">
+      {/* Mixed Content Warning */}
+      <GlassmorphicCard>
+        <div className="p-4 bg-red-500/20 border border-red-500/30 rounded-lg">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="text-2xl">🔒</div>
+            <h3 className="text-lg font-bold text-red-400">Mixed Content Error Detected</h3>
+          </div>
+          <p className="text-red-300 mb-4">
+            Your HTTPS page cannot load HTTP streams from your droplet. This is a browser security feature.
+          </p>
+          <div className="space-y-2">
+            <p className="text-white font-medium">Quick Fix: Access your app via HTTP instead:</p>
+            <div className="flex gap-2">
+              <Input
+                value="http://22ebeed8-97b2-4ac0-ab35-1b90816024e0.lovableproject.com/dj-dashboard"
+                readOnly
+                className="font-mono text-sm bg-blue-500/10 border-blue-500/20"
+              />
+              <Button
+                onClick={() => {
+                  copyToClipboard("http://22ebeed8-97b2-4ac0-ab35-1b90816024e0.lovableproject.com/dj-dashboard", "HTTP URL");
+                  window.open("http://22ebeed8-97b2-4ac0-ab35-1b90816024e0.lovableproject.com/dj-dashboard", "_blank");
+                }}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                Open HTTP Version
+              </Button>
+            </div>
+          </div>
+        </div>
+      </GlassmorphicCard>
+
       {/* Stream Status Header */}
       <GlassmorphicCard>
         <div className="flex items-center justify-between">
