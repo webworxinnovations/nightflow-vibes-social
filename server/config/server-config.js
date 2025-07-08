@@ -53,7 +53,7 @@ class ServerConfig {
         listen: '0.0.0.0' // CRITICAL: Bind to all interfaces
       },
       http: {
-        port: this.HLS_PORT,
+        port: 9001, // FORCE port 9001 for DigitalOcean
         mediaroot: this.mediaRoot,
         allow_origin: '*',
         listen: '0.0.0.0' // CRITICAL: Bind to all interfaces for HLS
