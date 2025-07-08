@@ -38,55 +38,59 @@ export const CleanStreamingDashboard = () => {
     <div className="space-y-6">
       {/* Mixed Content Warning */}
       <GlassmorphicCard>
-        <div className="p-4 bg-red-500/20 border border-red-500/30 rounded-lg">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="text-2xl">🔒</div>
-            <h3 className="text-lg font-bold text-red-400">Mixed Content Error Detected</h3>
-          </div>
-          <p className="text-red-300 mb-4">
-            Your HTTPS page cannot load HTTP streams from your droplet. This is a browser security feature.
-          </p>
-          <div className="space-y-3">
-            <div>
-              <p className="text-white font-medium mb-2">Option 1: Try this HTTP URL (copy and paste in new tab):</p>
-              <div className="flex gap-2">
-                <Input
-                  value="http://22ebeed8-97b2-4ac0-ab35-1b90816024e0.lovableproject.com:80/dj-dashboard"
-                  readOnly
-                  className="font-mono text-sm bg-blue-500/10 border-blue-500/20"
-                />
-                <Button
-                  onClick={() => {
-                    copyToClipboard("http://22ebeed8-97b2-4ac0-ab35-1b90816024e0.lovableproject.com:80/dj-dashboard", "HTTP URL");
-                  }}
-                  variant="outline"
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
-              </div>
+          <div className="p-4 bg-green-500/20 border border-green-500/30 rounded-lg">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="text-2xl">🔒</div>
+              <h3 className="text-lg font-bold text-green-400">HTTPS SSL Enabled!</h3>
             </div>
-            
-            <div>
-              <p className="text-white font-medium mb-2">Option 2: Disable browser security:</p>
-              <div className="text-sm text-yellow-300 space-y-2">
-                <div>
-                  <p className="font-medium">For Microsoft Edge:</p>
-                  <p>1. Close ALL Edge windows</p>
-                  <p>2. Open terminal/command prompt</p>
-                  <p>3. Try this command first:</p>
-                  <p><code className="bg-black/30 px-1 rounded text-xs">"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" --disable-web-security --user-data-dir="C:\EdgeDev"</code></p>
-                  <p>4. If that doesn't work, try:</p>
-                  <p><code className="bg-black/30 px-1 rounded text-xs">"C:\Program Files\Microsoft\Edge\Application\msedge.exe" --disable-web-security --user-data-dir="C:\EdgeDev"</code></p>
-                  <p>5. Open your dashboard again</p>
-                </div>
-                <div>
-                  <p className="font-medium">For Chrome:</p>
-                  <p><code className="bg-black/30 px-1 rounded">chrome --disable-web-security --user-data-dir=/tmp/chrome_dev</code></p>
+            <p className="text-green-300 mb-4">
+              ✅ Your droplet now has SSL certificates and supports HTTPS connections!
+            </p>
+            <div className="space-y-3">
+              <div>
+                <p className="text-white font-medium mb-2">🔗 HTTPS API Endpoint:</p>
+                <div className="flex gap-2">
+                  <Input
+                    value="https://67.205.179.77:3443"
+                    readOnly
+                    className="font-mono text-sm bg-green-500/10 border-green-500/20"
+                  />
+                  <Button
+                    onClick={() => {
+                      copyToClipboard("https://67.205.179.77:3443", "HTTPS URL");
+                    }}
+                    variant="outline"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
+              
+              <div>
+                <p className="text-white font-medium mb-2">📺 HLS Stream URL:</p>
+                <div className="flex gap-2">
+                  <Input
+                    value="https://67.205.179.77:3443/live"
+                    readOnly
+                    className="font-mono text-sm bg-blue-500/10 border-blue-500/20"
+                  />
+                  <Button
+                    onClick={() => {
+                      copyToClipboard("https://67.205.179.77:3443/live", "HLS URL");
+                    }}
+                    variant="outline"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="text-sm text-green-300 bg-green-500/10 p-3 rounded">
+                <p className="font-medium mb-1">🎉 Ready to stream!</p>
+                <p>Your HTTPS-enabled droplet can now serve secure streams to your Lovable frontend.</p>
+              </div>
             </div>
           </div>
-        </div>
       </GlassmorphicCard>
 
       {/* Stream Status Header */}
