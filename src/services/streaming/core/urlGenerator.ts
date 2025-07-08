@@ -3,8 +3,8 @@ import { EnvironmentConfig } from './environment';
 
 export class URLGenerator {
   static getApiBaseUrl(): string {
-    // Use HTTPS SSL port (3443) 
-    return 'https://67.205.179.77:3443';
+    // Use HTTP port (9001) - your working port
+    return 'http://67.205.179.77:9001';
   }
 
   static getOBSServerUrl(): string {
@@ -18,13 +18,13 @@ export class URLGenerator {
   }
 
   static getHlsUrl(streamKey: string): string {
-    // Use HTTPS SSL port (3443) for HLS streaming
-    const hlsUrl = `https://67.205.179.77:3443/live/${streamKey}/index.m3u8`;
+    // Use HTTP port (9001) for HLS streaming - this will work
+    const hlsUrl = `http://67.205.179.77:9001/live/${streamKey}/index.m3u8`;
     
-    console.log('🎥 HLS URL Generation (HTTPS SSL):');
+    console.log('🎥 HLS URL Generation (HTTP Working Port):');
     console.log('- Stream Key:', streamKey);
     console.log('- Droplet IP:', '67.205.179.77');
-    console.log('- HTTPS SSL Port:', '3443');
+    console.log('- HTTP Port:', '9001');
     console.log('- Generated HLS URL:', hlsUrl);
     
     return hlsUrl;
@@ -36,19 +36,19 @@ export class URLGenerator {
   }
 
   static async testServerConnectivity(): Promise<{ available: boolean; testedUrls: string[] }> {
-    console.log('🔍 Testing droplet server on correct port 3001...');
+    console.log('🔍 Testing droplet server on working HTTP port 9001...');
     
     try {
-      const response = await fetch('https://67.205.179.77:3443/health', {
+      const response = await fetch('http://67.205.179.77:9001/health', {
         method: 'GET',
         signal: AbortSignal.timeout(10000)
       });
 
       const results = [
-        `✅ Droplet server: https://67.205.179.77:3443 - ${response.ok ? 'ONLINE' : 'Issues detected'}`,
-        '✅ HTTPS protocol: Secure SSL connection to your server',
+        `✅ Droplet server: http://67.205.179.77:9001 - ${response.ok ? 'ONLINE' : 'Issues detected'}`,
+        '✅ HTTP protocol: Working connection to your server',
         '✅ RTMP server: rtmp://67.205.179.77:1935 (should be running)',
-        '✅ HLS streaming: Available via HTTPS on port 3443',
+        '✅ HLS streaming: Available via HTTP on port 9001',
         response.ok ? '✅ Server is responding correctly!' : '⚠️ Server responding but with issues'
       ];
 
@@ -62,10 +62,10 @@ export class URLGenerator {
       console.error('❌ Could not connect to your server:', error);
       
       const results = [
-        '❌ Droplet server: https://67.205.179.77:3443 - CONNECTION FAILED',
-        '⚠️ Check if your server is still running',
-        '⚠️ RTMP server: May not be accessible',
-        '⚠️ Verify your droplet is still online in DigitalOcean dashboard'
+        '❌ Droplet server: http://67.205.179.77:9001 - CONNECTION FAILED',
+        '⚠️ Your droplet server is not running',
+        '⚠️ Start your server: npm start in the server folder',
+        '⚠️ Or run: node streaming-server.js in your droplet'
       ];
       
       return {

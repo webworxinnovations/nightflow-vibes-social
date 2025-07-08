@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Copy, Eye, EyeOff, Play, Square, Users, Timer } from "lucide-react";
 import { toast } from "sonner";
 import { RealVideoPlayer } from "./RealVideoPlayer";
+import { ServerConnectionAlert } from "./ServerConnectionAlert";
 
 export const CleanStreamingDashboard = () => {
   const { streamKey, isLive, viewerCount, hlsUrl, rtmpUrl, generateStreamKey } = useStreamKey();
@@ -36,47 +37,31 @@ export const CleanStreamingDashboard = () => {
 
   return (
     <div className="space-y-6">
-      {/* Mixed Content Warning */}
+      {/* Server Connection Status */}
+      <ServerConnectionAlert />
+
+      {/* Server Info */}
       <GlassmorphicCard>
-          <div className="p-4 bg-green-500/20 border border-green-500/30 rounded-lg">
+          <div className="p-4 bg-blue-500/20 border border-blue-500/30 rounded-lg">
             <div className="flex items-center gap-3 mb-3">
-              <div className="text-2xl">🔒</div>
-              <h3 className="text-lg font-bold text-green-400">HTTPS SSL Enabled!</h3>
+              <div className="text-2xl">🌐</div>
+              <h3 className="text-lg font-bold text-blue-400">DigitalOcean Droplet Ready!</h3>
             </div>
-            <p className="text-green-300 mb-4">
-              ✅ Your droplet now has SSL certificates and supports HTTPS connections!
+            <p className="text-blue-300 mb-4">
+              ✅ Your droplet is configured for OBS streaming with HTTP on port 9001
             </p>
             <div className="space-y-3">
               <div>
-                <p className="text-white font-medium mb-2">🔗 HTTPS API Endpoint:</p>
+                <p className="text-white font-medium mb-2">🔗 HTTP API Endpoint:</p>
                 <div className="flex gap-2">
                   <Input
-                    value="https://67.205.179.77:3443"
-                    readOnly
-                    className="font-mono text-sm bg-green-500/10 border-green-500/20"
-                  />
-                  <Button
-                    onClick={() => {
-                      copyToClipboard("https://67.205.179.77:3443", "HTTPS URL");
-                    }}
-                    variant="outline"
-                  >
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-              
-              <div>
-                <p className="text-white font-medium mb-2">📺 HLS Stream URL:</p>
-                <div className="flex gap-2">
-                  <Input
-                    value="https://67.205.179.77:3443/live"
+                    value="http://67.205.179.77:9001"
                     readOnly
                     className="font-mono text-sm bg-blue-500/10 border-blue-500/20"
                   />
                   <Button
                     onClick={() => {
-                      copyToClipboard("https://67.205.179.77:3443/live", "HLS URL");
+                      copyToClipboard("http://67.205.179.77:9001", "HTTP URL");
                     }}
                     variant="outline"
                   >
@@ -85,9 +70,28 @@ export const CleanStreamingDashboard = () => {
                 </div>
               </div>
               
-              <div className="text-sm text-green-300 bg-green-500/10 p-3 rounded">
-                <p className="font-medium mb-1">🎉 Ready to stream!</p>
-                <p>Your HTTPS-enabled droplet can now serve secure streams to your Lovable frontend.</p>
+              <div>
+                <p className="text-white font-medium mb-2">📺 RTMP Server (for OBS):</p>
+                <div className="flex gap-2">
+                  <Input
+                    value="rtmp://67.205.179.77:1935/live"
+                    readOnly
+                    className="font-mono text-sm bg-green-500/10 border-green-500/20"
+                  />
+                  <Button
+                    onClick={() => {
+                      copyToClipboard("rtmp://67.205.179.77:1935/live", "RTMP URL");
+                    }}
+                    variant="outline"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="text-sm text-blue-300 bg-blue-500/10 p-3 rounded">
+                <p className="font-medium mb-1">🎉 Start your server to stream!</p>
+                <p>Make sure your droplet server is running, then generate a stream key and configure OBS.</p>
               </div>
             </div>
           </div>
