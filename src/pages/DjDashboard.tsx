@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { LiveStreamManager } from "@/components/dj/LiveStreamManager";
+import { CleanStreamingDashboard } from "@/components/dj/CleanStreamingDashboard";
 import { DjStatsCards } from "@/components/dashboard/DjStatsCards";
 import { RequestsHeader } from "@/components/dashboard/RequestsHeader";
 import { RequestsTabsContent } from "@/components/dashboard/RequestsTabsContent";
@@ -58,9 +58,9 @@ export default function DjDashboard() {
             upcomingEvents={djEvents}
           />
           
-          {/* Live Stream Manager - Now showing the full test setup */}
+          {/* Clean Streaming Dashboard */}
           <div className="mt-6 mb-6">
-            <LiveStreamManager />
+            <CleanStreamingDashboard />
           </div>
           
           <Tabs defaultValue="live" className="mt-6">
