@@ -12,7 +12,7 @@ class MediaServerService {
     
     console.log('🎬 Initializing Media Server Service for DigitalOcean Droplet...');
     console.log(`🎬 Droplet IP: 67.205.179.77`);
-    console.log('🎬 Target: External RTMP on port 1935 + HLS HTTP on port 8080');
+    console.log('🎬 Target: External RTMP on port 1935 + HLS HTTP on port 9001');
     
     this.mediaDirectoryManager = new MediaDirectoryManager(this.serverConfig.mediaRoot);
     this.mediaDirectoryManager.setupDirectories();
@@ -28,7 +28,7 @@ class MediaServerService {
     // FORCE both RTMP and HTTP servers
     mediaServerConfig.rtmp.port = 1935;
     mediaServerConfig.rtmp.listen = '0.0.0.0'; // CRITICAL: External access
-    mediaServerConfig.http.port = 8080;
+    mediaServerConfig.http.port = 9001; // Use same port as API server
     mediaServerConfig.http.listen = '0.0.0.0'; // CRITICAL: HTTP server for HLS
     
     // DigitalOcean droplet optimizations
@@ -73,7 +73,7 @@ class MediaServerService {
   async start() {
     console.log(`🚀 Starting DigitalOcean Droplet Media Server...`);
     console.log(`🌐 RTMP: Binding to 0.0.0.0:1935 for external OBS access`);
-    console.log(`🌐 HTTP: Binding to 0.0.0.0:8080 for HLS video delivery`);
+    console.log(`🌐 HTTP: Binding to 0.0.0.0:9001 for HLS video delivery`);
     
     try {
       if (!this.nms) {
@@ -81,7 +81,7 @@ class MediaServerService {
       }
       
       console.log(`🎬 Starting RTMP server on 0.0.0.0:1935...`);
-      console.log(`🎬 Starting HLS HTTP server on 0.0.0.0:8080...`);
+      console.log(`🎬 Starting HLS HTTP server on 0.0.0.0:9001...`);
       
       // Start the server
       this.nms.run();
@@ -94,7 +94,7 @@ class MediaServerService {
         
       console.log(`🌊 ✅ DigitalOcean Droplet Media Server FULLY OPERATIONAL`);
       console.log(`🎯 ✅ OBS Connection: rtmp://67.205.179.77:1935/live/STREAM_KEY`);
-      console.log(`📱 ✅ HLS Video: http://67.205.179.77:8080/live/STREAM_KEY/index.m3u8`);
+      console.log(`📱 ✅ HLS Video: http://67.205.179.77:9001/live/STREAM_KEY/index.m3u8`);
       console.log(`🌊 ✅ Both RTMP and HLS HTTP servers running on droplet`);
       console.log(`🌐 ✅ External access enabled on both ports`);
       
