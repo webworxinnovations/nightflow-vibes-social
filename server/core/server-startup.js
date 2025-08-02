@@ -126,14 +126,44 @@ class ServerStartup {
   }
 
   startMediaServerSafely(app) {
-    console.log('🎬 Media Server temporarily disabled to test HTTPS...');
-    console.log('🌐 ✅ HTTP STREAMING SERVER READY!');
-    console.log('🌐 ✅ HTTPS testing mode active');
+    console.log('🎬 Starting RTMP Media Server for OBS...');
+    console.log('🌐 ✅ HTTPS API Server already running on port 3443');
     
-    // Skip media server startup to test HTTPS
-    app.locals.mediaServer = null;
-    app.locals.httpStreamServer = this.httpStreamServer;
-    app.locals.wsHandler = this.wsHandler;
+    try {
+      // Start RTMP server with a delay for stability
+      setTimeout(async () => {
+        this.mediaServer = new MediaServerService(this.serverConfig, this.streamManager);
+        
+        try {
+          const mediaStarted = await this.mediaServer.start();
+          
+          if (mediaStarted) {
+            this.rtmpReady = true;
+            console.log('🎥 ✅ RTMP server started successfully for OBS!');
+            console.log(`🎯 ✅ OBS Connection: rtmp://67.205.179.77:1935/live`);
+            console.log('📱 ✅ HTTPS API: https://67.205.179.77:3443');
+            console.log('🌊 ✅ Full streaming infrastructure operational');
+          } else {
+            console.log('⚠️ RTMP server startup issues - OBS may not connect');
+          }
+          
+        } catch (error) {
+          console.error('❌ RTMP startup error:', error.message);
+          console.log('🌐 HTTPS API continues working - web streaming available');
+        }
+        
+        app.locals.mediaServer = this.mediaServer;
+        app.locals.httpStreamServer = this.httpStreamServer;
+        app.locals.wsHandler = this.wsHandler;
+        
+      }, 2000); // 2 second delay for stability
+      
+    } catch (error) {
+      console.error('❌ Media server startup error:', error);
+      app.locals.mediaServer = null;
+      app.locals.httpStreamServer = this.httpStreamServer;
+      app.locals.wsHandler = this.wsHandler;
+    }
   }
 
   getServerConfig() {
