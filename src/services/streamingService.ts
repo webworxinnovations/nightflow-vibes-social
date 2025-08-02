@@ -86,40 +86,19 @@ class StreamingService {
 
   async getStreamStatus(streamKey: string): Promise<StreamStatus> {
     try {
-      console.log('🔍 Checking stream status via server API...');
+      console.log('🔍 Checking stream status for:', streamKey);
       
-      // Check if server is responding first
-      const statusResponse = await fetch(`${this.API_BASE_URL}/api/stream/status/${streamKey}`, {
-        method: 'GET',
-        signal: AbortSignal.timeout(8000)
-      });
+      // Check if the HLS stream is available via HTTP first (bypass HTTPS issues)
+      const httpHlsUrl = `http://67.205.179.77:3000/live/${streamKey}/index.m3u8`;
+      console.log('Testing HTTP HLS:', httpHlsUrl);
       
-      if (statusResponse.ok) {
-        const data = await statusResponse.json();
-        console.log('✅ Server response:', data);
-        return {
-          isLive: data.isLive || false,
-          viewerCount: data.viewerCount || 0,
-          duration: data.duration || 0,
-          bitrate: data.bitrate || 0,
-          resolution: data.resolution || '',
-          timestamp: new Date().toISOString()
-        };
-      }
-    } catch (error) {
-      console.log('⚠️ Server API unavailable, checking HLS directly...');
-    }
-
-    // Fallback: Check HLS directly
-    try {
-      const hlsUrl = `${this.API_BASE_URL}/live/${streamKey}/index.m3u8`;
-      const response = await fetch(hlsUrl, {
+      const response = await fetch(httpHlsUrl, {
         method: 'HEAD',
         signal: AbortSignal.timeout(5000)
       });
       
       const isLive = response.ok;
-      console.log(isLive ? '🔴 HLS Stream detected!' : '⚫ No HLS stream');
+      console.log(isLive ? '🔴 Stream is LIVE via HTTP!' : '⚫ Stream offline');
       
       return {
         isLive,
@@ -130,25 +109,7 @@ class StreamingService {
         timestamp: new Date().toISOString()
       };
     } catch (error) {
-      console.log('🚨 HTTPS connection failed. Assuming stream is live based on OBS connection');
-      
-      // Final fallback: If we can't reach HTTPS, assume stream is live if key exists
-      const storedConfig = localStorage.getItem('nightflow_stream_config');
-      if (storedConfig) {
-        const config = JSON.parse(storedConfig);
-        if (config.streamKey === streamKey) {
-          console.log('💡 Using fallback: Stream key exists, assuming LIVE');
-          return {
-            isLive: true,
-            viewerCount: 1,
-            duration: 0,
-            bitrate: 0,
-            resolution: '1080p',
-            timestamp: new Date().toISOString()
-          };
-        }
-      }
-      
+      console.log('⚫ Stream check failed:', error);
       return {
         isLive: false,
         viewerCount: 0,
