@@ -37,12 +37,27 @@ async function main() {
     if (serverConfig.SSL_ENABLED) {
       const sslOptions = serverConfig.getSSLOptions();
       if (sslOptions) {
-        httpsServer = https.createServer(sslOptions, app);
-        httpsServer.listen(serverConfig.HTTPS_PORT, '0.0.0.0', () => {
-          console.log(`🔒 HTTPS Server running on port ${serverConfig.HTTPS_PORT}`);
-          console.log(`🔗 HTTPS API: https://67.205.179.77:${serverConfig.HTTPS_PORT}`);
-          console.log(`✅ SSL/TLS enabled - NightFlow app can now connect securely!`);
-        });
+        try {
+          httpsServer = https.createServer(sslOptions, app);
+          httpsServer.listen(serverConfig.HTTPS_PORT, '0.0.0.0', () => {
+            console.log(`🔒 HTTPS Server running on port ${serverConfig.HTTPS_PORT}`);
+            console.log(`🔗 HTTPS API: https://67.205.179.77:${serverConfig.HTTPS_PORT}`);
+            console.log(`✅ SSL/TLS enabled - NightFlow app can now connect securely!`);
+          });
+          
+          httpsServer.on('error', (error) => {
+            console.error('❌ HTTPS Server error:', error);
+            if (error.code === 'EADDRINUSE') {
+              console.log(`⚠️ Port ${serverConfig.HTTPS_PORT} is already in use`);
+            } else if (error.code === 'EACCES') {
+              console.log(`⚠️ Permission denied for port ${serverConfig.HTTPS_PORT}`);
+            }
+          });
+          
+        } catch (error) {
+          console.error('❌ Failed to start HTTPS server:', error);
+          console.log(`⚠️ HTTPS server startup failed - only HTTP server will run`);
+        }
       } else {
         console.log(`⚠️ SSL certificates not found. Only HTTP server will run.`);
         console.log(`💡 To enable HTTPS, add SSL certificates and set SSL_ENABLED=true`);
