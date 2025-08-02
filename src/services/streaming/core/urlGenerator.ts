@@ -3,8 +3,8 @@ import { EnvironmentConfig } from './environment';
 
 export class URLGenerator {
   static getApiBaseUrl(): string {
-    // Use working HTTP port
-    return 'http://67.205.179.77:3001';
+    // Use HTTPS port for Lovable compatibility (SSL now working!)
+    return 'https://67.205.179.77:3443';
   }
 
   static getOBSServerUrl(): string {
@@ -18,13 +18,13 @@ export class URLGenerator {
   }
 
   static getHlsUrl(streamKey: string): string {
-    // Use working HTTP port for HLS streaming
-    const hlsUrl = `http://67.205.179.77:3001/live/${streamKey}/index.m3u8`;
+    // Use HTTPS port for Lovable compatibility (SSL now working!)
+    const hlsUrl = `https://67.205.179.77:3443/live/${streamKey}/index.m3u8`;
     
-    console.log('🎥 HLS URL Generation (Working HTTP):');
+    console.log('🎥 HLS URL Generation (HTTPS with SSL):');
     console.log('- Stream Key:', streamKey);
     console.log('- Droplet IP:', '67.205.179.77');
-    console.log('- HTTP Port:', '3001');
+    console.log('- HTTPS Port:', '3443');
     console.log('- Generated HLS URL:', hlsUrl);
     
     return hlsUrl;
@@ -39,7 +39,7 @@ export class URLGenerator {
     console.log('🔍 Testing droplet server on working HTTP port 9001...');
     
     try {
-      const response = await fetch('http://67.205.179.77:3001/health', {
+      const response = await fetch('https://67.205.179.77:3443/health', {
         method: 'GET',
         signal: AbortSignal.timeout(10000)
       });

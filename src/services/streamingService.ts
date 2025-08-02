@@ -6,8 +6,8 @@ class StreamingService {
   private statusCallbacks: ((status: StreamStatus) => void)[] = [];
   private pollingInterval: number | null = null;
 
-  // Use working HTTP port
-  private readonly API_BASE_URL = 'http://67.205.179.77:3001';
+  // Use HTTPS port for Lovable compatibility (SSL now working!)
+  private readonly API_BASE_URL = 'https://67.205.179.77:3443';
   private readonly RTMP_URL = 'rtmp://67.205.179.77:1935/live';
 
   private constructor() {}
