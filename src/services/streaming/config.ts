@@ -11,8 +11,8 @@ export class StreamingConfig {
   }
 
   static getServerBaseUrl(): string {
-    // Use working HTTP 9001 port
-    return `http://${this.DROPLET_IP}:${this.HTTP_PORT}`;
+    // Use working HTTPS server on port 3443
+    return `https://${this.DROPLET_IP}:${this.HTTPS_PORT}`;
   }
 
   static getApiBaseUrl(): string {
@@ -28,8 +28,8 @@ export class StreamingConfig {
   }
 
   static getHLSUrl(streamKey: string): string {
-    // Use working HTTP 9001 for HLS streaming
-    return `http://${this.DROPLET_IP}:${this.HTTP_PORT}/live/${streamKey}/index.m3u8`;
+    // Use working HTTPS server for HLS streaming
+    return `https://${this.DROPLET_IP}:${this.HTTPS_PORT}/live/${streamKey}/index.m3u8`;
   }
 
   static getHlsUrl(streamKey: string): string {
