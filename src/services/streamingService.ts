@@ -85,15 +85,38 @@ class StreamingService {
   }
 
   async getStreamStatus(streamKey: string): Promise<StreamStatus> {
-    // Return default status since server is not accessible
-    return {
-      isLive: false,
-      viewerCount: 0,
-      duration: 0,
-      bitrate: 0,
-      resolution: '',
-      timestamp: new Date().toISOString()
-    };
+    try {
+      console.log('🔍 Checking stream status for:', streamKey);
+      
+      // Test if the HLS stream is available
+      const hlsUrl = `${this.API_BASE_URL}/live/${streamKey}/index.m3u8`;
+      const response = await fetch(hlsUrl, {
+        method: 'HEAD',
+        signal: AbortSignal.timeout(5000)
+      });
+      
+      const isLive = response.ok;
+      console.log(isLive ? '🔴 Stream is LIVE!' : '⚫ Stream offline');
+      
+      return {
+        isLive,
+        viewerCount: isLive ? 1 : 0,
+        duration: 0,
+        bitrate: 0,
+        resolution: isLive ? '1080p' : '',
+        timestamp: new Date().toISOString()
+      };
+    } catch (error) {
+      console.log('⚫ Stream check failed:', error);
+      return {
+        isLive: false,
+        viewerCount: 0,
+        duration: 0,
+        bitrate: 0,
+        resolution: '',
+        timestamp: new Date().toISOString()
+      };
+    }
   }
 
   async revokeStreamKey(): Promise<void> {
