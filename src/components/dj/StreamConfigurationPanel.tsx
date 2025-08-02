@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { GlassmorphicCard } from "@/components/ui/glassmorphic-card";
 import { RTMPDiagnostics } from "./RTMPDiagnostics";
-import { ServerStatusAlert } from "./ServerStatusAlert";
+
 import { ProfessionalStreamSetup } from "./ProfessionalStreamSetup";
 import { LiveStreamStatsHeader } from "./LiveStreamStatsHeader";
 import { 
@@ -59,7 +59,11 @@ export const StreamConfigurationPanel = ({
           />
         </div>
 
-        <ServerStatusAlert serverAvailable={serverAvailable} />
+        {!serverAvailable && (
+          <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg mb-4">
+            <p className="text-red-400 text-sm">⚠️ Server connection issues detected</p>
+          </div>
+        )}
 
         {streamConfig ? (
           <>

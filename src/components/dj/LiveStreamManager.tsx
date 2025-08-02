@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StreamKeyManager } from "./StreamKeyManager";
-import { BrowserStreamingPanel } from "./BrowserStreamingPanel";
 import { DigitalOceanDeploymentHelper } from "./DigitalOceanDeploymentHelper";
 import { StreamingTestPanel } from "./StreamingTestPanel";
 import { useStreamKey } from "@/hooks/useStreamKey";
@@ -34,7 +33,7 @@ export const LiveStreamManager = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger 
             value="test" 
             className="bg-green-500/30 data-[state=active]:bg-green-500 data-[state=active]:text-white text-green-300 font-bold"
@@ -42,7 +41,6 @@ export const LiveStreamManager = () => {
             🧪 OBS Test Setup (START HERE!)
           </TabsTrigger>
           <TabsTrigger value="obs">🎥 Advanced OBS</TabsTrigger>
-          <TabsTrigger value="browser">🌐 Browser Stream</TabsTrigger>
           <TabsTrigger value="deployment">🔧 Server Setup</TabsTrigger>
         </TabsList>
 
@@ -52,14 +50,6 @@ export const LiveStreamManager = () => {
 
         <TabsContent value="obs">
           <StreamKeyManager />
-        </TabsContent>
-
-        <TabsContent value="browser">
-          <BrowserStreamingPanel 
-            streamKey={streamKey || ''} 
-            onStreamStart={() => console.log('Browser stream started')}
-            onStreamStop={() => console.log('Browser stream stopped')}
-          />
         </TabsContent>
 
         <TabsContent value="deployment">

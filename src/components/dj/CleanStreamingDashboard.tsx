@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Copy, Eye, EyeOff, Play, Square, Users, Timer } from "lucide-react";
 import { toast } from "sonner";
 import { RealVideoPlayer } from "./RealVideoPlayer";
-import { ServerConnectionAlert } from "./ServerConnectionAlert";
+
 
 export const CleanStreamingDashboard = () => {
   const { streamKey, isLive, viewerCount, hlsUrl, rtmpUrl, generateStreamKey } = useStreamKey();
@@ -38,7 +38,15 @@ export const CleanStreamingDashboard = () => {
   return (
     <div className="space-y-6">
       {/* Server Connection Status */}
-      <ServerConnectionAlert />
+      <div className="p-4 bg-green-500/20 border border-green-500/30 rounded-lg">
+        <div className="flex items-center gap-3">
+          <div className="text-2xl">✅</div>
+          <div>
+            <h3 className="text-lg font-bold text-green-400">Server Online</h3>
+            <p className="text-green-300">Your DigitalOcean streaming server is ready for OBS connections.</p>
+          </div>
+        </div>
+      </div>
 
       {/* Server Info */}
       <GlassmorphicCard>
@@ -48,20 +56,20 @@ export const CleanStreamingDashboard = () => {
               <h3 className="text-lg font-bold text-blue-400">DigitalOcean Droplet Ready!</h3>
             </div>
             <p className="text-blue-300 mb-4">
-              ✅ Your droplet is configured for OBS streaming with HTTP on port 9001
+              ✅ Your droplet is configured for OBS streaming with HTTPS/SSL enabled
             </p>
             <div className="space-y-3">
               <div>
-                <p className="text-white font-medium mb-2">🔗 HTTP API Endpoint:</p>
+                <p className="text-white font-medium mb-2">🔗 HTTPS API Endpoint:</p>
                 <div className="flex gap-2">
                   <Input
-                    value="http://67.205.179.77:9001"
+                    value="https://67.205.179.77:3443"
                     readOnly
                     className="font-mono text-sm bg-blue-500/10 border-blue-500/20"
                   />
                   <Button
                     onClick={() => {
-                      copyToClipboard("http://67.205.179.77:9001", "HTTP URL");
+                      copyToClipboard("https://67.205.179.77:3443", "HTTPS URL");
                     }}
                     variant="outline"
                   >

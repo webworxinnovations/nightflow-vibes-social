@@ -1,8 +1,7 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SimpleStreamSetup } from "./SimpleStreamSetup";
-import { BrowserStreamingPanel } from "./BrowserStreamingPanel";
-import { Monitor, Videotape } from "lucide-react";
+import { Monitor } from "lucide-react";
 import { useRealTimeStream } from "@/hooks/useRealTimeStream";
 
 export const CleanLiveStreamManager = () => {
@@ -17,28 +16,13 @@ export const CleanLiveStreamManager = () => {
         </p>
       </div>
 
-      <Tabs defaultValue="obs" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="obs" className="flex items-center gap-2">
-            <Monitor className="h-4 w-4" />
-            OBS Streaming
-          </TabsTrigger>
-          <TabsTrigger value="browser" className="flex items-center gap-2">
-            <Videotape className="h-4 w-4" />
-            Browser Streaming
-          </TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="obs" className="mt-6">
-          <SimpleStreamSetup />
-        </TabsContent>
-        
-        <TabsContent value="browser" className="mt-6">
-          <BrowserStreamingPanel 
-            streamKey={streamConfig?.streamKey || ""}
-          />
-        </TabsContent>
-      </Tabs>
+      <div className="w-full">
+        <div className="flex items-center gap-2 mb-6">
+          <Monitor className="h-5 w-5" />
+          <h3 className="text-lg font-semibold">OBS Streaming Setup</h3>
+        </div>
+        <SimpleStreamSetup />
+      </div>
     </div>
   );
 };

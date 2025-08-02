@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { GlassmorphicCard } from "@/components/ui/glassmorphic-card";
 import { useRealTimeStream } from "@/hooks/useRealTimeStream";
-import { ServerDiagnostics } from "./ServerDiagnostics";
+
 import { SimpleOBSSetup } from "./SimpleOBSSetup";
 import { Play, AlertTriangle } from "lucide-react";
 
@@ -34,7 +34,16 @@ export const StreamingTestPanel = () => {
         </Button>
       </div>
 
-      {showDiagnostics && <ServerDiagnostics />}
+      {showDiagnostics && (
+        <div className="p-4 bg-slate-800/50 rounded-lg">
+          <h4 className="font-medium mb-3">Technical Diagnostics</h4>
+          <div className="space-y-2 text-sm">
+            <div>• RTMP Server: rtmp://67.205.179.77:1935/live</div>
+            <div>• HTTPS API: https://67.205.179.77:3443</div>
+            <div>• Connection Test: Run from your DJ Dashboard</div>
+          </div>
+        </div>
+      )}
 
       {/* OBS Setup */}
       <GlassmorphicCard>

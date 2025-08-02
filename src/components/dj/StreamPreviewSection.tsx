@@ -7,8 +7,6 @@ import { GlassmorphicCard } from "@/components/ui/glassmorphic-card";
 import { useMemo } from "react";
 import { toast } from "sonner";
 import { StreamHeader } from "./StreamHeader";
-import { StreamAlerts } from "./StreamAlerts";
-import { StreamConfiguration } from "./StreamConfiguration";
 import { StreamActions } from "./StreamActions";
 
 export const StreamPreviewSection = () => {
@@ -67,16 +65,18 @@ export const StreamPreviewSection = () => {
           formatDuration={formatDuration}
         />
 
-        {/* Alert Messages */}
-        <StreamAlerts hasMixedContentIssue={hasMixedContentIssue} />
-
-        {/* Stream Configuration Panel */}
-        <StreamConfiguration
-          debugInfo={debugInfo}
-          hasMixedContentIssue={hasMixedContentIssue}
-          onGenerateNewKey={handleGenerateNewKey}
-          onClearAndRegenerate={handleClearAndRegenerate}
-        />
+        {/* Stream Information */}
+        {debugInfo && (
+          <div className="p-4 bg-slate-800/50 rounded-lg">
+            <h3 className="font-medium mb-3">Stream Configuration</h3>
+            <div className="space-y-2 text-sm">
+              <div><strong>Stream Key:</strong> {debugInfo.streamKey}</div>
+              <div><strong>RTMP URL:</strong> {debugInfo.rtmpUrl}</div>
+              <div><strong>HLS URL:</strong> {debugInfo.streamUrl}</div>
+              <div><strong>Status:</strong> {debugInfo.status}</div>
+            </div>
+          </div>
+        )}
 
         {/* Action Buttons */}
         {debugInfo && (
