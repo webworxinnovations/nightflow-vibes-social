@@ -3,7 +3,7 @@ export class StreamingConfig {
   // Your actual droplet server IP
   private static readonly DROPLET_IP = '67.205.179.77';
   private static readonly RTMP_PORT = 1935;
-  private static readonly HTTP_PORT = 9001; // UPDATED TO MATCH YOUR WORKING PORT!
+  private static readonly HTTP_PORT = 3001; // UPDATED TO MATCH YOUR ACTUAL RUNNING PORT!
   private static readonly HTTPS_PORT = 3443;
 
   static getDropletIP(): string {
@@ -11,8 +11,8 @@ export class StreamingConfig {
   }
 
   static getServerBaseUrl(): string {
-    // Use working HTTPS server on port 3443
-    return `https://${this.DROPLET_IP}:${this.HTTPS_PORT}`;
+    // Use HTTP server on port 3001 (actual running port)
+    return `http://${this.DROPLET_IP}:${this.HTTP_PORT}`;
   }
 
   static getApiBaseUrl(): string {
@@ -28,8 +28,8 @@ export class StreamingConfig {
   }
 
   static getHLSUrl(streamKey: string): string {
-    // Use working HTTPS server for HLS streaming
-    return `https://${this.DROPLET_IP}:${this.HTTPS_PORT}/live/${streamKey}/index.m3u8`;
+    // Use HTTP server for HLS streaming  
+    return `http://${this.DROPLET_IP}:${this.HTTP_PORT}/live/${streamKey}/index.m3u8`;
   }
 
   static getHlsUrl(streamKey: string): string {
