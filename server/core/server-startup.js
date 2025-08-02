@@ -126,46 +126,14 @@ class ServerStartup {
   }
 
   startMediaServerSafely(app) {
-    console.log('🎬 Starting Media Servers (RTMP + HTTP Streaming)...');
+    console.log('🎬 Media Server temporarily disabled to test HTTPS...');
+    console.log('🌐 ✅ HTTP STREAMING SERVER READY!');
+    console.log('🌐 ✅ HTTPS testing mode active');
     
-    try {
-      // Start RTMP server with DigitalOcean optimizations
-      setTimeout(async () => {
-        this.mediaServer = new MediaServerService(this.serverConfig, this.streamManager);
-        
-        try {
-          const mediaStarted = await this.mediaServer.start();
-          
-          if (mediaStarted) {
-            this.rtmpReady = true;
-            console.log('🎥 ✅ RTMP server started successfully on DigitalOcean droplet!');
-            console.log(`🎯 ✅ OBS Connection: rtmp://67.205.179.77:1935/live`);
-            console.log('📱 ✅ HLS streams: http://67.205.179.77:9001/live/STREAM_KEY/index.m3u8');
-            console.log('🌊 ✅ DigitalOcean droplet streaming infrastructure fully operational');
-          } else {
-            console.log('⚠️ RTMP server startup issues - using HTTP streaming as fallback');
-            console.log('🌐 HTTP streaming provides full functionality on DigitalOcean droplet');
-          }
-          
-        } catch (error) {
-          console.error('❌ RTMP startup error:', error);
-          console.log('🌐 HTTP streaming continues - DigitalOcean droplet compatible solution active');
-        }
-        
-        console.log('🌐 ✅ HTTP STREAMING SERVER READY!');
-        console.log('🌐 ✅ Browser streaming: Fully functional on DigitalOcean droplet');
-        console.log('🌐 ✅ WebRTC streaming: Available for compatible software');
-        
-        app.locals.mediaServer = this.mediaServer;
-        app.locals.httpStreamServer = this.httpStreamServer;
-        app.locals.wsHandler = this.wsHandler;
-        
-      }, 3000); // 3 second delay for DigitalOcean stability
-      
-    } catch (error) {
-      console.error('❌ Media server startup error:', error);
-      console.log('🌐 HTTP streaming continues - DigitalOcean droplet compatible solution active');
-    }
+    // Skip media server startup to test HTTPS
+    app.locals.mediaServer = null;
+    app.locals.httpStreamServer = this.httpStreamServer;
+    app.locals.wsHandler = this.wsHandler;
   }
 
   getServerConfig() {
