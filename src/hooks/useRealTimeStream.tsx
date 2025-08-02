@@ -102,6 +102,34 @@ export const useRealTimeStream = () => {
   useEffect(() => {
     if (!streamConfig?.streamKey) return;
 
+    // Poll stream status every 3 seconds to detect when OBS starts streaming
+    const pollStreamStatus = async () => {
+      try {
+        const status = await streamingService.getStreamStatus(streamConfig.streamKey);
+        setStreamStatus(prevStatus => {
+          // Only show meaningful status changes
+          const wasLive = prevStatus.isLive;
+          const isNowLive = status.isLive;
+          
+          if (!wasLive && isNowLive) {
+            toast.success('🔴 Stream is now LIVE!');
+          } else if (wasLive && !isNowLive) {
+            toast.info('Stream ended');
+          }
+          
+          return status;
+        });
+      } catch (error) {
+        console.error('Failed to poll stream status:', error);
+      }
+    };
+
+    // Initial status check
+    pollStreamStatus();
+    
+    // Poll every 3 seconds
+    const pollInterval = setInterval(pollStreamStatus, 3000);
+
     const unsubscribe = streamingService.onStatusUpdate((status) => {
       setStreamStatus(prevStatus => {
         // Only show meaningful status changes
@@ -119,6 +147,7 @@ export const useRealTimeStream = () => {
     });
 
     return () => {
+      clearInterval(pollInterval);
       unsubscribe();
     };
   }, [streamConfig?.streamKey]);
