@@ -88,11 +88,11 @@ class StreamingService {
     try {
       console.log('🔍 Checking stream status for:', streamKey);
       
-      // Check if the HLS stream is available via HTTP first (bypass HTTPS issues)
-      const httpHlsUrl = `http://67.205.179.77:3000/live/${streamKey}/index.m3u8`;
-      console.log('Testing HTTP HLS:', httpHlsUrl);
+      // Check HTTPS HLS stream (required for mixed content security)
+      const hlsUrl = `${this.API_BASE_URL}/live/${streamKey}/index.m3u8`;
+      console.log('Testing HTTPS HLS:', hlsUrl);
       
-      const response = await fetch(httpHlsUrl, {
+      const response = await fetch(hlsUrl, {
         method: 'HEAD',
         signal: AbortSignal.timeout(5000)
       });
