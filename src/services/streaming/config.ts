@@ -11,11 +11,8 @@ export class StreamingConfig {
   }
 
   static getServerBaseUrl(): string {
-    // Check if we're on HTTPS and use HTTPS for server too
-    if (window.location.protocol === 'https:') {
-      return `https://${this.DROPLET_IP}:${this.HTTPS_PORT}`;
-    }
-    return `http://${this.DROPLET_IP}:${this.HTTP_PORT}`;
+    // Use HTTPS since SSL is now enabled
+    return `https://${this.DROPLET_IP}:${this.HTTPS_PORT}`;
   }
 
   static getApiBaseUrl(): string {
@@ -31,8 +28,8 @@ export class StreamingConfig {
   }
 
   static getHLSUrl(streamKey: string): string {
-    // Use HTTP server for HLS streaming  
-    return `http://${this.DROPLET_IP}:${this.HTTP_PORT}/live/${streamKey}/index.m3u8`;
+    // Use HTTPS for HLS streaming since SSL is enabled
+    return `https://${this.DROPLET_IP}:${this.HTTPS_PORT}/live/${streamKey}/index.m3u8`;
   }
 
   static getHlsUrl(streamKey: string): string {
