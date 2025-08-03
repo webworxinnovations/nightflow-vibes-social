@@ -11,7 +11,10 @@ export class StreamingConfig {
   }
 
   static getServerBaseUrl(): string {
-    // Use HTTP server on port 3001 (actual running port)
+    // Check if we're on HTTPS and use HTTPS for server too
+    if (window.location.protocol === 'https:') {
+      return `https://${this.DROPLET_IP}:${this.HTTPS_PORT}`;
+    }
     return `http://${this.DROPLET_IP}:${this.HTTP_PORT}`;
   }
 
