@@ -153,12 +153,12 @@ export const CleanStreamingDashboard = () => {
                   <Label className="text-blue-400 font-medium">Server URL</Label>
                   <div className="flex gap-2">
                     <Input
-                      value={rtmpUrl || "rtmp://67.205.179.77:1935/live"}
+                      value={rtmpUrl}
                       readOnly
                       className="font-mono text-sm bg-blue-500/10 border-blue-500/20"
                     />
                     <Button
-                      onClick={() => copyToClipboard(rtmpUrl || "rtmp://67.205.179.77:1935/live", "Server URL")}
+                      onClick={() => copyToClipboard(rtmpUrl, "Server URL")}
                       variant="outline"
                       size="sm"
                     >
