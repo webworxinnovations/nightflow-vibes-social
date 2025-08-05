@@ -28,8 +28,8 @@ export class StreamingConfig {
   }
 
   static getHLSUrl(streamKey: string): string {
-    // Use HTTP to avoid Mixed Content issues with browser security
-    return `http://${this.DROPLET_IP}:${this.HTTP_PORT}/live/${streamKey}/index.m3u8`;
+    // Use the dedicated HLS port (9001) where Node Media Server serves files
+    return `http://${this.DROPLET_IP}:9001/live/${streamKey}/index.m3u8`;
   }
 
   static getHlsUrl(streamKey: string): string {

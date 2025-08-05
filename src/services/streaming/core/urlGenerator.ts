@@ -18,13 +18,13 @@ export class URLGenerator {
   }
 
   static getHlsUrl(streamKey: string): string {
-    // Use HTTP to avoid Mixed Content issues with browser security  
-    const hlsUrl = `http://67.205.179.77:3001/live/${streamKey}/index.m3u8`;
+    // Use the dedicated HLS port (9001) where Node Media Server serves files
+    const hlsUrl = `http://67.205.179.77:9001/live/${streamKey}/index.m3u8`;
     
-    console.log('🎥 HLS URL Generation (HTTP for compatibility):');
+    console.log('🎥 HLS URL Generation (Node Media Server HLS port):');
     console.log('- Stream Key:', streamKey);
     console.log('- Droplet IP:', '67.205.179.77');
-    console.log('- HTTP Port:', '3001');
+    console.log('- HLS Port:', '9001');
     console.log('- Generated HLS URL:', hlsUrl);
     
     return hlsUrl;

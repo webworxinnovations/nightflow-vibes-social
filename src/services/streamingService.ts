@@ -27,7 +27,7 @@ class StreamingService {
     const config: StreamConfig = {
       streamKey,
       rtmpUrl: this.RTMP_URL,
-      hlsUrl: `${this.API_BASE_URL}/live/${streamKey}/index.m3u8`
+      hlsUrl: `http://67.205.179.77:9001/live/${streamKey}/index.m3u8` // Use Node Media Server HLS port
     };
 
     // Store in localStorage
@@ -88,9 +88,9 @@ class StreamingService {
     try {
       console.log('🔍 Checking stream status for:', streamKey);
       
-      // Check HTTPS HLS stream (required for mixed content security)
-      const hlsUrl = `${this.API_BASE_URL}/live/${streamKey}/index.m3u8`;
-      console.log('Testing HTTPS HLS:', hlsUrl);
+      // Check HLS stream on Node Media Server port
+      const hlsUrl = `http://67.205.179.77:9001/live/${streamKey}/index.m3u8`;
+      console.log('Testing HLS on Node Media Server:', hlsUrl);
       
       const response = await fetch(hlsUrl, {
         method: 'HEAD',
