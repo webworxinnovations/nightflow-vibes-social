@@ -3,8 +3,8 @@ import { EnvironmentConfig } from './environment';
 
 export class URLGenerator {
   static getApiBaseUrl(): string {
-    // Use HTTPS port for Lovable compatibility (SSL now working!)
-    return 'https://67.205.179.77:3443';
+    // Use HTTP to avoid Mixed Content issues with browser security
+    return 'http://67.205.179.77:3001';
   }
 
   static getOBSServerUrl(): string {
@@ -18,13 +18,13 @@ export class URLGenerator {
   }
 
   static getHlsUrl(streamKey: string): string {
-    // Use HTTPS port for Lovable compatibility (SSL now working!)
-    const hlsUrl = `https://67.205.179.77:3443/live/${streamKey}/index.m3u8`;
+    // Use HTTP to avoid Mixed Content issues with browser security  
+    const hlsUrl = `http://67.205.179.77:3001/live/${streamKey}/index.m3u8`;
     
-    console.log('🎥 HLS URL Generation (HTTPS with SSL):');
+    console.log('🎥 HLS URL Generation (HTTP for compatibility):');
     console.log('- Stream Key:', streamKey);
     console.log('- Droplet IP:', '67.205.179.77');
-    console.log('- HTTPS Port:', '3443');
+    console.log('- HTTP Port:', '3001');
     console.log('- Generated HLS URL:', hlsUrl);
     
     return hlsUrl;
