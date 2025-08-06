@@ -6,8 +6,8 @@ class StreamingService {
   private statusCallbacks: ((status: StreamStatus) => void)[] = [];
   private pollingInterval: number | null = null;
 
-  // Use HTTPS for production with SSL certificate
-  private readonly API_BASE_URL = 'https://67.205.179.77:3443';
+  // Use HTTP for status checks (browser security), RTMP stays on 1935
+  private readonly API_BASE_URL = 'http://67.205.179.77:8888';
   private readonly RTMP_URL = 'rtmp://67.205.179.77:1935/live';
 
   private constructor() {}
@@ -27,7 +27,7 @@ class StreamingService {
     const config: StreamConfig = {
       streamKey,
       rtmpUrl: this.RTMP_URL,
-      hlsUrl: `https://67.205.179.77:3443/live/${streamKey}/index.m3u8` // Use HTTPS with SSL
+      hlsUrl: `http://67.205.179.77:8888/live/${streamKey}/index.m3u8` // HTTP for browser compatibility
     };
 
     // Store in localStorage
@@ -89,8 +89,8 @@ class StreamingService {
       console.log('🔍 Checking stream status for:', streamKey);
       
       // Check HLS stream on HTTPS port
-      const hlsUrl = `https://67.205.179.77:3443/live/${streamKey}/index.m3u8`;
-      console.log('Testing HLS on HTTPS:', hlsUrl);
+      const hlsUrl = `http://67.205.179.77:8888/live/${streamKey}/index.m3u8`;
+      console.log('Testing HLS on HTTP:', hlsUrl);
       
       const response = await fetch(hlsUrl, {
         method: 'HEAD',
