@@ -2,7 +2,7 @@
 export class ServerStatusChecker {
   // Use your actual droplet IP where the server is running
   private static readonly DROPLET_IP = '67.205.179.77';
-  private static readonly SERVER_BASE_URL = `http://${this.DROPLET_IP}:8888`;
+  private static readonly SERVER_BASE_URL = `https://${this.DROPLET_IP}:3443`;
 
   static async checkStatus(): Promise<{ available: boolean; url: string; version?: string; uptime?: number }> {
     console.log('🔍 Testing your actual droplet server connectivity...');
@@ -54,7 +54,7 @@ export class ServerStatusChecker {
   }
 
   static getHLSBaseUrl(): string {
-    return `http://${this.DROPLET_IP}:8888/live`;
+    return `https://${this.DROPLET_IP}:3443/live`;
   }
 
   static getDropletIP(): string {
@@ -63,7 +63,8 @@ export class ServerStatusChecker {
 
   static async checkPortAccessibility(port: number): Promise<boolean> {
     try {
-      const response = await fetch(`http://${this.DROPLET_IP}:${port}/`, {
+      const protocol = port === 3443 ? 'https' : 'http';
+      const response = await fetch(`${protocol}://${this.DROPLET_IP}:${port}/`, {
         method: 'HEAD',
         signal: AbortSignal.timeout(5000),
         mode: 'cors'
