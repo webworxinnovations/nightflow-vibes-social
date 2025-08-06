@@ -109,7 +109,16 @@ class StreamingService {
         timestamp: new Date().toISOString()
       };
     } catch (error) {
-      console.log('⚫ Stream check failed:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
+      if (errorMessage.includes('Failed to fetch')) {
+        console.error('❌ MIXED CONTENT ERROR: HTTPS site cannot access HTTP stream');
+        console.error('💡 SOLUTION: Your droplet needs SSL certificate or use HTTPS tunnel');
+        console.error('🔧 Quick fix: Set up SSL on your droplet with: sudo certbot --nginx');
+      } else {
+        console.error('⚫ Stream check failed:', errorMessage);
+      }
+      
       return {
         isLive: false,
         viewerCount: 0,
