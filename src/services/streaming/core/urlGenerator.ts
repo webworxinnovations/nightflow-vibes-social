@@ -3,8 +3,8 @@ import { EnvironmentConfig } from './environment';
 
 export class URLGenerator {
   static getApiBaseUrl(): string {
-    // Use HTTP to avoid Mixed Content issues with browser security
-    return 'http://67.205.179.77:3001';
+    // Use HTTPS to match Lovable's secure environment
+    return 'https://67.205.179.77:3443';
   }
 
   static getOBSServerUrl(): string {
@@ -18,13 +18,13 @@ export class URLGenerator {
   }
 
   static getHlsUrl(streamKey: string): string {
-    // Use the dedicated HLS port (9001) where Node Media Server serves files
-    const hlsUrl = `http://67.205.179.77:9001/live/${streamKey}/index.m3u8`;
+    // Use HTTPS to avoid Mixed Content Error on Lovable
+    const hlsUrl = `https://67.205.179.77:3443/live/${streamKey}/index.m3u8`;
     
-    console.log('🎥 HLS URL Generation (Node Media Server HLS port):');
+    console.log('🎥 HLS URL Generation (HTTPS):');
     console.log('- Stream Key:', streamKey);
     console.log('- Droplet IP:', '67.205.179.77');
-    console.log('- HLS Port:', '9001');
+    console.log('- HTTPS Port:', '3443');
     console.log('- Generated HLS URL:', hlsUrl);
     
     return hlsUrl;
