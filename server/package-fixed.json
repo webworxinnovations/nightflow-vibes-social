@@ -1,0 +1,19 @@
+{
+  "name": "nightflow-streaming-server",
+  "version": "3.0.0",
+  "description": "NightFlow RTMP/HLS Streaming Server with HTTPS Support",
+  "main": "streaming-server-fixed.js",
+  "scripts": {
+    "start": "node streaming-server-fixed.js",
+    "dev": "NODE_ENV=development node streaming-server-fixed.js",
+    "prod": "NODE_ENV=production SSL_ENABLED=true node streaming-server-fixed.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "node-media-server": "^2.6.3"
+  },
+  "keywords": ["streaming", "rtmp", "hls", "nodejs"],
+  "author": "NightFlow",
+  "license": "MIT"
+}
