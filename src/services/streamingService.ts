@@ -6,8 +6,8 @@ class StreamingService {
   private statusCallbacks: ((status: StreamStatus) => void)[] = [];
   private pollingInterval: number | null = null;
 
-  // Use HTTP for now to avoid Mixed Content issues (browser security)
-  private readonly API_BASE_URL = 'http://67.205.179.77:3001';
+  // Use HTTPS for production with SSL certificate
+  private readonly API_BASE_URL = 'https://67.205.179.77:3443';
   private readonly RTMP_URL = 'rtmp://67.205.179.77:1935/live';
 
   private constructor() {}
@@ -22,18 +22,18 @@ class StreamingService {
   async generateStreamKey(): Promise<StreamConfig> {
     const streamKey = `nf_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
     
-    console.log('🔑 Generating stream key with HTTP on port 9001...');
+    console.log('🔑 Generating stream key with HTTPS on port 3443...');
     
     const config: StreamConfig = {
       streamKey,
       rtmpUrl: this.RTMP_URL,
-      hlsUrl: `http://67.205.179.77:9001/live/${streamKey}/index.m3u8` // Use Node Media Server HLS port
+      hlsUrl: `https://67.205.179.77:3443/live/${streamKey}/index.m3u8` // Use HTTPS with SSL
     };
 
     // Store in localStorage
     localStorage.setItem('nightflow_stream_config', JSON.stringify(config));
     
-    console.log('✅ Stream config generated with HTTP:', config);
+    console.log('✅ Stream config generated with HTTPS:', config);
     return config;
   }
 
@@ -50,7 +50,7 @@ class StreamingService {
   }
 
   async getServerStatus(): Promise<{ available: boolean; url: string; error?: string }> {
-    console.log('🔍 Testing HTTP server at 67.205.179.77:9001...');
+    console.log('🔍 Testing HTTPS server at 67.205.179.77:3443...');
     
     try {
       const response = await fetch(`${this.API_BASE_URL}/health`, {
@@ -59,7 +59,7 @@ class StreamingService {
       });
       
       const available = response.ok;
-      console.log(available ? '✅ HTTP Server online!' : '⚠️ HTTP Server issues');
+      console.log(available ? '✅ HTTPS Server online!' : '⚠️ HTTPS Server issues');
       
       return {
         available,
@@ -68,7 +68,7 @@ class StreamingService {
       };
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Connection failed';
-      console.error('❌ HTTP Server connection failed:', errorMsg);
+      console.error('❌ HTTPS Server connection failed:', errorMsg);
       
       return {
         available: false,
@@ -88,9 +88,9 @@ class StreamingService {
     try {
       console.log('🔍 Checking stream status for:', streamKey);
       
-      // Check HLS stream on Node Media Server port
-      const hlsUrl = `http://67.205.179.77:9001/live/${streamKey}/index.m3u8`;
-      console.log('Testing HLS on Node Media Server:', hlsUrl);
+      // Check HLS stream on HTTPS port
+      const hlsUrl = `https://67.205.179.77:3443/live/${streamKey}/index.m3u8`;
+      console.log('Testing HLS on HTTPS:', hlsUrl);
       
       const response = await fetch(hlsUrl, {
         method: 'HEAD',
@@ -98,7 +98,7 @@ class StreamingService {
       });
       
       const isLive = response.ok;
-      console.log(isLive ? '🔴 Stream is LIVE via HTTP!' : '⚫ Stream offline');
+      console.log(isLive ? '🔴 Stream is LIVE via HTTPS!' : '⚫ Stream offline');
       
       return {
         isLive,
@@ -112,9 +112,9 @@ class StreamingService {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       
       if (errorMessage.includes('Failed to fetch')) {
-        console.error('❌ MIXED CONTENT ERROR: HTTPS site cannot access HTTP stream');
-        console.error('💡 SOLUTION: Your droplet needs SSL certificate or use HTTPS tunnel');
-        console.error('🔧 Quick fix: Set up SSL on your droplet with: sudo certbot --nginx');
+        console.error('❌ HTTPS CONNECTION ERROR: Check SSL certificate');
+        console.error('💡 SOLUTION: Verify your droplet HTTPS setup is working');
+        console.error('🔧 Quick fix: Test HTTPS manually with: curl -k https://67.205.179.77:3443/api/health');
       } else {
         console.error('⚫ Stream check failed:', errorMessage);
       }

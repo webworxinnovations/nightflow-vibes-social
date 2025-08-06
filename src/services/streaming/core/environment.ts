@@ -2,7 +2,7 @@
 export class EnvironmentConfig {
   private static readonly DROPLET_IP = '67.205.179.77';
   private static readonly RTMP_PORT = 1935;
-  private static readonly HLS_PORT = 8080;
+  private static readonly HLS_PORT = 3443;
 
   static isProduction(): boolean {
     return window.location.hostname !== 'localhost';
@@ -25,12 +25,12 @@ export class EnvironmentConfig {
   }
 
   static getActualDeploymentUrl(): string {
-    return `http://${this.DROPLET_IP}:3001`;
+    return `https://${this.DROPLET_IP}:3443`;
   }
 
   static debugUrls(streamKey: string) {
     const rtmpUrl = `rtmp://${this.DROPLET_IP}:${this.RTMP_PORT}/live`;
-    const hlsUrl = `http://${this.DROPLET_IP}:3001/live/${streamKey}/index.m3u8`;
+    const hlsUrl = `https://${this.DROPLET_IP}:3443/live/${streamKey}/index.m3u8`;
     
     console.log('🔍 DigitalOcean Droplet Configuration:');
     console.log('- RTMP URL (for OBS):', rtmpUrl);
@@ -77,8 +77,8 @@ export class EnvironmentConfig {
         results.push('✅ WebSocket: Available for real-time updates');
         results.push('');
         results.push('🎯 STREAMING READY:');
-        results.push(`• OBS Server: rtmp://${this.DROPLET_IP}:1935/live`);
-        results.push(`• Web Streaming: http://${this.DROPLET_IP}:3001/live/[streamKey]/index.m3u8`);
+         results.push(`• OBS Server: rtmp://${this.DROPLET_IP}:1935/live`);
+         results.push(`• Web Streaming: https://${this.DROPLET_IP}:3443/live/[streamKey]/index.m3u8`);
         results.push('• All services using DigitalOcean Droplet IP');
         serverAvailable = true;
         console.log('✅ DigitalOcean droplet deployment confirmed operational');
