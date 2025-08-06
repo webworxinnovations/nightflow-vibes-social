@@ -11,8 +11,8 @@ export class StreamingConfig {
   }
 
   static getServerBaseUrl(): string {
-    // Use HTTPS for production
-    return `https://${this.DROPLET_IP}:${this.HTTPS_PORT}`;
+    // Use HTTP for production to avoid SSL certificate issues
+    return `http://${this.DROPLET_IP}:${this.HTTP_PORT}`;
   }
 
   static getApiBaseUrl(): string {
@@ -28,8 +28,8 @@ export class StreamingConfig {
   }
 
   static getHLSUrl(streamKey: string): string {
-    // Use HTTPS port for HLS
-    return `https://${this.DROPLET_IP}:${this.HTTPS_PORT}/live/${streamKey}/index.m3u8`;
+    // Use HTTP port for HLS to avoid SSL issues
+    return `http://${this.DROPLET_IP}:${this.HTTP_PORT}/live/${streamKey}/index.m3u8`;
   }
 
   static getHlsUrl(streamKey: string): string {

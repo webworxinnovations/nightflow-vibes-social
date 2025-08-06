@@ -22,7 +22,7 @@ class StreamingService {
   async generateStreamKey(): Promise<StreamConfig> {
     const streamKey = `nf_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
     
-    console.log('🔑 Generating stream key with HTTPS on port 3443...');
+    console.log('🔑 Generating stream key with HTTP on port 8888...');
     
     const config: StreamConfig = {
       streamKey,
@@ -33,7 +33,7 @@ class StreamingService {
     // Store in localStorage
     localStorage.setItem('nightflow_stream_config', JSON.stringify(config));
     
-    console.log('✅ Stream config generated with HTTPS:', config);
+    console.log('✅ Stream config generated with HTTP:', config);
     return config;
   }
 
@@ -50,7 +50,7 @@ class StreamingService {
   }
 
   async getServerStatus(): Promise<{ available: boolean; url: string; error?: string }> {
-    console.log('🔍 Testing HTTPS server at 67.205.179.77:3443...');
+    console.log('🔍 Testing HTTP server at 67.205.179.77:8888...');
     
     try {
       const response = await fetch(`${this.API_BASE_URL}/health`, {
@@ -59,7 +59,7 @@ class StreamingService {
       });
       
       const available = response.ok;
-      console.log(available ? '✅ HTTPS Server online!' : '⚠️ HTTPS Server issues');
+      console.log(available ? '✅ HTTP Server online!' : '⚠️ HTTP Server issues');
       
       return {
         available,
@@ -68,7 +68,7 @@ class StreamingService {
       };
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Connection failed';
-      console.error('❌ HTTPS Server connection failed:', errorMsg);
+      console.error('❌ HTTP Server connection failed:', errorMsg);
       
       return {
         available: false,
@@ -98,7 +98,7 @@ class StreamingService {
       });
       
       const isLive = response.ok;
-      console.log(isLive ? '🔴 Stream is LIVE via HTTPS!' : '⚫ Stream offline');
+      console.log(isLive ? '🔴 Stream is LIVE via HTTP!' : '⚫ Stream offline');
       
       return {
         isLive,
@@ -112,9 +112,9 @@ class StreamingService {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       
       if (errorMessage.includes('Failed to fetch')) {
-        console.error('❌ HTTPS CONNECTION ERROR: Check SSL certificate');
-        console.error('💡 SOLUTION: Verify your droplet HTTPS setup is working');
-        console.error('🔧 Quick fix: Test HTTPS manually with: curl -k https://67.205.179.77:3443/api/health');
+        console.error('❌ HTTP CONNECTION ERROR: Check server status');
+        console.error('💡 SOLUTION: Verify your droplet HTTP server is running');
+        console.error('🔧 Quick fix: Test HTTP manually with: curl http://67.205.179.77:8888/health');
       } else {
         console.error('⚫ Stream check failed:', errorMessage);
       }
