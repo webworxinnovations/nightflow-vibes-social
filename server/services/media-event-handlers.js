@@ -26,33 +26,67 @@ class MediaEventHandlers {
     nms.on('prePublish', (id, StreamPath, args) => {
       console.log(`[RTMP] 📡 Pre-publish: ${id} StreamPath=${StreamPath}`);
       
-      const pathParts = StreamPath.split('/');
-      if (pathParts.length >= 3 && pathParts[1] === 'live') {
-        const streamKey = pathParts[2];
-        console.log(`🔑 Stream key detected: ${streamKey}`);
-        
-        this.streamManager.addStream(streamKey);
-        
-        if (!streamKey.startsWith('nf_') || streamKey.length < 10) {
-          console.log(`❌ Invalid stream key format: ${streamKey}`);
+      try {
+        // Ensure StreamPath exists and is a string
+        if (!StreamPath || typeof StreamPath !== 'string') {
+          console.log(`❌ Invalid StreamPath: ${StreamPath}`);
           return false;
         }
         
-        console.log(`✅ Stream authorized: ${streamKey}`);
-        console.log(`🎉 OBS IS NOW STREAMING LIVE!`);
+        const pathParts = StreamPath.split('/');
+        if (pathParts.length >= 3 && pathParts[1] === 'live') {
+          const streamKey = pathParts[2];
+          
+          // Ensure streamKey exists and is a string
+          if (!streamKey || typeof streamKey !== 'string') {
+            console.log(`❌ Invalid stream key: ${streamKey}`);
+            return false;
+          }
+          
+          console.log(`🔑 Stream key detected: ${streamKey}`);
+          
+          this.streamManager.addStream(streamKey);
+          
+          if (!streamKey.startsWith('nf_') || streamKey.length < 10) {
+            console.log(`❌ Invalid stream key format: ${streamKey} - must start with 'nf_' and be at least 10 characters`);
+            return false;
+          }
+          
+          console.log(`✅ Stream authorized: ${streamKey}`);
+          console.log(`🎉 OBS IS NOW STREAMING LIVE!`);
+          return true;
+        } else {
+          console.log(`❌ Invalid stream path format: ${StreamPath} - expected /live/streamkey`);
+          return false;
+        }
+      } catch (error) {
+        console.error(`❌ Error in prePublish handler:`, error);
+        return false;
       }
     });
 
     nms.on('postPublish', (id, StreamPath, args) => {
-      const streamKey = StreamPath.split('/').pop();
-      console.log(`🔴 Stream LIVE: ${streamKey}`);
-      this.mediaDirectoryManager.createStreamDirectory(streamKey);
+      try {
+        const streamKey = StreamPath && typeof StreamPath === 'string' ? StreamPath.split('/').pop() : 'unknown';
+        console.log(`🔴 Stream LIVE: ${streamKey}`);
+        if (streamKey !== 'unknown') {
+          this.mediaDirectoryManager.createStreamDirectory(streamKey);
+        }
+      } catch (error) {
+        console.error(`❌ Error in postPublish handler:`, error);
+      }
     });
 
     nms.on('donePublish', (id, StreamPath, args) => {
-      const streamKey = StreamPath.split('/').pop();
-      console.log(`⚫ Stream ended: ${streamKey}`);
-      this.streamManager.removeStream(streamKey);
+      try {
+        const streamKey = StreamPath && typeof StreamPath === 'string' ? StreamPath.split('/').pop() : 'unknown';
+        console.log(`⚫ Stream ended: ${streamKey}`);
+        if (streamKey !== 'unknown') {
+          this.streamManager.removeStream(streamKey);
+        }
+      } catch (error) {
+        console.error(`❌ Error in donePublish handler:`, error);
+      }
     });
   }
 
@@ -62,15 +96,27 @@ class MediaEventHandlers {
     });
 
     nms.on('postPlay', (id, StreamPath, args) => {
-      const streamKey = StreamPath.split('/').pop();
-      console.log(`👁️ Viewer connected to: ${streamKey}`);
-      this.streamManager.incrementViewerCount(streamKey);
+      try {
+        const streamKey = StreamPath && typeof StreamPath === 'string' ? StreamPath.split('/').pop() : 'unknown';
+        console.log(`👁️ Viewer connected to: ${streamKey}`);
+        if (streamKey !== 'unknown') {
+          this.streamManager.incrementViewerCount(streamKey);
+        }
+      } catch (error) {
+        console.error(`❌ Error in postPlay handler:`, error);
+      }
     });
 
     nms.on('donePlay', (id, StreamPath, args) => {
-      const streamKey = StreamPath.split('/').pop();
-      console.log(`👁️ Viewer disconnected from: ${streamKey}`);
-      this.streamManager.decrementViewerCount(streamKey);
+      try {
+        const streamKey = StreamPath && typeof StreamPath === 'string' ? StreamPath.split('/').pop() : 'unknown';
+        console.log(`👁️ Viewer disconnected from: ${streamKey}`);
+        if (streamKey !== 'unknown') {
+          this.streamManager.decrementViewerCount(streamKey);
+        }
+      } catch (error) {
+        console.error(`❌ Error in donePlay handler:`, error);
+      }
     });
   }
 
