@@ -11,8 +11,8 @@ export class StreamingConfig {
   }
 
   static getServerBaseUrl(): string {
-    // Use HTTP for production to avoid SSL certificate issues
-    return `http://${this.DROPLET_IP}:${this.HTTP_PORT}`;
+    // Use HTTPS with SSL for Lovable compatibility
+    return `https://${this.DROPLET_IP}:${this.HTTPS_PORT}`;
   }
 
   static getApiBaseUrl(): string {
@@ -28,8 +28,8 @@ export class StreamingConfig {
   }
 
   static getHLSUrl(streamKey: string): string {
-    // Use HTTP port for HLS to avoid SSL issues
-    return `http://${this.DROPLET_IP}:${this.HTTP_PORT}/live/${streamKey}/index.m3u8`;
+    // Use HTTPS with SSL for Lovable compatibility
+    return `https://${this.DROPLET_IP}:${this.HTTPS_PORT}/live/${streamKey}/index.m3u8`;
   }
 
   static getHlsUrl(streamKey: string): string {
@@ -106,7 +106,7 @@ export class StreamingConfig {
   }
 
   static async testDropletConnection(): Promise<{ available: boolean; details: string }> {
-    console.log('🔍 Testing droplet HTTPS connectivity on port 3443...');
+    console.log('🔍 Testing droplet HTTPS SSL connectivity on port 3443...');
     
     const testEndpoint = `https://${this.DROPLET_IP}:${this.HTTPS_PORT}/health`;
     
