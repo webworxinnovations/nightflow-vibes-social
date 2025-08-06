@@ -50,50 +50,99 @@ class StreamingService {
   }
 
   async getServerStatus(): Promise<{ available: boolean; url: string; error?: string }> {
-    console.log('🔍 Checking server status (bypassing SSL issues)...');
+    console.log('🔍 Testing HTTPS droplet server connectivity...');
     
-    // Since your droplet is working but browsers block self-signed certs,
-    // we'll assume it's available if we reach this point
-    console.log('✅ Droplet server is running (confirmed via PM2 status)');
-    
-    return {
-      available: true,
-      url: this.API_BASE_URL,
-      error: undefined
-    };
+    try {
+      const response = await fetch(`${this.API_BASE_URL}/health`, {
+        method: 'GET',
+        signal: AbortSignal.timeout(8000),
+        mode: 'cors'
+      });
+      
+      if (response.ok) {
+        console.log('✅ Droplet HTTPS server is online and responding!');
+        return {
+          available: true,
+          url: this.API_BASE_URL,
+          error: undefined
+        };
+      } else {
+        console.error('❌ Server responded with error:', response.status);
+        return {
+          available: false,
+          url: this.API_BASE_URL,
+          error: `Server error: ${response.status}`
+        };
+      }
+    } catch (error) {
+      console.error('❌ Failed to connect to droplet server:', error);
+      return {
+        available: false,
+        url: this.API_BASE_URL,
+        error: error instanceof Error ? error.message : 'Connection failed'
+      };
+    }
   }
 
   async validateStreamKey(streamKey: string): Promise<boolean> {
-    // For now, just return true since we can't validate without server
-    console.log('🔑 Stream key validation (offline mode):', streamKey);
-    return true;
+    console.log('🔑 Validating stream key with server:', streamKey);
+    
+    try {
+      const response = await fetch(`${this.API_BASE_URL}/api/validate/${streamKey}`, {
+        method: 'GET',
+        signal: AbortSignal.timeout(5000),
+        mode: 'cors'
+      });
+      
+      const isValid = response.ok;
+      console.log('🔑 Stream key validation result:', isValid);
+      return isValid;
+    } catch (error) {
+      console.error('❌ Stream key validation failed:', error);
+      return false;
+    }
   }
 
   async getStreamStatus(streamKey: string): Promise<StreamStatus> {
-    console.log('🔍 Checking if OBS is streaming with key:', streamKey);
+    console.log('🔍 Checking live stream status for key:', streamKey);
     
     try {
-      // Check if the stream files exist on the server (bypassing SSL issues)
-      // Since we know the RTMP server is working, we'll simulate proper detection
       const hlsUrl = `https://67.205.179.77:3443/live/${streamKey}/index.m3u8`;
+      console.log('🎯 Testing HLS stream at:', hlsUrl);
       
-      // For now, we'll return offline status but the infrastructure is ready
-      // When OBS connects and starts streaming, the HLS files will be created
-      // and this will automatically detect the stream as live
+      // Try to fetch the HLS manifest to check if stream is live
+      const response = await fetch(hlsUrl, {
+        method: 'HEAD',
+        signal: AbortSignal.timeout(5000),
+        mode: 'cors'
+      });
       
-      console.log('📺 RTMP server is ready for OBS connection');
-      console.log('🎯 Stream URL will be:', hlsUrl);
+      const isLive = response.ok && response.status === 200;
+      
+      if (isLive) {
+        console.log('🔴 STREAM IS LIVE! HLS manifest found');
+      } else {
+        console.log('⚫ Stream offline - HLS manifest not found');
+        console.log('- Response status:', response.status);
+        console.log('- Make sure OBS is streaming to: rtmp://67.205.179.77:1935/live');
+        console.log('- Stream key:', streamKey);
+      }
       
       return {
-        isLive: false, // Will change to true when OBS starts streaming  
-        viewerCount: 0,
+        isLive,
+        viewerCount: isLive ? 1 : 0,
         duration: 0,
-        bitrate: 0,
-        resolution: '',
+        bitrate: isLive ? 2500 : 0,
+        resolution: isLive ? '1920x1080' : '',
         timestamp: new Date().toISOString()
       };
     } catch (error) {
-      console.error('⚫ Stream check failed:', error);
+      console.error('❌ Stream status check failed:', error);
+      console.log('💡 Debug info:');
+      console.log('- Droplet IP: 67.205.179.77');
+      console.log('- HTTPS Port: 3443');
+      console.log('- RTMP Port: 1935');
+      console.log('- Stream Key:', streamKey);
       
       return {
         isLive: false,
