@@ -146,26 +146,54 @@ export const CleanStreamingDashboard = () => {
                   variant="outline" 
                   size="sm"
                   onClick={async () => {
-                    console.log('🧪 Testing droplet server connection...');
-                    try {
-                      const response = await fetch('https://67.205.179.77:3443/health', {
-                        method: 'GET',
-                        signal: AbortSignal.timeout(5000)
-                      });
-                      if (response.ok) {
-                        console.log('✅ Droplet server is responding!');
-                        toast.success('✅ Server is online and responding!');
-                      } else {
-                        console.log('⚠️ Server responded with status:', response.status);
-                        toast.error(`⚠️ Server responded with status: ${response.status}`);
+                    console.log('🧪 Testing all droplet ports...');
+                    toast.loading('Testing all server ports...', { id: 'port-test' });
+                    
+                    const tests = [
+                      { name: 'HTTPS API', url: 'https://67.205.179.77:3443/health', port: 3443 },
+                      { name: 'HTTP API', url: 'http://67.205.179.77:3001/health', port: 3001 },
+                      { name: 'RTMP Server', url: 'http://67.205.179.77:3001/api/rtmp/status', port: 1935 },
+                    ];
+                    
+                    let allPassed = true;
+                    const results = [];
+                    
+                    for (const test of tests) {
+                      try {
+                        console.log(`Testing ${test.name}...`);
+                        const response = await fetch(test.url, {
+                          method: 'GET',
+                          signal: AbortSignal.timeout(8000)
+                        });
+                        
+                        if (response.ok) {
+                          console.log(`✅ ${test.name}: OK`);
+                          results.push(`✅ ${test.name} (Port ${test.port}): Connected`);
+                        } else {
+                          console.log(`⚠️ ${test.name}: Status ${response.status}`);
+                          results.push(`⚠️ ${test.name} (Port ${test.port}): Status ${response.status}`);
+                          allPassed = false;
+                        }
+                      } catch (error) {
+                        console.error(`❌ ${test.name}:`, error);
+                        results.push(`❌ ${test.name} (Port ${test.port}): Failed`);
+                        allPassed = false;
                       }
-                    } catch (error) {
-                      console.error('❌ Server connection failed:', error);
-                      toast.error('❌ Cannot connect to droplet server. Make sure it\'s running on port 3443.');
                     }
+                    
+                    toast.dismiss('port-test');
+                    
+                    if (allPassed) {
+                      toast.success('✅ All server ports are working!');
+                    } else {
+                      toast.error('⚠️ Some ports failed. Check console for details.');
+                    }
+                    
+                    console.log('🔍 Port Test Results:');
+                    results.forEach(result => console.log(result));
                   }}
                 >
-                  Test Server
+                  Test All Ports
                 </Button>
                 <Button onClick={handleGenerateKey} variant="outline">
                   Generate New Key
