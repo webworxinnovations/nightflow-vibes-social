@@ -6,8 +6,8 @@ class StreamingService {
   private statusCallbacks: ((status: StreamStatus) => void)[] = [];
   private pollingInterval: number | null = null;
 
-  // Use the DigitalOcean App Platform domain for HTTPS compatibility
-  private readonly API_BASE_URL = 'https://nightflow-app-wijb2.ondigitalocean.app';
+  // Use HTTPS on port 3443 as configured on your droplet
+  private readonly API_BASE_URL = 'https://67.205.179.77:3443';
   private readonly RTMP_URL = 'rtmp://67.205.179.77:1935/live';
 
   private constructor() {}
@@ -27,7 +27,7 @@ class StreamingService {
     const config: StreamConfig = {
       streamKey,
       rtmpUrl: this.RTMP_URL,
-      hlsUrl: `https://nightflow-app-wijb2.ondigitalocean.app/live/${streamKey}/index.m3u8` // Use app platform domain
+      hlsUrl: `https://67.205.179.77:3443/live/${streamKey}/index.m3u8` // HTTPS on port 3443 as configured
     };
 
     // Store in localStorage
@@ -51,6 +51,8 @@ class StreamingService {
 
   async getServerStatus(): Promise<{ available: boolean; url: string; error?: string }> {
     console.log('🔍 Testing HTTPS droplet server connectivity...');
+    console.log('🎯 Target URL:', `${this.API_BASE_URL}/health`);
+    console.log('🔒 Using HTTPS on port 3443 as configured in your droplet server');
     
     try {
       const response = await fetch(`${this.API_BASE_URL}/health`, {
@@ -61,6 +63,7 @@ class StreamingService {
       
       if (response.ok) {
         console.log('✅ Droplet HTTPS server is online and responding!');
+        console.log('🔒 SSL certificates are working correctly');
         return {
           available: true,
           url: this.API_BASE_URL,
@@ -68,6 +71,7 @@ class StreamingService {
         };
       } else {
         console.error('❌ Server responded with error:', response.status);
+        console.log('💡 Droplet server is reachable but returning an error');
         return {
           available: false,
           url: this.API_BASE_URL,
@@ -76,6 +80,12 @@ class StreamingService {
       }
     } catch (error) {
       console.error('❌ Failed to connect to droplet server:', error);
+      console.log('🔍 Possible issues:');
+      console.log('  1. SSL certificates not properly configured on port 3443');
+      console.log('  2. HTTPS server not running on your droplet');
+      console.log('  3. Firewall blocking port 3443');
+      console.log('  4. Self-signed certificate causing browser rejection');
+      
       return {
         available: false,
         url: this.API_BASE_URL,
@@ -107,7 +117,7 @@ class StreamingService {
     console.log('🔍 Checking live stream status for key:', streamKey);
     
     try {
-      const hlsUrl = `https://nightflow-app-wijb2.ondigitalocean.app/live/${streamKey}/index.m3u8`;
+      const hlsUrl = `https://67.205.179.77:3443/live/${streamKey}/index.m3u8`;
       console.log('🎯 Testing HLS stream at:', hlsUrl);
       
       // Try to fetch the HLS manifest to check if stream is live
