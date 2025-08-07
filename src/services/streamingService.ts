@@ -6,8 +6,8 @@ class StreamingService {
   private statusCallbacks: ((status: StreamStatus) => void)[] = [];
   private pollingInterval: number | null = null;
 
-  // Use HTTP for HLS streaming on port 9001 (standard media server port)
-  private readonly API_BASE_URL = 'http://67.205.179.77:9001';
+  // Use HTTPS for compatibility with Lovable's HTTPS environment
+  private readonly API_BASE_URL = 'https://67.205.179.77:3443';
   private readonly RTMP_URL = 'rtmp://67.205.179.77:1935/live';
 
   private constructor() {}
@@ -27,7 +27,7 @@ class StreamingService {
     const config: StreamConfig = {
       streamKey,
       rtmpUrl: this.RTMP_URL,
-      hlsUrl: `http://67.205.179.77:9001/live/${streamKey}/index.m3u8` // Standard HLS port for media server
+      hlsUrl: `https://67.205.179.77:3443/live/${streamKey}/index.m3u8` // HTTPS for Lovable compatibility
     };
 
     // Store in localStorage
@@ -107,7 +107,7 @@ class StreamingService {
     console.log('🔍 Checking live stream status for key:', streamKey);
     
     try {
-      const hlsUrl = `http://67.205.179.77:9001/live/${streamKey}/index.m3u8`;
+      const hlsUrl = `https://67.205.179.77:3443/live/${streamKey}/index.m3u8`;
       console.log('🎯 Testing HLS stream at:', hlsUrl);
       
       // Try to fetch the HLS manifest to check if stream is live
