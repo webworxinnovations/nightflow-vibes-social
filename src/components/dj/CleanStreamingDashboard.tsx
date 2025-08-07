@@ -235,19 +235,25 @@ export const CleanStreamingDashboard = () => {
           <div className="space-y-4">
             <h3 className="text-xl font-semibold">Live Preview</h3>
             
-            <div className="aspect-video bg-black rounded-lg overflow-hidden">
+            <div className="aspect-video bg-black rounded-lg overflow-hidden relative">
               {streamKey ? (
-                <RealVideoPlayer
-                  hlsUrl={hlsUrl}
-                  isLive={isLive}
-                  autoplay={false}
-                  muted={true}
-                />
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center">
+                    <div className="text-6xl mb-4">🎥</div>
+                    <h3 className="text-xl font-semibold mb-2">Ready for Streaming</h3>
+                    <p className="text-muted-foreground mb-4">
+                      Configure OBS with the settings above and start streaming
+                    </p>
+                    <div className="text-sm text-green-400 bg-green-500/10 p-3 rounded">
+                      ✅ Stream will appear here when you start broadcasting from OBS
+                    </div>
+                  </div>
+                </div>
               ) : (
                 <div className="flex items-center justify-center h-full text-muted-foreground">
                   <div className="text-center">
                     <div className="text-4xl mb-2">📹</div>
-                    <p>Generate a stream key to see preview</p>
+                    <p>Generate a stream key to get started</p>
                   </div>
                 </div>
               )}
