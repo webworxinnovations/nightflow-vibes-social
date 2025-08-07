@@ -18,13 +18,14 @@ export class URLGenerator {
   }
 
   static getHlsUrl(streamKey: string): string {
-    // Use HTTP port 9001 for HLS streaming (where Node Media Server serves HLS)
-    const hlsUrl = `http://67.205.179.77:9001/live/${streamKey}/index.m3u8`;
+    // Keep HTTPS for consistency - video preview won't work in Lovable due to browser security
+    // but this maintains proper URL structure for when app is published
+    const hlsUrl = `https://67.205.179.77:3443/live/${streamKey}/index.m3u8`;
     
-    console.log('🎥 HLS URL Generation (HTTP on media server port):');
+    console.log('🎥 HLS URL Generation (HTTPS - for published app):');
     console.log('- Stream Key:', streamKey);
     console.log('- Droplet IP:', '67.205.179.77');
-    console.log('- HLS Port:', '9001 (Node Media Server)');
+    console.log('- HTTPS Port:', '3443');
     console.log('- Generated HLS URL:', hlsUrl);
     
     return hlsUrl;
