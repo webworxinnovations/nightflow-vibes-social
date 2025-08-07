@@ -4,15 +4,15 @@ export class StreamingConfig {
   private static readonly DROPLET_IP = '67.205.179.77';
   private static readonly RTMP_PORT = 1935;
   private static readonly HTTP_PORT = 8888; // HTTP server port
-  private static readonly HTTPS_PORT = 3443; // HTTPS server port
+  private static readonly HLS_PORT = 9001; // HLS media server port
 
   static getDropletIP(): string {
     return this.DROPLET_IP;
   }
 
   static getServerBaseUrl(): string {
-    // Use HTTPS with SSL for Lovable compatibility
-    return `https://${this.DROPLET_IP}:${this.HTTPS_PORT}`;
+    // Use HTTP for media server compatibility
+    return `http://${this.DROPLET_IP}:${this.HLS_PORT}`;
   }
 
   static getApiBaseUrl(): string {
@@ -28,8 +28,8 @@ export class StreamingConfig {
   }
 
   static getHLSUrl(streamKey: string): string {
-    // Use HTTPS with SSL for Lovable compatibility
-    return `https://${this.DROPLET_IP}:${this.HTTPS_PORT}/live/${streamKey}/index.m3u8`;
+    // Use HTTP for HLS media server
+    return `http://${this.DROPLET_IP}:${this.HLS_PORT}/live/${streamKey}/index.m3u8`;
   }
 
   static getHlsUrl(streamKey: string): string {
@@ -37,8 +37,8 @@ export class StreamingConfig {
   }
 
   static getWebSocketUrl(streamKey: string): string {
-    // Use WSS for secure WebSocket
-    return `wss://${this.DROPLET_IP}:${this.HTTPS_PORT}/ws/stream/${streamKey}`;
+    // Use WS for WebSocket
+    return `ws://${this.DROPLET_IP}:${this.HLS_PORT}/ws/stream/${streamKey}`;
   }
 
   static isProduction(): boolean {
@@ -46,7 +46,7 @@ export class StreamingConfig {
   }
 
   static isHTTPSAvailable(): boolean {
-    return true; // Now HTTPS is available!
+    return false; // Using HTTP for media server
   }
 
   static getPortInfo(): { rtmpPort: number; description: string; compatibility: string } {
@@ -106,12 +106,12 @@ export class StreamingConfig {
   }
 
   static async testDropletConnection(): Promise<{ available: boolean; details: string }> {
-    console.log('🔍 Testing droplet HTTPS SSL connectivity on port 3443...');
+    console.log('🔍 Testing droplet HTTP media server connectivity on port 9001...');
     
-    const testEndpoint = `https://${this.DROPLET_IP}:${this.HTTPS_PORT}/health`;
+    const testEndpoint = `http://${this.DROPLET_IP}:${this.HLS_PORT}/health`;
     
     try {
-      console.log(`🧪 Testing HTTPS: ${testEndpoint}`);
+      console.log(`🧪 Testing HTTP: ${testEndpoint}`);
       const response = await fetch(testEndpoint, {
         method: 'GET',
         signal: AbortSignal.timeout(8000)
@@ -119,14 +119,14 @@ export class StreamingConfig {
       
       if (response.ok) {
         const data = await response.text();
-        console.log(`✅ HTTPS connection successful:`, data);
+        console.log(`✅ HTTP connection successful:`, data);
         
         return { 
           available: true, 
-          details: `Droplet server is online with HTTPS on port 3443 - Ready for streaming!` 
+          details: `Droplet media server is online on port 9001 - Ready for streaming!` 
         };
       } else {
-        console.log(`⚠️ HTTPS responded with status ${response.status}`);
+        console.log(`⚠️ HTTP responded with status ${response.status}`);
         
         return { 
           available: false, 
@@ -134,12 +134,12 @@ export class StreamingConfig {
         };
       }
     } catch (error) {
-      console.log(`❌ HTTPS connection failed:`, error);
+      console.log(`❌ HTTP connection failed:`, error);
       const lastError = error instanceof Error ? error.message : 'Connection failed';
       
         return { 
           available: false, 
-          details: `Cannot connect to droplet server on HTTPS port 3443. Error: ${lastError}` 
+          details: `Cannot connect to droplet server on HTTP port 9001. Error: ${lastError}` 
         };
     }
   }
