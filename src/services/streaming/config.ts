@@ -12,8 +12,8 @@ export class StreamingConfig {
   }
 
   static getServerBaseUrl(): string {
-    // Use HTTPS via DigitalOcean App Platform domain
-    return `https://${this.DROPLET_DOMAIN}`;
+    // Use HTTPS from your droplet directly
+    return `https://${this.DROPLET_IP}:3443`;
   }
 
   static getApiBaseUrl(): string {
@@ -29,8 +29,8 @@ export class StreamingConfig {
   }
 
   static getHLSUrl(streamKey: string): string {
-    // Use HTTPS via DigitalOcean App Platform domain
-    return `https://${this.DROPLET_DOMAIN}/live/${streamKey}/index.m3u8`;
+    // Use HTTPS from your droplet directly
+    return `https://${this.DROPLET_IP}:3443/live/${streamKey}/index.m3u8`;
   }
 
   static getHlsUrl(streamKey: string): string {
@@ -38,8 +38,8 @@ export class StreamingConfig {
   }
 
   static getWebSocketUrl(streamKey: string): string {
-    // Use WSS for secure WebSocket via DigitalOcean App Platform
-    return `wss://${this.DROPLET_DOMAIN}/ws/stream/${streamKey}`;
+    // Use WSS for secure WebSocket from your droplet directly
+    return `wss://${this.DROPLET_IP}:3443/ws/stream/${streamKey}`;
   }
 
   static isProduction(): boolean {
@@ -107,9 +107,9 @@ export class StreamingConfig {
   }
 
   static async testDropletConnection(): Promise<{ available: boolean; details: string }> {
-    console.log('🔍 Testing droplet HTTP media server connectivity on port 9001...');
+    console.log('🔍 Testing droplet HTTPS server connectivity on port 3443...');
     
-    const testEndpoint = `http://${this.DROPLET_IP}:${this.HLS_PORT}/health`;
+    const testEndpoint = `https://${this.DROPLET_IP}:3443/health`;
     
     try {
       console.log(`🧪 Testing HTTP: ${testEndpoint}`);
@@ -124,7 +124,7 @@ export class StreamingConfig {
         
         return { 
           available: true, 
-          details: `Droplet media server is online on port 9001 - Ready for streaming!` 
+          details: `Droplet HTTPS server is online on port 3443 - Ready for streaming!` 
         };
       } else {
         console.log(`⚠️ HTTP responded with status ${response.status}`);
@@ -140,7 +140,7 @@ export class StreamingConfig {
       
         return { 
           available: false, 
-          details: `Cannot connect to droplet server on HTTP port 9001. Error: ${lastError}` 
+          details: `Cannot connect to droplet server on HTTPS port 3443. Error: ${lastError}` 
         };
     }
   }
