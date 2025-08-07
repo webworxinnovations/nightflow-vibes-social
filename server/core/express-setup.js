@@ -62,6 +62,59 @@ class ExpressSetup {
       });
     });
 
+    
+    // Add HLS proxy route for HTTPS access to Node Media Server content
+    app.get('/live/:streamKey/index.m3u8', async (req, res) => {
+      const { streamKey } = req.params;
+      const hlsUrl = `http://127.0.0.1:9001/live/${streamKey}/index.m3u8`;
+      
+      console.log(`🎥 Proxying HLS request for stream: ${streamKey}`);
+      console.log(`📡 Forwarding to: ${hlsUrl}`);
+      
+      try {
+        const { default: fetch } = await import('node-fetch');
+        const response = await fetch(hlsUrl);
+        
+        if (response.ok) {
+          const content = await response.text();
+          res.set('Content-Type', 'application/vnd.apple.mpegurl');
+          res.set('Access-Control-Allow-Origin', '*');
+          res.set('Access-Control-Allow-Headers', '*');
+          res.send(content);
+          console.log(`✅ HLS proxy successful for stream: ${streamKey}`);
+        } else {
+          console.log(`❌ HLS stream not available: ${streamKey}`);
+          res.status(404).json({ error: 'Stream not available' });
+        }
+      } catch (error) {
+        console.error(`❌ HLS proxy error for ${streamKey}:`, error);
+        res.status(500).json({ error: 'Proxy error' });
+      }
+    });
+
+    // Add HLS segment proxy route  
+    app.get('/live/:streamKey/:segment', async (req, res) => {
+      const { streamKey, segment } = req.params;
+      const segmentUrl = `http://127.0.0.1:9001/live/${streamKey}/${segment}`;
+      
+      try {
+        const { default: fetch } = await import('node-fetch');
+        const response = await fetch(segmentUrl);
+        
+        if (response.ok) {
+          const buffer = await response.buffer();
+          res.set('Content-Type', 'video/mp2t');
+          res.set('Access-Control-Allow-Origin', '*');
+          res.send(buffer);
+        } else {
+          res.status(404).json({ error: 'Segment not available' });
+        }
+      } catch (error) {
+        console.error(`❌ Segment proxy error:`, error);
+        res.status(500).json({ error: 'Segment proxy error' });
+      }
+    });
+
     try {
       console.log('🔧 Setting up API routes...');
       const apiRoutes = createApiRoutes(serverConfig, streamManager);

@@ -51,6 +51,7 @@
     "input-otp": "^1.2.4",
     "lucide-react": "^0.462.0",
     "next-themes": "^0.3.0",
+    "node-fetch": "^2.6.7",
     "node-media-server": "^2.6.3",
     "obs-websocket-js": "^5.0.6",
     "qrcode.react": "^4.2.0",
