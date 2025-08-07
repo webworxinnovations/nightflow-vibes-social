@@ -6,8 +6,8 @@ class StreamingService {
   private statusCallbacks: ((status: StreamStatus) => void)[] = [];
   private pollingInterval: number | null = null;
 
-  // Use HTTPS for compatibility with Lovable's HTTPS environment
-  private readonly API_BASE_URL = 'https://67.205.179.77:3443';
+  // Use the DigitalOcean App Platform domain for HTTPS compatibility
+  private readonly API_BASE_URL = 'https://nightflow-app-wijb2.ondigitalocean.app';
   private readonly RTMP_URL = 'rtmp://67.205.179.77:1935/live';
 
   private constructor() {}
@@ -27,7 +27,7 @@ class StreamingService {
     const config: StreamConfig = {
       streamKey,
       rtmpUrl: this.RTMP_URL,
-      hlsUrl: `https://67.205.179.77:3443/live/${streamKey}/index.m3u8` // HTTPS for Lovable compatibility
+      hlsUrl: `https://nightflow-app-wijb2.ondigitalocean.app/live/${streamKey}/index.m3u8` // Use app platform domain
     };
 
     // Store in localStorage
@@ -107,7 +107,7 @@ class StreamingService {
     console.log('🔍 Checking live stream status for key:', streamKey);
     
     try {
-      const hlsUrl = `https://67.205.179.77:3443/live/${streamKey}/index.m3u8`;
+      const hlsUrl = `https://nightflow-app-wijb2.ondigitalocean.app/live/${streamKey}/index.m3u8`;
       console.log('🎯 Testing HLS stream at:', hlsUrl);
       
       // Try to fetch the HLS manifest to check if stream is live

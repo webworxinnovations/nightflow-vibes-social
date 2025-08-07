@@ -1,7 +1,8 @@
 
 export class StreamingConfig {
-  // Your actual droplet server IP
+  // DigitalOcean Configuration
   private static readonly DROPLET_IP = '67.205.179.77';
+  private static readonly DROPLET_DOMAIN = 'nightflow-app-wijb2.ondigitalocean.app';
   private static readonly RTMP_PORT = 1935;
   private static readonly HTTP_PORT = 8888; // HTTP server port
   private static readonly HLS_PORT = 9001; // HLS media server port
@@ -11,8 +12,8 @@ export class StreamingConfig {
   }
 
   static getServerBaseUrl(): string {
-    // Use HTTP for media server compatibility
-    return `http://${this.DROPLET_IP}:${this.HLS_PORT}`;
+    // Use HTTPS via DigitalOcean App Platform domain
+    return `https://${this.DROPLET_DOMAIN}`;
   }
 
   static getApiBaseUrl(): string {
@@ -28,8 +29,8 @@ export class StreamingConfig {
   }
 
   static getHLSUrl(streamKey: string): string {
-    // Use HTTP for HLS media server
-    return `http://${this.DROPLET_IP}:${this.HLS_PORT}/live/${streamKey}/index.m3u8`;
+    // Use HTTPS via DigitalOcean App Platform domain
+    return `https://${this.DROPLET_DOMAIN}/live/${streamKey}/index.m3u8`;
   }
 
   static getHlsUrl(streamKey: string): string {
@@ -37,8 +38,8 @@ export class StreamingConfig {
   }
 
   static getWebSocketUrl(streamKey: string): string {
-    // Use WS for WebSocket
-    return `ws://${this.DROPLET_IP}:${this.HLS_PORT}/ws/stream/${streamKey}`;
+    // Use WSS for secure WebSocket via DigitalOcean App Platform
+    return `wss://${this.DROPLET_DOMAIN}/ws/stream/${streamKey}`;
   }
 
   static isProduction(): boolean {
@@ -46,7 +47,7 @@ export class StreamingConfig {
   }
 
   static isHTTPSAvailable(): boolean {
-    return false; // Using HTTP for media server
+    return true; // Using HTTPS via DigitalOcean App Platform
   }
 
   static getPortInfo(): { rtmpPort: number; description: string; compatibility: string } {

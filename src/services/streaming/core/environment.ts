@@ -1,6 +1,7 @@
 
 export class EnvironmentConfig {
   private static readonly DROPLET_IP = '67.205.179.77';
+  private static readonly DROPLET_DOMAIN = 'nightflow-app-wijb2.ondigitalocean.app';
   private static readonly RTMP_PORT = 1935;
   private static readonly HLS_PORT = 9001;
 
@@ -25,19 +26,18 @@ export class EnvironmentConfig {
   }
 
   static getActualDeploymentUrl(): string {
-    return `http://${this.DROPLET_IP}:9001`;
+    return `https://${this.DROPLET_DOMAIN}`;
   }
 
   static debugUrls(streamKey: string) {
     const rtmpUrl = `rtmp://${this.DROPLET_IP}:${this.RTMP_PORT}/live`;
-    const hlsUrl = `http://${this.DROPLET_IP}:9001/live/${streamKey}/index.m3u8`;
+    const hlsUrl = `https://${this.DROPLET_DOMAIN}/live/${streamKey}/index.m3u8`;
     
-    console.log('🔍 DigitalOcean Droplet Configuration:');
+    console.log('🔍 DigitalOcean Configuration:');
     console.log('- RTMP URL (for OBS):', rtmpUrl);
     console.log('- HLS URL (for playback):', hlsUrl);
     console.log('- Stream Key:', streamKey);
-    console.log('- Droplet IP:', this.DROPLET_IP);
-    console.log('- All URLs using Droplet IP directly');
+    console.log('- Using HTTPS via App Platform Domain');
     
     return { rtmpUrl, hlsUrl };
   }
@@ -76,10 +76,10 @@ export class EnvironmentConfig {
         results.push('✅ HLS Streaming: Ready for HTTP playback');
         results.push('✅ WebSocket: Available for real-time updates');
         results.push('');
-        results.push('🎯 STREAMING READY:');
-         results.push(`• OBS Server: rtmp://${this.DROPLET_IP}:1935/live`);
-         results.push(`• Web Streaming: http://${this.DROPLET_IP}:9001/live/[streamKey]/index.m3u8`);
-        results.push('• All services using DigitalOcean Droplet IP');
+         results.push('🎯 STREAMING READY:');
+          results.push(`• OBS Server: rtmp://${this.DROPLET_IP}:1935/live`);
+          results.push(`• Web Streaming: https://${this.DROPLET_DOMAIN}/live/[streamKey]/index.m3u8`);
+        results.push('• Using HTTPS via DigitalOcean App Platform');
         serverAvailable = true;
         console.log('✅ DigitalOcean droplet deployment confirmed operational');
       } else {
