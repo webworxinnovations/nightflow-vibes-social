@@ -141,9 +141,36 @@ export const CleanStreamingDashboard = () => {
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-semibold">OBS Setup</h3>
-              <Button onClick={handleGenerateKey} variant="outline">
-                Generate New Key
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={async () => {
+                    console.log('🧪 Testing droplet server connection...');
+                    try {
+                      const response = await fetch('https://67.205.179.77:3443/health', {
+                        method: 'GET',
+                        signal: AbortSignal.timeout(5000)
+                      });
+                      if (response.ok) {
+                        console.log('✅ Droplet server is responding!');
+                        toast.success('✅ Server is online and responding!');
+                      } else {
+                        console.log('⚠️ Server responded with status:', response.status);
+                        toast.error(`⚠️ Server responded with status: ${response.status}`);
+                      }
+                    } catch (error) {
+                      console.error('❌ Server connection failed:', error);
+                      toast.error('❌ Cannot connect to droplet server. Make sure it\'s running on port 3443.');
+                    }
+                  }}
+                >
+                  Test Server
+                </Button>
+                <Button onClick={handleGenerateKey} variant="outline">
+                  Generate New Key
+                </Button>
+              </div>
             </div>
 
             {streamKey ? (
