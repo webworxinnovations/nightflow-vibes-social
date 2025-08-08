@@ -1,4 +1,3 @@
-
 const { setupMiddleware, createApiRoutes, setupErrorHandling } = require('../routes/api-routes');
 
 class ExpressSetup {
@@ -62,7 +61,6 @@ class ExpressSetup {
       });
     });
 
-    
     // Add HLS proxy route for HTTPS access to Node Media Server content
     app.get('/live/:streamKey/index.m3u8', async (req, res) => {
       const { streamKey } = req.params;
