@@ -1,11 +1,11 @@
 
 import { useState } from 'react';
-import { usePaymentProcessing } from './usePaymentProcessing';
+import { useSecurePaymentProcessing } from './useSecurePaymentProcessing';
 import { toast } from 'sonner';
 
 export const useTipping = () => {
   const [isTipping, setIsTipping] = useState(false);
-  const { createPaymentIntent, confirmPayment, isProcessing } = usePaymentProcessing();
+  const { createPaymentIntent, confirmPayment, isProcessing } = useSecurePaymentProcessing();
 
   const sendTip = async (
     amount: number,
