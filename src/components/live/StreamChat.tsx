@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Send, DollarSign } from "lucide-react";
 import { useRealTimeChat } from "@/hooks/useRealTimeChat";
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
+import { useSecureStreamViewer } from "@/hooks/useSecureStreamViewer";
 import { TipDialog } from "./TipDialog";
 
 interface StreamChatProps {
@@ -20,6 +21,9 @@ export const StreamChat = ({ streamId, streamerId }: StreamChatProps) => {
   const { messages, isLoading, sendMessage } = useRealTimeChat(streamId);
   const { user } = useSupabaseAuth();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  
+  // Track user as stream viewer for secure chat access
+  useSecureStreamViewer(streamId);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {

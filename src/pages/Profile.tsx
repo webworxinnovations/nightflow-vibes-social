@@ -42,30 +42,67 @@ export default function Profile() {
       }
 
       try {
-        // Fetch profile by username
-        const { data: profileData, error } = await supabase
+        // First get profile ID by username, then use secure function
+        const { data: basicProfile, error: basicError } = await supabase
           .from('profiles')
-          .select('*')
+          .select('id')
           .eq('username', profileUsername)
           .single();
 
-        if (error || !profileData) {
-          console.error('Error fetching profile:', error);
+        if (basicError || !basicProfile) {
+          console.error('Error fetching basic profile:', basicError);
           setProfile(null);
-        } else {
-          setProfile(profileData);
-          setFollowerCount(profileData.follower_count || 0);
-          
-          // Check if current user is following this profile
-          if (currentUser && currentUser.id !== profileData.id) {
-            const { data: followData } = await supabase
-              .from('follows')
-              .select('id')
-              .eq('follower_id', currentUser.id)
-              .eq('following_id', profileData.id)
-              .single();
+          return;
+        }
+
+        // Use secure function to fetch profile data based on authentication status
+        const { data: profileData, error } = await supabase
+          .rpc('get_safe_profile', { profile_id: basicProfile.id })
+          .single();
+
+        if (error || !profileData) {
+          // Fallback to public profile function
+          const { data: publicProfileData, error: publicError } = await supabase
+            .rpc('get_public_profile_safe', { profile_username: profileUsername })
+            .single();
             
-            setIsFollowing(!!followData);
+          if (publicError || !publicProfileData) {
+            console.error('Error fetching profile:', publicError);
+            setProfile(null);
+          } else {
+            // Convert public profile to full profile format
+            setProfile({
+              ...publicProfileData,
+              updated_at: new Date().toISOString(),
+              website: null,
+              instagram: null,
+              spotify: null,
+              soundcloud: null,
+              location: null,
+              streaming_title: null,
+              streaming_description: null,
+              total_tips_received: null,
+              last_streamed_at: null
+            });
+            setFollowerCount(publicProfileData.follower_count || 0);
+          }
+        } else {
+          // Add the updated_at field if missing
+          const completeProfile = {
+            ...profileData,
+            updated_at: new Date().toISOString()
+          } as Profile;
+          setProfile(completeProfile);
+          setFollowerCount(profileData.follower_count || 0);
+        }
+        
+        // Check if current user is following this profile using secure function
+        if (currentUser && profile && currentUser.id !== profile.id) {
+          const { data: isFollowingData, error: followError } = await supabase
+            .rpc('is_following', { profile_id: profile.id });
+            
+          if (!followError) {
+            setIsFollowing(isFollowingData || false);
           }
         }
       } catch (error) {
@@ -84,26 +121,30 @@ export default function Profile() {
 
     try {
       if (isFollowing) {
-        // Unfollow
-        await supabase
+        // Unfollow - this will still work due to RLS policy allowing management of own follows
+        const { error } = await supabase
           .from('follows')
           .delete()
           .eq('follower_id', currentUser.id)
           .eq('following_id', profile.id);
         
-        setIsFollowing(false);
-        setFollowerCount(prev => prev - 1);
+        if (!error) {
+          setIsFollowing(false);
+          setFollowerCount(prev => prev - 1);
+        }
       } else {
-        // Follow
-        await supabase
+        // Follow - this will still work due to RLS policy allowing management of own follows
+        const { error } = await supabase
           .from('follows')
           .insert({
             follower_id: currentUser.id,
             following_id: profile.id
           });
         
-        setIsFollowing(true);
-        setFollowerCount(prev => prev + 1);
+        if (!error) {
+          setIsFollowing(true);
+          setFollowerCount(prev => prev + 1);
+        }
       }
     } catch (error) {
       console.error('Error following/unfollowing:', error);

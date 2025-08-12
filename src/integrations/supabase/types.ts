@@ -916,6 +916,13 @@ export type Database = {
           stream_id: string
         }[]
       }
+      get_follow_counts: {
+        Args: { profile_id: string }
+        Returns: {
+          follower_count: number
+          following_count: number
+        }[]
+      }
       get_public_profile: {
         Args: { profile_username: string }
         Returns: {
@@ -980,6 +987,10 @@ export type Database = {
           rtmp_url: string
           hls_url: string
         }[]
+      }
+      is_following: {
+        Args: { profile_id: string }
+        Returns: boolean
       }
       log_payment_event: {
         Args: {
