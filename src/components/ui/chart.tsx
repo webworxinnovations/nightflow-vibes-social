@@ -74,27 +74,44 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
     return null
   }
 
+  // Safely generate CSS without dangerouslySetInnerHTML
+  const cssVariables = React.useMemo(() => {
+    const variables: Record<string, string> = {}
+    
+    Object.entries(THEMES).forEach(([theme, prefix]) => {
+      colorConfig.forEach(([key, itemConfig]) => {
+        const color =
+          itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ||
+          itemConfig.color
+        if (color && /^#[0-9A-Fa-f]{6}$|^hsl\([\d\s,]+\)$|^rgb\([\d\s,]+\)$/.test(color)) {
+          // Sanitize color values - only allow hex, hsl, or rgb
+          variables[`--color-${key}-${theme}`] = color
+        }
+      })
+    })
+    
+    return variables
+  }, [colorConfig])
+
   return (
-    <style
-      dangerouslySetInnerHTML={{
-        __html: Object.entries(THEMES)
-          .map(
-            ([theme, prefix]) => `
-${prefix} [data-chart=${id}] {
-${colorConfig
-  .map(([key, itemConfig]) => {
-    const color =
-      itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ||
-      itemConfig.color
-    return color ? `  --color-${key}: ${color};` : null
-  })
-  .join("\n")}
-}
-`
-          )
-          .join("\n"),
-      }}
-    />
+    <style>
+      {Object.entries(THEMES).map(([theme, prefix]) => {
+        const selector = prefix ? `${prefix} [data-chart="${id}"]` : `[data-chart="${id}"]`
+        const rules = colorConfig
+          .map(([key, itemConfig]) => {
+            const color =
+              itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ||
+              itemConfig.color
+            return color && /^#[0-9A-Fa-f]{6}$|^hsl\([\d\s,]+\)$|^rgb\([\d\s,]+\)$/.test(color)
+              ? `  --color-${key}: ${color};`
+              : null
+          })
+          .filter(Boolean)
+          .join('\n')
+        
+        return rules ? `${selector} {\n${rules}\n}` : ''
+      }).filter(Boolean).join('\n')}
+    </style>
   )
 }
 
