@@ -20,21 +20,13 @@ class StreamingService {
   }
 
   async generateStreamKey(): Promise<StreamConfig> {
-    const streamKey = `nf_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
+    // Import here to avoid circular dependencies
+    const { DatabaseService } = await import('./streaming/databaseService');
+    const { useSupabaseAuth } = await import('@/contexts/SupabaseAuthContext');
     
-    console.log('🔑 Generating stream key with HTTPS SSL for Lovable...');
-    
-    const config: StreamConfig = {
-      streamKey,
-      rtmpUrl: this.RTMP_URL,
-      hlsUrl: `https://67.205.179.77:3443/live/${streamKey}/index.m3u8` // HTTPS on port 3443 as configured
-    };
-
-    // Store in localStorage
-    localStorage.setItem('nightflow_stream_config', JSON.stringify(config));
-    
-    console.log('✅ Stream config generated with HTTPS SSL:', config);
-    return config;
+    // Note: This is a simplified approach. In production, you'd need to get user ID properly
+    // For now, we'll use a placeholder that the calling code should replace with actual user ID
+    throw new Error('This method should be called through useRealTimeStream hook which provides user context');
   }
 
   async getCurrentStream(): Promise<StreamConfig | null> {
@@ -155,9 +147,13 @@ class StreamingService {
   }
 
   async revokeStreamKey(): Promise<void> {
+    // Import here to avoid circular dependencies
+    const { DatabaseService } = await import('./streaming/databaseService');
+    
+    // Note: This method should be called through useRealTimeStream hook which provides proper context
     localStorage.removeItem('nightflow_stream_config');
     this.stopPolling();
-    console.log('🔑 Stream key revoked');
+    console.log('🔑 Stream key revoked from localStorage - database revocation should be handled by useRealTimeStream');
   }
 
   onStatusUpdate(callback: (status: StreamStatus) => void): () => void {

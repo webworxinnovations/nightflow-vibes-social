@@ -4,46 +4,22 @@ import { StreamConfig } from '@/types/streaming';
 import { URLGenerator } from './core/urlGenerator';
 
 export class DatabaseService {
-  static async saveStream(userId: string, streamKey: string, rtmpUrl: string, hlsUrl: string): Promise<void> {
-    // First, deactivate any existing streams for this user
-    await supabase
-      .from('streams')
-      .update({ is_active: false })
-      .eq('user_id', userId)
-      .eq('is_active', true);
+  static async generateStreamKey(userId: string): Promise<StreamConfig> {
+    const { data, error } = await supabase
+      .rpc('generate_secure_stream_key', { user_id_param: userId });
 
-    // Create new stream record (without sensitive credentials)
-    const { data: streamData, error: streamError } = await supabase
-      .from('streams')
-      .insert({
-        user_id: userId,
-        title: 'Live DJ Stream',
-        description: 'Live DJ Performance',
-        status: 'offline',
-        is_active: true
-      })
-      .select('id')
-      .single();
-
-    if (streamError || !streamData) {
-      throw new Error('Failed to save stream configuration');
+    if (error || !data || data.length === 0) {
+      throw new Error('Failed to generate secure stream key: ' + (error?.message || 'Unknown error'));
     }
 
-    // Store credentials separately in secure table
-    const { error: credentialsError } = await supabase
-      .from('stream_credentials')
-      .insert({
-        stream_id: streamData.id,
-        stream_key: streamKey,
-        rtmp_url: rtmpUrl,
-        hls_url: hlsUrl
-      });
-
-    if (credentialsError) {
-      // Clean up the stream record if credentials insertion fails
-      await supabase.from('streams').delete().eq('id', streamData.id);
-      throw new Error('Failed to save stream credentials');
-    }
+    const result = data[0];
+    return {
+      streamKey: result.stream_key,
+      rtmpUrl: result.rtmp_url,
+      hlsUrl: result.hls_url,
+      isLive: false,
+      viewerCount: 0
+    };
   }
 
   static async getCurrentStream(userId: string): Promise<StreamConfig | null> {
@@ -84,35 +60,37 @@ export class DatabaseService {
 
   static async validateStreamKey(streamKey: string): Promise<boolean> {
     const { data, error } = await supabase
-      .from('stream_credentials')
-      .select('stream_id')
-      .eq('stream_key', streamKey)
-      .single();
+      .rpc('validate_stream_key_secure', { stream_key_param: streamKey });
 
-    if (error) {
+    if (error || !data || data.length === 0) {
       return false;
     }
 
-    // Check if the stream is still active
-    const { data: streamData, error: streamError } = await supabase
-      .from('streams')
-      .select('is_active')
-      .eq('id', data.stream_id)
-      .eq('is_active', true)
-      .single();
-
-    return !streamError && !!streamData;
+    return data[0].is_valid;
   }
 
-  static async revokeStream(userId: string): Promise<void> {
-    const { error } = await supabase
-      .from('streams')
-      .update({ is_active: false })
-      .eq('user_id', userId)
-      .eq('is_active', true);
+  static async revokeStream(userId: string, streamKey?: string): Promise<void> {
+    if (streamKey) {
+      const { data, error } = await supabase
+        .rpc('revoke_stream_credentials', { 
+          stream_key_param: streamKey, 
+          user_id_param: userId 
+        });
 
-    if (error) {
-      throw new Error('Failed to revoke stream');
+      if (error) {
+        throw new Error('Failed to revoke stream credentials: ' + error.message);
+      }
+    } else {
+      // Fallback: deactivate all active streams for user
+      const { error } = await supabase
+        .from('streams')
+        .update({ is_active: false, status: 'offline' })
+        .eq('user_id', userId)
+        .eq('is_active', true);
+
+      if (error) {
+        throw new Error('Failed to revoke stream');
+      }
     }
   }
 }

@@ -368,11 +368,65 @@ export type Database = {
           },
         ]
       }
+      stream_audit_log: {
+        Row: {
+          action: string
+          created_at: string | null
+          id: string
+          ip_address: unknown | null
+          stream_id: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown | null
+          stream_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown | null
+          stream_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stream_audit_log_stream_id_fkey"
+            columns: ["stream_id"]
+            isOneToOne: false
+            referencedRelation: "public_streams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stream_audit_log_stream_id_fkey"
+            columns: ["stream_id"]
+            isOneToOne: false
+            referencedRelation: "streams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stream_audit_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stream_credentials: {
         Row: {
           created_at: string
+          expires_at: string | null
           hls_url: string
           id: string
+          revoked_at: string | null
           rtmp_url: string
           stream_id: string
           stream_key: string
@@ -380,8 +434,10 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          expires_at?: string | null
           hls_url: string
           id?: string
+          revoked_at?: string | null
           rtmp_url: string
           stream_id: string
           stream_key: string
@@ -389,8 +445,10 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          expires_at?: string | null
           hls_url?: string
           id?: string
+          revoked_at?: string | null
           rtmp_url?: string
           stream_id?: string
           stream_key?: string
@@ -729,6 +787,15 @@ export type Database = {
       }
     }
     Functions: {
+      generate_secure_stream_key: {
+        Args: { user_id_param: string }
+        Returns: {
+          stream_key: string
+          rtmp_url: string
+          hls_url: string
+          stream_id: string
+        }[]
+      }
       get_public_profile: {
         Args: { profile_username: string }
         Returns: {
@@ -751,6 +818,18 @@ export type Database = {
           stream_key: string
           rtmp_url: string
           hls_url: string
+        }[]
+      }
+      revoke_stream_credentials: {
+        Args: { stream_key_param: string; user_id_param: string }
+        Returns: boolean
+      }
+      validate_stream_key_secure: {
+        Args: { stream_key_param: string }
+        Returns: {
+          is_valid: boolean
+          stream_id: string
+          user_id: string
         }[]
       }
     }

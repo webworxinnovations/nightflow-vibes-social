@@ -59,6 +59,9 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         
         setSession(session);
         setUser(session?.user ?? null);
+        
+        // Make user available globally for hooks that can't access context
+        (window as any).__supabase_user = session?.user ?? null;
 
         // Fetch profile data when user signs in
         if (session?.user) {
