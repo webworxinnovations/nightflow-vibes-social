@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      auth_rate_limit: {
+        Row: {
+          action: string
+          attempts: number | null
+          blocked_until: string | null
+          created_at: string | null
+          id: string
+          identifier: string
+          updated_at: string | null
+          window_start: string | null
+        }
+        Insert: {
+          action: string
+          attempts?: number | null
+          blocked_until?: string | null
+          created_at?: string | null
+          id?: string
+          identifier: string
+          updated_at?: string | null
+          window_start?: string | null
+        }
+        Update: {
+          action?: string
+          attempts?: number | null
+          blocked_until?: string | null
+          created_at?: string | null
+          id?: string
+          identifier?: string
+          updated_at?: string | null
+          window_start?: string | null
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           created_at: string
@@ -228,6 +261,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      payment_audit_log: {
+        Row: {
+          action: string
+          amount: number | null
+          created_at: string | null
+          error_message: string | null
+          id: string
+          ip_address: unknown | null
+          payment_intent_id: string | null
+          recipient_id: string | null
+          success: boolean | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          amount?: number | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          ip_address?: unknown | null
+          payment_intent_id?: string | null
+          recipient_id?: string | null
+          success?: boolean | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          amount?: number | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          ip_address?: unknown | null
+          payment_intent_id?: string | null
+          recipient_id?: string | null
+          success?: boolean | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -731,11 +806,14 @@ export type Database = {
           id: string
           message: string | null
           payment_intent_id: string | null
+          payment_verified: boolean | null
           recipient_id: string
           song_request: string | null
           status: string | null
           stream_id: string | null
+          stripe_payment_intent_id: string | null
           tipper_id: string
+          verification_date: string | null
         }
         Insert: {
           amount: number
@@ -743,11 +821,14 @@ export type Database = {
           id?: string
           message?: string | null
           payment_intent_id?: string | null
+          payment_verified?: boolean | null
           recipient_id: string
           song_request?: string | null
           status?: string | null
           stream_id?: string | null
+          stripe_payment_intent_id?: string | null
           tipper_id: string
+          verification_date?: string | null
         }
         Update: {
           amount?: number
@@ -755,11 +836,14 @@ export type Database = {
           id?: string
           message?: string | null
           payment_intent_id?: string | null
+          payment_verified?: boolean | null
           recipient_id?: string
           song_request?: string | null
           status?: string | null
           stream_id?: string | null
+          stripe_payment_intent_id?: string | null
           tipper_id?: string
+          verification_date?: string | null
         }
         Relationships: [
           {
@@ -855,6 +939,20 @@ export type Database = {
           rtmp_url: string
           hls_url: string
         }[]
+      }
+      log_payment_event: {
+        Args: {
+          p_user_id: string
+          p_payment_intent_id: string
+          p_action: string
+          p_amount?: number
+          p_recipient_id?: string
+          p_ip_address?: unknown
+          p_user_agent?: string
+          p_success?: boolean
+          p_error_message?: string
+        }
+        Returns: undefined
       }
       log_security_event: {
         Args: {
