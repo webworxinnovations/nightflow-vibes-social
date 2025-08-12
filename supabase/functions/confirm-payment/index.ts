@@ -5,6 +5,10 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const corsHeaders = {
   'Access-Control-Allow-Origin': 'https://bkedbcwomesqxlughssq.lovableproject.com',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Content-Security-Policy': "default-src 'self'",
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
 }
 
 serve(async (req) => {
@@ -87,8 +91,15 @@ serve(async (req) => {
       console.warn('STRIPE_SECRET_KEY not set - skipping payment verification')
     }
 
+    // Create service client for secure operations
+    const supabaseService = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      { auth: { persistSession: false } }
+    )
+
     // Update tip status to completed
-    const { error } = await supabaseClient
+    const { error } = await supabaseService
       .from('tips')
       .update({ status: 'completed' })
       .eq('payment_intent_id', paymentIntentId)
@@ -96,10 +107,29 @@ serve(async (req) => {
 
     if (error) {
       console.error('Database update error:', error)
+      
+      // Log security event for failed confirmation
+      await supabaseService.rpc('log_security_event', {
+        p_user_id: user.id,
+        p_event_type: 'PAYMENT_CONFIRMATION_FAILED',
+        p_event_data: { 
+          payment_intent_id: paymentIntentId,
+          error: error.message 
+        }
+      })
+      
       throw new Error('Failed to update payment status')
     }
 
-    // Log the confirmation for audit
+    // Log successful payment confirmation
+    await supabaseService.rpc('log_security_event', {
+      p_user_id: user.id,
+      p_event_type: 'PAYMENT_CONFIRMED',
+      p_event_data: { 
+        payment_intent_id: paymentIntentId
+      }
+    })
+
     console.log(`Payment confirmed: ${paymentIntentId} for user ${user.id}`)
 
     return new Response(

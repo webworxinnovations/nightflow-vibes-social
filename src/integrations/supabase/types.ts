@@ -301,6 +301,36 @@ export type Database = {
         }
         Relationships: []
       }
+      security_audit_log: {
+        Row: {
+          created_at: string | null
+          event_data: Json | null
+          event_type: string
+          id: string
+          ip_address: unknown | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          ip_address?: unknown | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          ip_address?: unknown | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       song_requests: {
         Row: {
           album_art_url: string | null
@@ -700,8 +730,10 @@ export type Database = {
           created_at: string
           id: string
           message: string | null
+          payment_intent_id: string | null
           recipient_id: string
           song_request: string | null
+          status: string | null
           stream_id: string | null
           tipper_id: string
         }
@@ -710,8 +742,10 @@ export type Database = {
           created_at?: string
           id?: string
           message?: string | null
+          payment_intent_id?: string | null
           recipient_id: string
           song_request?: string | null
+          status?: string | null
           stream_id?: string | null
           tipper_id: string
         }
@@ -720,8 +754,10 @@ export type Database = {
           created_at?: string
           id?: string
           message?: string | null
+          payment_intent_id?: string | null
           recipient_id?: string
           song_request?: string | null
+          status?: string | null
           stream_id?: string | null
           tipper_id?: string
         }
@@ -819,6 +855,16 @@ export type Database = {
           rtmp_url: string
           hls_url: string
         }[]
+      }
+      log_security_event: {
+        Args: {
+          p_user_id: string
+          p_event_type: string
+          p_event_data?: Json
+          p_ip_address?: unknown
+          p_user_agent?: string
+        }
+        Returns: undefined
       }
       revoke_stream_credentials: {
         Args: { stream_key_param: string; user_id_param: string }

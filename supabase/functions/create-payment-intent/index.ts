@@ -5,6 +5,10 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const corsHeaders = {
   'Access-Control-Allow-Origin': 'https://bkedbcwomesqxlughssq.lovableproject.com',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Content-Security-Policy': "default-src 'self'",
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
 }
 
 // Rate limiting map (in production, use Redis or similar)
@@ -160,8 +164,15 @@ serve(async (req) => {
       }
     }
 
+    // Create service client for secure operations
+    const supabaseService = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      { auth: { persistSession: false } }
+    )
+
     // Store pending tip in database
-    const { error: tipError } = await supabaseClient
+    const { error: tipError } = await supabaseService
       .from('tips')
       .insert({
         tipper_id: tipperId,
@@ -176,10 +187,31 @@ serve(async (req) => {
 
     if (tipError) {
       console.error('Database error:', tipError)
+      
+      // Log security event for failed tip creation
+      await supabaseService.rpc('log_security_event', {
+        p_user_id: user.id,
+        p_event_type: 'TIP_STORAGE_FAILED',
+        p_event_data: { 
+          payment_intent_id: paymentIntent.id,
+          error: tipError.message 
+        }
+      })
+      
       throw new Error('Failed to create tip record')
     }
 
-    // Log the action for audit
+    // Log successful payment intent creation
+    await supabaseService.rpc('log_security_event', {
+      p_user_id: user.id,
+      p_event_type: 'PAYMENT_INTENT_CREATED',
+      p_event_data: { 
+        payment_intent_id: paymentIntent.id,
+        amount: amount,
+        recipient_id: recipientId
+      }
+    })
+
     console.log(`Payment intent created: ${paymentIntent.id} for user ${user.id}`)
 
     return new Response(
