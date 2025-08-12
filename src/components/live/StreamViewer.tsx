@@ -78,7 +78,7 @@ export const StreamViewer = ({ stream, open, onClose }: StreamViewerProps) => {
                   <div>
                     <h2 className="font-semibold">{stream.streamer.username}</h2>
                     <p className="text-sm text-muted-foreground">
-                      {stream.streamer.streaming_title || stream.title || "Live Stream"}
+                      {stream.title || "Live Stream"}
                     </p>
                   </div>
                   <Badge variant="destructive" className="flex items-center gap-1 ml-2">
@@ -123,10 +123,9 @@ export const StreamViewer = ({ stream, open, onClose }: StreamViewerProps) => {
 
               {/* Video Player */}
               <div className="flex-1 bg-black relative">
-                <RealVideoPlayer
-                  hlsUrl={stream.hls_url}
-                  isLive={stream.status === 'live'}
-                />
+                <div className="flex items-center justify-center h-full text-white">
+                  <p>Stream player unavailable - credentials protected for security</p>
+                </div>
 
                 {/* Video Controls Overlay */}
                 <div className="absolute bottom-4 left-4 flex gap-2">
@@ -148,10 +147,10 @@ export const StreamViewer = ({ stream, open, onClose }: StreamViewerProps) => {
                 </div>
 
                 {/* Stream Info Overlay */}
-                {stream.streamer.streaming_description && (
+                {stream.description && (
                   <div className="absolute bottom-4 right-4 max-w-md">
                     <div className="bg-black/70 text-white p-3 rounded-lg">
-                      <p className="text-sm">{stream.streamer.streaming_description}</p>
+                      <p className="text-sm">{stream.description}</p>
                     </div>
                   </div>
                 )}

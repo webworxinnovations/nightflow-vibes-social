@@ -38,7 +38,6 @@ export const useTipping = () => {
       
       return false;
     } catch (error) {
-      console.error('Error sending tip:', error);
       toast.error('Failed to send tip. Please try again.');
       return false;
     } finally {

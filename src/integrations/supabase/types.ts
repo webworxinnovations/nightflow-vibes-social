@@ -368,6 +368,51 @@ export type Database = {
           },
         ]
       }
+      stream_credentials: {
+        Row: {
+          created_at: string
+          hls_url: string
+          id: string
+          rtmp_url: string
+          stream_id: string
+          stream_key: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          hls_url: string
+          id?: string
+          rtmp_url: string
+          stream_id: string
+          stream_key: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          hls_url?: string
+          id?: string
+          rtmp_url?: string
+          stream_id?: string
+          stream_key?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stream_credentials_stream_id_fkey"
+            columns: ["stream_id"]
+            isOneToOne: true
+            referencedRelation: "public_streams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stream_credentials_stream_id_fkey"
+            columns: ["stream_id"]
+            isOneToOne: true
+            referencedRelation: "streams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stream_viewers: {
         Row: {
           anonymous_id: string | null
@@ -424,15 +469,12 @@ export type Database = {
           description: string | null
           duration: number | null
           ended_at: string | null
-          hls_url: string
           id: string
           is_active: boolean | null
           max_viewers: number | null
           resolution: string | null
-          rtmp_url: string
           started_at: string | null
           status: Database["public"]["Enums"]["stream_status"] | null
-          stream_key: string
           title: string | null
           updated_at: string
           user_id: string
@@ -444,15 +486,12 @@ export type Database = {
           description?: string | null
           duration?: number | null
           ended_at?: string | null
-          hls_url: string
           id?: string
           is_active?: boolean | null
           max_viewers?: number | null
           resolution?: string | null
-          rtmp_url: string
           started_at?: string | null
           status?: Database["public"]["Enums"]["stream_status"] | null
-          stream_key: string
           title?: string | null
           updated_at?: string
           user_id: string
@@ -464,15 +503,12 @@ export type Database = {
           description?: string | null
           duration?: number | null
           ended_at?: string | null
-          hls_url?: string
           id?: string
           is_active?: boolean | null
           max_viewers?: number | null
           resolution?: string | null
-          rtmp_url?: string
           started_at?: string | null
           status?: Database["public"]["Enums"]["stream_status"] | null
-          stream_key?: string
           title?: string | null
           updated_at?: string
           user_id?: string
@@ -666,10 +702,11 @@ export type Database = {
     Views: {
       public_streams: {
         Row: {
+          avatar_url: string | null
           created_at: string | null
           description: string | null
           duration: number | null
-          ended_at: string | null
+          full_name: string | null
           id: string | null
           max_viewers: number | null
           resolution: string | null
@@ -677,35 +714,8 @@ export type Database = {
           status: Database["public"]["Enums"]["stream_status"] | null
           title: string | null
           user_id: string | null
+          username: string | null
           viewer_count: number | null
-        }
-        Insert: {
-          created_at?: string | null
-          description?: string | null
-          duration?: number | null
-          ended_at?: string | null
-          id?: string | null
-          max_viewers?: number | null
-          resolution?: string | null
-          started_at?: string | null
-          status?: Database["public"]["Enums"]["stream_status"] | null
-          title?: string | null
-          user_id?: string | null
-          viewer_count?: number | null
-        }
-        Update: {
-          created_at?: string | null
-          description?: string | null
-          duration?: number | null
-          ended_at?: string | null
-          id?: string | null
-          max_viewers?: number | null
-          resolution?: string | null
-          started_at?: string | null
-          status?: Database["public"]["Enums"]["stream_status"] | null
-          title?: string | null
-          user_id?: string | null
-          viewer_count?: number | null
         }
         Relationships: [
           {
@@ -719,7 +729,14 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      get_stream_credentials: {
+        Args: { stream_id_param: string }
+        Returns: {
+          stream_key: string
+          rtmp_url: string
+          hls_url: string
+        }[]
+      }
     }
     Enums: {
       event_status: "draft" | "published" | "live" | "ended" | "cancelled"

@@ -19,14 +19,11 @@ export const useRealTimeStream = () => {
   const generateStreamKey = useCallback(async () => {
     setIsLoading(true);
     try {
-      console.log('🔑 Generating fresh stream key...');
       const config = await streamingService.generateStreamKey();
-      console.log('✅ New stream config generated:', config);
       setStreamConfig(config);
       toast.success('Stream key generated! Copy the settings to OBS.');
       return config.streamKey;
     } catch (error) {
-      console.error('Failed to generate stream key:', error);
       if (error instanceof Error) {
         toast.error(error.message);
       } else {
@@ -51,7 +48,6 @@ export const useRealTimeStream = () => {
       });
       toast.info('Stream key revoked');
     } catch (error) {
-      console.error('Failed to revoke stream key:', error);
       toast.error('Failed to revoke stream key');
     }
   }, []);
@@ -75,21 +71,17 @@ export const useRealTimeStream = () => {
     const loadCurrentStream = async () => {
       setIsLoading(true);
       try {
-        console.log('🔍 Loading current stream from database...');
         const config = await streamingService.getCurrentStream();
         if (config) {
-          console.log('✅ Loaded stream config:', config);
           setStreamConfig(config);
           
           // Start monitoring if we have a stream
           if (config.streamKey) {
             validateAndConnect(config.streamKey);
           }
-        } else {
-          console.log('🚫 No active stream found in database');
         }
       } catch (error) {
-        console.error('Failed to load current stream:', error);
+        // Silent fail - user will need to generate new stream key
       } finally {
         setIsLoading(false);
       }
@@ -119,9 +111,9 @@ export const useRealTimeStream = () => {
           
           return status;
         });
-      } catch (error) {
-        console.error('Failed to poll stream status:', error);
-      }
+        } catch (error) {
+          // Silent fail - polling will retry
+        }
     };
 
     // Initial status check

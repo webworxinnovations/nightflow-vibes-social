@@ -19,19 +19,33 @@ export const LiveStreamDiscovery = ({ onWatchStream }: LiveStreamDiscoveryProps)
   useEffect(() => {
     const fetchLiveStreams = async () => {
       const { data, error } = await supabase
-        .from('streams')
-        .select(`
-          *,
-          streamer:profiles(*)
-        `)
-        .eq('status', 'live')
+        .from('public_streams')
+        .select('*')
         .order('viewer_count', { ascending: false });
 
       if (error) {
-        console.error('Error fetching live streams:', error);
-      } else {
-        setLiveStreams(data || []);
-      }
+        return;
+      } 
+
+      const liveStreamData: LiveStream[] = (data || []).map(stream => ({
+        id: stream.id!,
+        title: stream.title || 'Live Stream',
+        status: stream.status as 'live' | 'offline' | 'starting' | 'ending',
+        viewer_count: stream.viewer_count || 0,
+        max_viewers: stream.max_viewers || 0,
+        started_at: stream.started_at || '',
+        duration: stream.duration || 0,
+        description: stream.description || '',
+        resolution: stream.resolution || '',
+        streamer: {
+          id: stream.user_id!,
+          username: stream.username || 'Anonymous',
+          avatar_url: stream.avatar_url || undefined,
+          full_name: stream.full_name || undefined
+        }
+      }));
+
+      setLiveStreams(liveStreamData);
       setIsLoading(false);
     };
 
@@ -107,9 +121,6 @@ export const LiveStreamDiscovery = ({ onWatchStream }: LiveStreamDiscoveryProps)
                 </Avatar>
                 <div>
                   <CardTitle className="text-sm">{stream.streamer.username}</CardTitle>
-                  {stream.streamer.verified && (
-                    <Badge variant="secondary" className="text-xs">Verified</Badge>
-                  )}
                 </div>
               </div>
               <Badge variant="destructive" className="flex items-center gap-1">
@@ -127,11 +138,11 @@ export const LiveStreamDiscovery = ({ onWatchStream }: LiveStreamDiscoveryProps)
             
             <div>
               <h3 className="font-semibold truncate">
-                {stream.streamer.streaming_title || stream.title || "Live Stream"}
+                {stream.title || "Live Stream"}
               </h3>
-              {stream.streamer.streaming_description && (
+              {stream.description && (
                 <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                  {stream.streamer.streaming_description}
+                  {stream.description}
                 </p>
               )}
             </div>

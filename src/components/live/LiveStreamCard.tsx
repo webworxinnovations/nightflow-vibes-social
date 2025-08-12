@@ -42,12 +42,9 @@ export const LiveStreamCard = ({ stream, onWatch }: LiveStreamCardProps) => {
               <h3 className="font-semibold text-sm truncate">
                 {stream.streamer.username}
               </h3>
-              {stream.streamer.verified && (
-                <Verified className="h-4 w-4 text-blue-500" />
-              )}
             </div>
             <p className="text-xs text-muted-foreground truncate">
-              {stream.streamer.streaming_title || stream.title || "Live Stream"}
+              {stream.title || "Live Stream"}
             </p>
           </div>
 
@@ -63,10 +60,10 @@ export const LiveStreamCard = ({ stream, onWatch }: LiveStreamCardProps) => {
           <div className="absolute inset-0 flex items-center justify-center">
             <Play className="h-12 w-12 text-white/80" />
           </div>
-          {stream.streamer.streaming_description && (
+          {stream.description && (
             <div className="absolute bottom-2 left-2 right-2">
               <p className="text-white text-xs bg-black/50 rounded px-2 py-1 truncate">
-                {stream.streamer.streaming_description}
+                {stream.description}
               </p>
             </div>
           )}
