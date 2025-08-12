@@ -729,6 +729,22 @@ export type Database = {
       }
     }
     Functions: {
+      get_public_profile: {
+        Args: { profile_username: string }
+        Returns: {
+          id: string
+          username: string
+          full_name: string
+          avatar_url: string
+          bio: string
+          role: Database["public"]["Enums"]["user_role"]
+          verified: boolean
+          follower_count: number
+          following_count: number
+          total_streams: number
+          created_at: string
+        }[]
+      }
       get_stream_credentials: {
         Args: { stream_id_param: string }
         Returns: {
