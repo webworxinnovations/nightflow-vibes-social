@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instanciate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+    PostgrestVersion: "12.2.12 (cd3cf9e)"
   }
   public: {
     Tables: {
@@ -46,6 +46,13 @@ export type Database = {
           username?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "chat_messages_stream_id_fkey"
+            columns: ["stream_id"]
+            isOneToOne: false
+            referencedRelation: "public_streams"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "chat_messages_stream_id_fkey"
             columns: ["stream_id"]
@@ -168,6 +175,13 @@ export type Database = {
             columns: ["organizer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_stream_id_fkey"
+            columns: ["stream_id"]
+            isOneToOne: false
+            referencedRelation: "public_streams"
             referencedColumns: ["id"]
           },
           {
@@ -380,6 +394,13 @@ export type Database = {
           viewer_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "stream_viewers_stream_id_fkey"
+            columns: ["stream_id"]
+            isOneToOne: false
+            referencedRelation: "public_streams"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "stream_viewers_stream_id_fkey"
             columns: ["stream_id"]
@@ -622,6 +643,13 @@ export type Database = {
             foreignKeyName: "tips_stream_id_fkey"
             columns: ["stream_id"]
             isOneToOne: false
+            referencedRelation: "public_streams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tips_stream_id_fkey"
+            columns: ["stream_id"]
+            isOneToOne: false
             referencedRelation: "streams"
             referencedColumns: ["id"]
           },
@@ -636,7 +664,59 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_streams: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          duration: number | null
+          ended_at: string | null
+          id: string | null
+          max_viewers: number | null
+          resolution: string | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["stream_status"] | null
+          title: string | null
+          user_id: string | null
+          viewer_count: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          duration?: number | null
+          ended_at?: string | null
+          id?: string | null
+          max_viewers?: number | null
+          resolution?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["stream_status"] | null
+          title?: string | null
+          user_id?: string | null
+          viewer_count?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          duration?: number | null
+          ended_at?: string | null
+          id?: string | null
+          max_viewers?: number | null
+          resolution?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["stream_status"] | null
+          title?: string | null
+          user_id?: string | null
+          viewer_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "streams_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       [_ in never]: never
