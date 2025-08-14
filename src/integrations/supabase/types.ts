@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.12 (cd3cf9e)"
@@ -910,10 +910,10 @@ export type Database = {
       generate_secure_stream_key: {
         Args: { user_id_param: string }
         Returns: {
-          stream_key: string
-          rtmp_url: string
           hls_url: string
+          rtmp_url: string
           stream_id: string
+          stream_key: string
         }[]
       }
       get_follow_counts: {
@@ -926,91 +926,91 @@ export type Database = {
       get_profile_with_privacy: {
         Args: { profile_id: string }
         Returns: {
-          id: string
-          username: string
-          full_name: string
           avatar_url: string
           bio: string
-          role: Database["public"]["Enums"]["user_role"]
-          verified: boolean
+          created_at: string
           follower_count: number
           following_count: number
-          total_streams: number
-          created_at: string
-          website: string
+          full_name: string
+          id: string
           instagram: string
-          spotify: string
-          soundcloud: string
-          location: string
-          streaming_title: string
-          streaming_description: string
-          total_tips_received: number
           last_streamed_at: string
+          location: string
+          role: Database["public"]["Enums"]["user_role"]
+          soundcloud: string
+          spotify: string
+          streaming_description: string
+          streaming_title: string
+          total_streams: number
+          total_tips_received: number
+          username: string
+          verified: boolean
+          website: string
         }[]
       }
       get_public_profile: {
         Args: { profile_username: string }
         Returns: {
-          id: string
-          username: string
-          full_name: string
           avatar_url: string
           bio: string
-          role: Database["public"]["Enums"]["user_role"]
-          verified: boolean
+          created_at: string
           follower_count: number
           following_count: number
+          full_name: string
+          id: string
+          role: Database["public"]["Enums"]["user_role"]
           total_streams: number
-          created_at: string
+          username: string
+          verified: boolean
         }[]
       }
       get_public_profile_safe: {
         Args: { profile_username: string }
         Returns: {
-          id: string
-          username: string
-          full_name: string
           avatar_url: string
           bio: string
-          role: Database["public"]["Enums"]["user_role"]
-          verified: boolean
+          created_at: string
           follower_count: number
           following_count: number
+          full_name: string
+          id: string
+          role: Database["public"]["Enums"]["user_role"]
           total_streams: number
-          created_at: string
+          username: string
+          verified: boolean
         }[]
       }
       get_safe_profile: {
         Args: { profile_id: string }
         Returns: {
-          id: string
-          username: string
-          full_name: string
           avatar_url: string
           bio: string
-          role: Database["public"]["Enums"]["user_role"]
-          verified: boolean
+          created_at: string
           follower_count: number
           following_count: number
-          total_streams: number
-          created_at: string
-          website: string
+          full_name: string
+          id: string
           instagram: string
-          spotify: string
-          soundcloud: string
-          location: string
-          streaming_title: string
-          streaming_description: string
-          total_tips_received: number
           last_streamed_at: string
+          location: string
+          role: Database["public"]["Enums"]["user_role"]
+          soundcloud: string
+          spotify: string
+          streaming_description: string
+          streaming_title: string
+          total_streams: number
+          total_tips_received: number
+          username: string
+          verified: boolean
+          website: string
         }[]
       }
       get_stream_credentials: {
         Args: { stream_id_param: string }
         Returns: {
-          stream_key: string
-          rtmp_url: string
           hls_url: string
+          rtmp_url: string
+          stream_key: string
         }[]
       }
       is_following: {
@@ -1019,25 +1019,25 @@ export type Database = {
       }
       log_payment_event: {
         Args: {
-          p_user_id: string
-          p_payment_intent_id: string
           p_action: string
           p_amount?: number
-          p_recipient_id?: string
-          p_ip_address?: unknown
-          p_user_agent?: string
-          p_success?: boolean
           p_error_message?: string
+          p_ip_address?: unknown
+          p_payment_intent_id: string
+          p_recipient_id?: string
+          p_success?: boolean
+          p_user_agent?: string
+          p_user_id: string
         }
         Returns: undefined
       }
       log_security_event: {
         Args: {
-          p_user_id: string
-          p_event_type: string
           p_event_data?: Json
+          p_event_type: string
           p_ip_address?: unknown
           p_user_agent?: string
+          p_user_id: string
         }
         Returns: undefined
       }
